@@ -147,3 +147,100 @@ export interface SystemHealth {
   };
   capabilities: string[];
 }
+
+export interface AdminSystemStats {
+  totalUsers: number;
+  adminUsers: number;
+  standardUsers: number;
+  activeUsers: number;
+  totalBusinessBenchmarks: number;
+  totalMarketDatasets: number;
+  activeMLModels: number;
+  totalPredictions: number;
+  totalPlans: number;
+  systemLoad: string;
+  nodeVersion: string;
+  uptimeSeconds: number;
+  dbStatus: {
+    connected: boolean;
+    driver: string;
+    host: string;
+    database: string;
+    mode: string;
+    message: string;
+  };
+}
+
+export interface BusinessDataset {
+  id: number;
+  name: string;
+  category: string;
+  typicalCapex: string;
+  avgMargin: string;
+  riskIndex: string;
+  breakevenMonths: number;
+  targetFootfall: string;
+  status: string;
+  updatedAt: string;
+}
+
+export interface MarketDataset {
+  id: string;
+  region: string;
+  city: string;
+  footfallIndex: number;
+  avgHouseholdIncome: string;
+  commercialRentPerSqFt: string;
+  competitorDensity: string;
+  growthTrend: string;
+  lastRefreshed: string;
+  status: string;
+}
+
+export interface MLModel {
+  id: string;
+  name: string;
+  version: string;
+  architecture: string;
+  accuracy: string;
+  f1Score: string;
+  avgLatencyMs: number;
+  totalInferences: number;
+  status: string;
+  lastTrained: string;
+  featureWeights: { feature: string; weight: number }[];
+}
+
+export interface SystemAnalytics {
+  timeSeriesRegistrations: { date: string; newUsers: number; activeSessions: number }[];
+  featureUsageDistribution: { name: string; usagePercent: number; totalCalls: number }[];
+  apiPerformance: {
+    avgResponseTimeMs: number;
+    uptimePercentage: number;
+    errorRatePercentage: number;
+    totalRequests24h: number;
+  };
+}
+
+export interface AuditLog {
+  id: number;
+  action: string;
+  details: string;
+  severity: 'INFO' | 'WARNING' | 'ALERT' | 'SUCCESS' | string;
+  user: string;
+  ip: string;
+  timestamp: string;
+}
+
+export interface PlatformSettings {
+  maintenanceMode: boolean;
+  publicRegistrations: boolean;
+  maxRequestsPerMinute: number;
+  jwtExpiryDays: number;
+  enableDetailedAuditLogs: boolean;
+  autoBackupDaily: boolean;
+  systemNotificationBanner: string;
+  defaultCurrency: string;
+  aiEngineVersion: string;
+}
+

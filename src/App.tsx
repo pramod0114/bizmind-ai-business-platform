@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 // Layouts
 import { PublicLayout } from './layouts/PublicLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
+import { AdminLayout } from './layouts/AdminLayout';
 
 // Public Pages
 import { HomePage } from './pages/public/HomePage';
@@ -20,7 +21,7 @@ import { LoginPage } from './pages/public/LoginPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
 
-// Dashboard Pages
+// User / Entrepreneur Dashboard Pages
 import { OverviewPage } from './pages/dashboard/OverviewPage';
 import { BusinessPlannerPage } from './pages/dashboard/BusinessPlannerPage';
 import { MarketAnalysisPage } from './pages/dashboard/MarketAnalysisPage';
@@ -31,8 +32,17 @@ import { RecommendationsPage } from './pages/dashboard/RecommendationsPage';
 import { SavedPage } from './pages/dashboard/SavedPage';
 import { ReportsPage } from './pages/dashboard/ReportsPage';
 import { SettingsPage } from './pages/dashboard/SettingsPage';
-import { AdminDashboardPage } from './pages/dashboard/AdminDashboardPage';
 import { NotFoundPage } from './pages/dashboard/NotFoundPage';
+
+// Administrator Console Pages
+import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminBusinessesPage } from './pages/admin/AdminBusinessesPage';
+import { AdminMarketDataPage } from './pages/admin/AdminMarketDataPage';
+import { AdminMLPage } from './pages/admin/AdminMLPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 
 // Scroll to top upon route change
 function ScrollToTop() {
@@ -61,7 +71,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           </Route>
 
-          {/* Authenticated Decision Support Dashboard Views */}
+          {/* USER DASHBOARD: Dedicated to Entrepreneurs & Business Planners */}
           <Route
             element={
               <ProtectedRoute>
@@ -79,14 +89,24 @@ export default function App() {
             <Route path="/saved" element={<SavedPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminDashboardPage />
-                </ProtectedRoute>
-              }
-            />
+          </Route>
+
+          {/* ADMIN CONSOLE: Dedicated to Platform Administrators */}
+          <Route
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/admin" element={<AdminOverviewPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
+            <Route path="/admin/market-data" element={<AdminMarketDataPage />} />
+            <Route path="/admin/ml-models" element={<AdminMLPage />} />
+            <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
 
           {/* 404 Catch-All */}

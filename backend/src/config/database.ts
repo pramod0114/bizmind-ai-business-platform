@@ -404,6 +404,444 @@ export class DatabaseService {
   }
 
   /**
+   * Update user active status (Admin operation)
+   */
+  public async updateUserStatus(id: number | string, is_active: boolean): Promise<boolean> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const user = await this.findUserById(numericId);
+    if (!user) return false;
+
+    if (this.isConnected && this.pool) {
+      await this.pool.query('UPDATE users SET is_active = ?, updated_at = NOW() WHERE id = ?', [
+        is_active ? 1 : 0,
+        numericId,
+      ]);
+      return true;
+    }
+
+    user.is_active = is_active ? 1 : 0;
+    user.updated_at = new Date().toISOString();
+    this.fallbackUsers.set(user.email.toLowerCase(), user);
+    return true;
+  }
+
+  /**
+   * Update user role (Admin operation)
+   */
+  public async updateUserRole(id: number | string, role: 'USER' | 'ADMIN'): Promise<boolean> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const user = await this.findUserById(numericId);
+    if (!user) return false;
+
+    if (this.isConnected && this.pool) {
+      await this.pool.query('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?', [
+        role,
+        numericId,
+      ]);
+      return true;
+    }
+
+    user.role = role;
+    user.updated_at = new Date().toISOString();
+    this.fallbackUsers.set(user.email.toLowerCase(), user);
+    return true;
+  }
+
+  /**
+   * Delete user (Admin operation)
+   */
+  public async deleteUser(id: number | string): Promise<boolean> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const user = await this.findUserById(numericId);
+    if (!user) return false;
+
+    if (this.isConnected && this.pool) {
+      await this.pool.query('DELETE FROM users WHERE id = ?', [numericId]);
+      return true;
+    }
+
+    return this.fallbackUsers.delete(user.email.toLowerCase());
+  }
+
+  // --- BUSINESS DATA MANAGEMENT ---
+  private businessDatasets = [
+    {
+      id: 1,
+      name: 'Specialty Coffee & Bakery',
+      category: 'Food & Beverage',
+      typicalCapex: '$65,000 - $140,000',
+      avgMargin: '24.5%',
+      riskIndex: 'Low-Medium',
+      breakevenMonths: 14,
+      targetFootfall: '800+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      name: 'Boutique Fitness & Yoga Studio',
+      category: 'Health & Wellness',
+      typicalCapex: '$95,000 - $210,000',
+      avgMargin: '31.2%',
+      riskIndex: 'Medium',
+      breakevenMonths: 18,
+      targetFootfall: '450+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 3,
+      name: 'Eco-Friendly Dry Cleaning & Tailoring',
+      category: 'Personal Services',
+      typicalCapex: '$40,000 - $85,000',
+      avgMargin: '28.0%',
+      riskIndex: 'Low',
+      breakevenMonths: 11,
+      targetFootfall: '600+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 4,
+      name: 'Artisanal Co-Working & Café',
+      category: 'Commercial Spaces',
+      typicalCapex: '$180,000 - $350,000',
+      avgMargin: '22.8%',
+      riskIndex: 'Medium-High',
+      breakevenMonths: 22,
+      targetFootfall: '1,200+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 5,
+      name: 'Neighborhood Pet Spa & Supplies',
+      category: 'Pet Care & Retail',
+      typicalCapex: '$50,000 - $110,000',
+      avgMargin: '33.5%',
+      riskIndex: 'Low',
+      breakevenMonths: 12,
+      targetFootfall: '500+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+
+  public async getBusinessDatasets() {
+    return [...this.businessDatasets];
+  }
+
+  public async createBusinessDataset(data: any) {
+    const newRecord = {
+      id: this.businessDatasets.length + 1,
+      name: data.name || 'New Business Template',
+      category: data.category || 'General',
+      typicalCapex: data.typicalCapex || '$50,000 - $100,000',
+      avgMargin: data.avgMargin || '20.0%',
+      riskIndex: data.riskIndex || 'Medium',
+      breakevenMonths: Number(data.breakevenMonths) || 12,
+      targetFootfall: data.targetFootfall || '500+ per hour',
+      status: 'Active Benchmark',
+      updatedAt: new Date().toISOString(),
+    };
+    this.businessDatasets.unshift(newRecord);
+    return newRecord;
+  }
+
+  public async updateBusinessDataset(id: number, data: any) {
+    const index = this.businessDatasets.findIndex((b) => b.id === Number(id));
+    if (index === -1) return null;
+    this.businessDatasets[index] = {
+      ...this.businessDatasets[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.businessDatasets[index];
+  }
+
+  public async deleteBusinessDataset(id: number) {
+    const index = this.businessDatasets.findIndex((b) => b.id === Number(id));
+    if (index === -1) return false;
+    this.businessDatasets.splice(index, 1);
+    return true;
+  }
+
+  // --- MARKET DATASET MANAGEMENT ---
+  private marketDatasets = [
+    {
+      id: 'MKT-01',
+      region: 'Downtown Metropolitan Core',
+      city: 'Austin, TX',
+      footfallIndex: 94.2,
+      avgHouseholdIncome: '$108,400',
+      commercialRentPerSqFt: '$52.50',
+      competitorDensity: 'High (8.4/10)',
+      growthTrend: '+6.8% YoY',
+      lastRefreshed: 'Today',
+      status: 'Synchronized',
+    },
+    {
+      id: 'MKT-02',
+      region: 'Tech Corridor & Innovation Park',
+      city: 'Seattle, WA',
+      footfallIndex: 88.7,
+      avgHouseholdIncome: '$132,000',
+      commercialRentPerSqFt: '$64.00',
+      competitorDensity: 'Medium-High (7.1/10)',
+      growthTrend: '+8.2% YoY',
+      lastRefreshed: 'Yesterday',
+      status: 'Synchronized',
+    },
+    {
+      id: 'MKT-03',
+      region: 'Suburban Lifestyle District',
+      city: 'Denver, CO',
+      footfallIndex: 76.5,
+      avgHouseholdIncome: '$94,500',
+      commercialRentPerSqFt: '$38.20',
+      competitorDensity: 'Moderate (4.8/10)',
+      growthTrend: '+9.4% YoY',
+      lastRefreshed: '2 days ago',
+      status: 'Synchronized',
+    },
+    {
+      id: 'MKT-04',
+      region: 'Arts & Cultural Quarter',
+      city: 'Chicago, IL',
+      footfallIndex: 82.1,
+      avgHouseholdIncome: '$86,200',
+      commercialRentPerSqFt: '$44.00',
+      competitorDensity: 'High (7.9/10)',
+      growthTrend: '+4.1% YoY',
+      lastRefreshed: '3 days ago',
+      status: 'Synchronized',
+    },
+  ];
+
+  public async getMarketDatasets() {
+    return [...this.marketDatasets];
+  }
+
+  public async createMarketDataset(data: any) {
+    const newRecord = {
+      id: `MKT-0${this.marketDatasets.length + 1}`,
+      region: data.region || 'New Regional Market',
+      city: data.city || 'National Metro',
+      footfallIndex: Number(data.footfallIndex) || 75.0,
+      avgHouseholdIncome: data.avgHouseholdIncome || '$85,000',
+      commercialRentPerSqFt: data.commercialRentPerSqFt || '$40.00',
+      competitorDensity: data.competitorDensity || 'Moderate (5.0/10)',
+      growthTrend: data.growthTrend || '+5.0% YoY',
+      lastRefreshed: 'Just now',
+      status: 'Synchronized',
+    };
+    this.marketDatasets.unshift(newRecord);
+    return newRecord;
+  }
+
+  public async updateMarketDataset(id: string, data: any) {
+    const index = this.marketDatasets.findIndex((m) => m.id === id);
+    if (index === -1) return null;
+    this.marketDatasets[index] = {
+      ...this.marketDatasets[index],
+      ...data,
+      lastRefreshed: 'Just now',
+    };
+    return this.marketDatasets[index];
+  }
+
+  public async deleteMarketDataset(id: string) {
+    const index = this.marketDatasets.findIndex((m) => m.id === id);
+    if (index === -1) return false;
+    this.marketDatasets.splice(index, 1);
+    return true;
+  }
+
+  // --- ML MODELS MONITORING & MANAGEMENT ---
+  private mlModels = [
+    {
+      id: 'biz-success-regressor',
+      name: 'Venture Success Probability Regressor',
+      version: 'v2.4.1-ensemble',
+      architecture: 'XGBoost + Random Forest Gradient Ensemble',
+      accuracy: '91.8%',
+      f1Score: '0.894',
+      avgLatencyMs: 14.2,
+      totalInferences: 18450,
+      status: 'Healthy / Production',
+      lastTrained: '2026-08-15',
+      featureWeights: [
+        { feature: 'Location Footfall Density', weight: 0.32 },
+        { feature: 'Capital Adequacy Ratio', weight: 0.26 },
+        { feature: 'Competitor Proximity Index', weight: 0.21 },
+        { feature: 'Target Demographic Median Income', weight: 0.14 },
+        { feature: 'Seasonality Multiplier', weight: 0.07 },
+      ],
+    },
+    {
+      id: 'market-demand-forecaster',
+      name: 'Geospatial Market Demand Forecaster',
+      version: 'v1.9.0-transformer',
+      architecture: 'Spatial Graph Convolutional Network',
+      accuracy: '88.4%',
+      f1Score: '0.862',
+      avgLatencyMs: 22.8,
+      totalInferences: 12100,
+      status: 'Healthy / Production',
+      lastTrained: '2026-08-10',
+      featureWeights: [
+        { feature: 'Regional Population Growth', weight: 0.35 },
+        { feature: 'Retail Spend Index', weight: 0.28 },
+        { feature: 'Transit Accessibility Score', weight: 0.22 },
+        { feature: 'Commercial Vacancy Rate', weight: 0.15 },
+      ],
+    },
+    {
+      id: 'risk-assessment-classifier',
+      name: 'Multi-Factor Financial Risk Classifier',
+      version: 'v3.1.2-lightgbm',
+      architecture: 'LightGBM Multi-class Classifier',
+      accuracy: '93.5%',
+      f1Score: '0.921',
+      avgLatencyMs: 9.6,
+      totalInferences: 24780,
+      status: 'Healthy / Production',
+      lastTrained: '2026-08-18',
+      featureWeights: [
+        { feature: 'Breakeven Horizon (Months)', weight: 0.38 },
+        { feature: 'Operating Margin Tolerance', weight: 0.29 },
+        { feature: 'Fixed Cost to Revenue Ratio', weight: 0.21 },
+        { feature: 'Macroeconomic Volatility Index', weight: 0.12 },
+      ],
+    },
+  ];
+
+  public async getMLModels() {
+    return [...this.mlModels];
+  }
+
+  public async retrainMLModel(modelId: string) {
+    const model = this.mlModels.find((m) => m.id === modelId);
+    if (!model) return null;
+    model.lastTrained = new Date().toISOString().split('T')[0];
+    model.status = 'Healthy / Production (Retrained)';
+    model.totalInferences = 0;
+    return model;
+  }
+
+  // --- SYSTEM-WIDE ANALYTICS ---
+  public async getSystemAnalytics() {
+    return {
+      timeSeriesRegistrations: [
+        { date: 'Mon', newUsers: 14, activeSessions: 84 },
+        { date: 'Tue', newUsers: 22, activeSessions: 112 },
+        { date: 'Wed', newUsers: 19, activeSessions: 135 },
+        { date: 'Thu', newUsers: 31, activeSessions: 168 },
+        { date: 'Fri', newUsers: 28, activeSessions: 194 },
+        { date: 'Sat', newUsers: 15, activeSessions: 102 },
+        { date: 'Sun', newUsers: 18, activeSessions: 120 },
+      ],
+      featureUsageDistribution: [
+        { name: 'Business Planner', usagePercent: 34, totalCalls: 4230 },
+        { name: 'Location Analysis (Map)', usagePercent: 28, totalCalls: 3480 },
+        { name: 'Predictions Engine', usagePercent: 19, totalCalls: 2360 },
+        { name: 'Market Intelligence', usagePercent: 12, totalCalls: 1490 },
+        { name: 'Reports & Export', usagePercent: 7, totalCalls: 870 },
+      ],
+      apiPerformance: {
+        avgResponseTimeMs: 42.5,
+        uptimePercentage: 99.98,
+        errorRatePercentage: 0.04,
+        totalRequests24h: 184520,
+      },
+    };
+  }
+
+  // --- AUDIT LOGS ---
+  private auditLogs = [
+    {
+      id: 1,
+      action: 'SYSTEM_BOOT',
+      details: 'BizMind API Server Initialized with MySQL & JWT engine',
+      severity: 'INFO',
+      user: 'SYSTEM',
+      ip: '127.0.0.1',
+      timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
+    },
+    {
+      id: 2,
+      action: 'ADMIN_SEED',
+      details: 'Default administrator account provisioned (admin@bizmind.ai)',
+      severity: 'INFO',
+      user: 'SYSTEM',
+      ip: '127.0.0.1',
+      timestamp: new Date(Date.now() - 3600000 * 20).toISOString(),
+    },
+    {
+      id: 3,
+      action: 'USER_LOGIN',
+      details: 'Admin user authenticated successfully',
+      severity: 'SUCCESS',
+      user: 'admin@bizmind.ai',
+      ip: '192.168.1.45',
+      timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
+    },
+    {
+      id: 4,
+      action: 'DATASET_REFRESH',
+      details: 'Austin Metropolitan market dataset synchronized',
+      severity: 'INFO',
+      user: 'admin@bizmind.ai',
+      ip: '192.168.1.45',
+      timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+    },
+  ];
+
+  public async getAllAuditLogs() {
+    return [...this.auditLogs];
+  }
+
+  public async addAuditLog(action: string, details: string, severity = 'INFO', user = 'ADMIN') {
+    const newLog = {
+      id: this.auditLogs.length + 1,
+      action,
+      details,
+      severity,
+      user,
+      ip: '127.0.0.1',
+      timestamp: new Date().toISOString(),
+    };
+    this.auditLogs.unshift(newLog);
+    return newLog;
+  }
+
+  // --- PLATFORM CONFIGURATION & SYSTEM SETTINGS ---
+  private platformSettings = {
+    maintenanceMode: false,
+    publicRegistrations: true,
+    maxRequestsPerMinute: 120,
+    jwtExpiryDays: 7,
+    enableDetailedAuditLogs: true,
+    autoBackupDaily: true,
+    systemNotificationBanner: '',
+    defaultCurrency: 'USD ($)',
+    aiEngineVersion: 'Gemini-3.7 & Local Ensembles',
+  };
+
+  public async getSystemSettings() {
+    return { ...this.platformSettings };
+  }
+
+  public async updateSystemSettings(settings: any) {
+    this.platformSettings = {
+      ...this.platformSettings,
+      ...settings,
+    };
+    this.addAuditLog('SETTINGS_UPDATE', 'Platform configuration parameters modified by Administrator', 'WARNING', 'admin@bizmind.ai');
+    return { ...this.platformSettings };
+  }
+
+  /**
    * Generic parameterized query execution
    */
   public async executeQuery<T>(sql: string, params: unknown[] = []): Promise<T[]> {

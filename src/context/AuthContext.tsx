@@ -17,8 +17,8 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isLoading: boolean;
-  login: (credentials: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (credentials: LoginPayload) => Promise<User>;
+  register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (data: UpdateProfilePayload) => Promise<User>;
   changePassword: (data: ChangePasswordPayload) => Promise<void>;
@@ -68,13 +68,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /**
    * User login
    */
-  const login = async (credentials: LoginPayload): Promise<void> => {
+  const login = async (credentials: LoginPayload): Promise<User> => {
     setIsLoading(true);
     try {
       const response = await authService.login(credentials);
       localStorage.setItem(TOKEN_KEY, response.token);
       setToken(response.token);
       setUser(response.user);
+      return response.user;
     } finally {
       setIsLoading(false);
     }
@@ -83,13 +84,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   /**
    * User registration
    */
-  const register = async (payload: RegisterPayload): Promise<void> => {
+  const register = async (payload: RegisterPayload): Promise<User> => {
     setIsLoading(true);
     try {
       const response = await authService.register(payload);
       localStorage.setItem(TOKEN_KEY, response.token);
       setToken(response.token);
       setUser(response.user);
+      return response.user;
     } finally {
       setIsLoading(false);
     }
