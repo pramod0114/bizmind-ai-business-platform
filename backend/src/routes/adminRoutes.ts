@@ -21,6 +21,7 @@ import {
   getSystemSettings,
   updateSystemSettings,
 } from '../controllers/adminController.js';
+import { getAdminBusinessPlansOverview } from '../controllers/planController.js';
 import { authenticateUser, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -30,6 +31,9 @@ router.use(authenticateUser, requireAdmin);
 
 // System Overview Metrics
 router.get('/stats', getSystemStats);
+
+// Business Plans Telemetry Overview
+router.get('/business-plans', getAdminBusinessPlansOverview);
 
 // User Management Endpoints
 router.get('/users', getAdminUsersList);

@@ -23,8 +23,14 @@ export const config = {
     expiresIn: '7d',
   },
   admin: {
-    email: process.env.ADMIN_EMAIL || 'admin@bizmind.ai',
-    password: process.env.ADMIN_PASSWORD || 'Admin@123456',
+    email:
+      process.env.ADMIN_EMAIL && !process.env.ADMIN_EMAIL.includes('your_')
+        ? process.env.ADMIN_EMAIL.trim().toLowerCase()
+        : 'admin@bizmind.ai',
+    password:
+      process.env.ADMIN_PASSWORD && !process.env.ADMIN_PASSWORD.includes('your_')
+        ? process.env.ADMIN_PASSWORD
+        : 'Admin@123456',
   },
   mlService: {
     url: process.env.ML_API_URL || 'http://localhost:8000',

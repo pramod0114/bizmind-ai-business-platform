@@ -30,6 +30,42 @@ export interface DatabaseStatus {
   message: string;
 }
 
+export interface LocationAnalysisRow {
+  id: number;
+  user_id: number;
+  location_name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  business_count: number;
+  category_summary: Record<string, number> | string;
+  competition_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  opportunity_score: number;
+  business_name?: string | null;
+  business_category?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedBusinessRow {
+  id: number;
+  user_id: number;
+  osm_id: string | number;
+  business_name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  opening_hours: string | null;
+  brand: string | null;
+  cuisine: string | null;
+  distance_meters: number | null;
+  saved_at: string;
+}
+
 export class DatabaseService {
   private static instance: DatabaseService;
   private pool: mysql.Pool | null = null;
@@ -38,10 +74,63 @@ export class DatabaseService {
   private nextUserId = 1;
   private initialized = false;
 
+  private locationAnalyses: Map<number, LocationAnalysisRow> = new Map();
+  private nextLocationAnalysisId = 1;
+  private locationAnalysesSeeded = false;
+
+  private savedBusinesses: Map<number, SavedBusinessRow> = new Map();
+  private nextSavedBusinessId = 1;
+  private savedBusinessesSeeded = false;
+
   private constructor() {
-    this.initDatabase().catch((err) => {
-      logger.error('Database initialization error:', err);
-    });
+    this.seedFallbackUsersSync();
+    if (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') {
+      this.initDatabase().catch((err) => {
+        logger.warn('Database initialization fallback:', err?.message || err);
+      });
+    } else {
+      logger.info('Running in self-contained relational in-memory database mode for development sandbox.');
+    }
+  }
+
+  private seedFallbackUsersSync(): void {
+    const adminEmail = (config.admin.email || 'admin@bizmind.ai').trim().toLowerCase();
+    const adminHash = bcrypt.hashSync(config.admin.password || 'Admin@123456', 10);
+    const demoEmail = 'user@bizmind.ai';
+    const demoHash = bcrypt.hashSync('User@123456', 10);
+    const now = new Date().toISOString();
+
+    if (!this.fallbackUsers.has(adminEmail)) {
+      this.fallbackUsers.set(adminEmail, {
+        id: this.nextUserId++,
+        full_name: 'BizMind Administrator',
+        email: adminEmail,
+        password_hash: adminHash,
+        role: 'ADMIN',
+        profile_image: null,
+        phone: '+1 (555) 019-2834',
+        created_at: now,
+        updated_at: now,
+        last_login: null,
+        is_active: 1,
+      });
+    }
+
+    if (!this.fallbackUsers.has(demoEmail)) {
+      this.fallbackUsers.set(demoEmail, {
+        id: this.nextUserId++,
+        full_name: 'Alex Vance',
+        email: demoEmail,
+        password_hash: demoHash,
+        role: 'USER',
+        profile_image: null,
+        phone: '+1 (555) 014-9921',
+        created_at: now,
+        updated_at: now,
+        last_login: null,
+        is_active: 1,
+      });
+    }
   }
 
   public static getInstance(): DatabaseService {
@@ -67,6 +156,7 @@ export class DatabaseService {
         waitForConnections: config.database.waitForConnections,
         connectionLimit: config.database.connectionLimit,
         queueLimit: config.database.queueLimit,
+        connectTimeout: 2000,
       });
 
       // Test connection
@@ -93,6 +183,55 @@ export class DatabaseService {
           UNIQUE KEY uk_users_email (email),
           KEY idx_users_role (role),
           KEY idx_users_is_active (is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Ensure location_analyses table exists in MySQL
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS location_analyses (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          user_id BIGINT UNSIGNED NOT NULL,
+          location_name VARCHAR(255) NOT NULL,
+          address TEXT NOT NULL,
+          latitude DECIMAL(10, 7) NOT NULL,
+          longitude DECIMAL(10, 7) NOT NULL,
+          radius INT UNSIGNED NOT NULL DEFAULT 2000,
+          business_count INT UNSIGNED NOT NULL DEFAULT 0,
+          category_summary JSON DEFAULT NULL,
+          competition_level ENUM('LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'MEDIUM',
+          opportunity_score INT UNSIGNED NOT NULL DEFAULT 70,
+          business_name VARCHAR(255) DEFAULT NULL,
+          business_category VARCHAR(150) DEFAULT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          KEY idx_loc_user_id (user_id),
+          CONSTRAINT fk_loc_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Ensure saved_businesses table exists in MySQL
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS saved_businesses (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          user_id BIGINT UNSIGNED NOT NULL,
+          osm_id VARCHAR(100) NOT NULL,
+          business_name VARCHAR(255) NOT NULL,
+          category VARCHAR(150) NOT NULL,
+          latitude DECIMAL(10, 7) NOT NULL,
+          longitude DECIMAL(10, 7) NOT NULL,
+          address TEXT DEFAULT NULL,
+          phone VARCHAR(100) DEFAULT NULL,
+          website VARCHAR(500) DEFAULT NULL,
+          opening_hours VARCHAR(255) DEFAULT NULL,
+          brand VARCHAR(150) DEFAULT NULL,
+          cuisine VARCHAR(150) DEFAULT NULL,
+          distance_meters INT DEFAULT NULL,
+          saved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY uk_user_osm (user_id, osm_id),
+          KEY idx_saved_user_id (user_id),
+          CONSTRAINT fk_saved_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
     } catch (err) {
@@ -225,7 +364,14 @@ export class DatabaseService {
     }
 
     const user = this.fallbackUsers.get(normalizedEmail);
-    return user ? { ...user } : null;
+    if (user) return { ...user };
+
+    for (const [key, val] of this.fallbackUsers.entries()) {
+      if (key.trim().toLowerCase() === normalizedEmail || val.email.trim().toLowerCase() === normalizedEmail) {
+        return { ...val };
+      }
+    }
+    return null;
   }
 
   /**
@@ -461,6 +607,613 @@ export class DatabaseService {
     }
 
     return this.fallbackUsers.delete(user.email.toLowerCase());
+  }
+
+  // --- BUSINESS PLANS MANAGEMENT ---
+  private businessPlans: Map<string | number, any> = new Map();
+  private nextPlanId = 1;
+
+  private seedInitialBusinessPlans(): void {
+    if (this.businessPlans.size > 0) return;
+    const now = new Date().toISOString();
+
+    const sample1 = {
+      id: this.nextPlanId++,
+      user_id: 2,
+      userId: 2,
+      business_name: 'The Roasted Bean Artisanal Café',
+      businessName: 'The Roasted Bean Artisanal Café',
+      category: 'Food & Beverage',
+      description: 'Specialty pour-over coffees, handcrafted espresso beverages, sourdough toasts, and fresh baked pastries in a contemporary aesthetic setting.',
+      location: 'Indiranagar, Bengaluru',
+      target_customer: 'Young professionals, tech workers, and specialty coffee enthusiasts',
+      targetCustomer: 'Young professionals, tech workers, and specialty coffee enthusiasts',
+      business_model: 'B2C',
+      businessModel: 'B2C',
+      executive_summary: 'Targeting prime footfall in Indiranagar with high beverage margins and strong repeat patronage.',
+      executiveSummary: 'Targeting prime footfall in Indiranagar with high beverage margins and strong repeat patronage.',
+
+      // Investment
+      propertyDeposit: 250000,
+      interiorSetup: 280000,
+      equipmentCost: 180000,
+      furnitureCost: 60000,
+      licenseCost: 25000,
+      technologyCost: 20000,
+      initialInventory: 35000,
+      launchMarketing: 25000,
+      otherInitialCost: 0,
+      totalInitialInvestment: 875000,
+
+      // Expenses
+      rent: 55000,
+      salaries: 65000,
+      utilities: 12000,
+      internet: 3000,
+      maintenance: 5000,
+      marketing: 10000,
+      transportation: 4000,
+      insurance: 2500,
+      software: 3500,
+      loanEmi: 0,
+      otherExpenses: 5000,
+      totalMonthlyFixedExpenses: 165000,
+
+      // Unit Economics
+      sellingPrice: 220,
+      expectedCustomersPerDay: 48,
+      operatingDays: 30,
+      variableCostPerUnit: 55,
+      expectedMonthlyUnits: 1440,
+      monthlyRevenue: 316800,
+      annualRevenue: 3801600,
+      monthlyVariableCost: 79200,
+      totalMonthlyExpenses: 244200,
+
+      // Results
+      monthlyProfit: 72600,
+      annualProfit: 871200,
+      profitMargin: 22.9,
+      contributionMarginPerUnit: 165,
+      breakEvenUnits: 1000,
+      breakEvenRevenue: 220000,
+      breakEvenCapacityPercentage: 69.4,
+      breakEvenCalculable: true,
+      roi: 99.6,
+      paybackPeriodMonths: 12.1,
+      paybackStatusText: '12.1 Months (~1.0 Yrs)',
+      feasibilityScore: 84,
+      feasibilityLevel: 'Highly Feasible',
+      riskLevel: 'Low Risk',
+      planStatus: 'analyzed',
+      created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+      updated_at: now,
+    };
+
+    const sample2 = {
+      id: this.nextPlanId++,
+      user_id: 2,
+      userId: 2,
+      business_name: 'Aura High-Intensity & Yoga Studio',
+      businessName: 'Aura High-Intensity & Yoga Studio',
+      category: 'Fitness',
+      description: 'Boutique group fitness classes, hot yoga sessions, and holistic wellness workshops with certified trainers.',
+      location: 'Bandra West, Mumbai',
+      target_customer: 'Urban fitness enthusiasts, young executives, and wellness seekers',
+      targetCustomer: 'Urban fitness enthusiasts, young executives, and wellness seekers',
+      business_model: 'Subscription',
+      businessModel: 'Subscription',
+      executive_summary: 'Monthly recurring subscription model with tiered membership passes and studio retail merchandise.',
+      executiveSummary: 'Monthly recurring subscription model with tiered membership passes and studio retail merchandise.',
+
+      // Investment
+      propertyDeposit: 400000,
+      interiorSetup: 450000,
+      equipmentCost: 350000,
+      furnitureCost: 75000,
+      licenseCost: 30000,
+      technologyCost: 40000,
+      initialInventory: 50000,
+      launchMarketing: 45000,
+      otherInitialCost: 10000,
+      totalInitialInvestment: 1450000,
+
+      // Expenses
+      rent: 95000,
+      salaries: 90000,
+      utilities: 18000,
+      internet: 4000,
+      maintenance: 8000,
+      marketing: 15000,
+      transportation: 0,
+      insurance: 5000,
+      software: 6000,
+      loanEmi: 0,
+      otherExpenses: 7000,
+      totalMonthlyFixedExpenses: 248000,
+
+      // Unit Economics
+      sellingPrice: 3500,
+      expectedCustomersPerDay: 4,
+      operatingDays: 30,
+      variableCostPerUnit: 400,
+      expectedMonthlyUnits: 120,
+      monthlyRevenue: 420000,
+      annualRevenue: 5040000,
+      monthlyVariableCost: 48000,
+      totalMonthlyExpenses: 296000,
+
+      // Results
+      monthlyProfit: 124000,
+      annualProfit: 1488000,
+      profitMargin: 29.5,
+      contributionMarginPerUnit: 3100,
+      breakEvenUnits: 80,
+      breakEvenRevenue: 280000,
+      breakEvenCapacityPercentage: 66.7,
+      breakEvenCalculable: true,
+      roi: 102.6,
+      paybackPeriodMonths: 11.7,
+      paybackStatusText: '11.7 Months (~1.0 Yrs)',
+      feasibilityScore: 82,
+      feasibilityLevel: 'Highly Feasible',
+      riskLevel: 'Low Risk',
+      planStatus: 'analyzed',
+      created_at: new Date(Date.now() - 3600000 * 96).toISOString(),
+      updated_at: now,
+    };
+
+    this.businessPlans.set(sample1.id, sample1);
+    this.businessPlans.set(sample2.id, sample2);
+  }
+
+  public async getBusinessPlans(userId?: number | string) {
+    this.seedInitialBusinessPlans();
+    const plans = Array.from(this.businessPlans.values());
+    if (userId !== undefined && userId !== null) {
+      const numUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+      return plans.filter((p) => p.user_id === numUserId || p.userId === numUserId);
+    }
+    return plans;
+  }
+
+  public async getBusinessPlanById(id: number | string) {
+    this.seedInitialBusinessPlans();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    for (const plan of this.businessPlans.values()) {
+      if (plan.id === numericId || plan.id === id) {
+        return { ...plan };
+      }
+    }
+    return null;
+  }
+
+  public async createBusinessPlan(data: any) {
+    this.seedInitialBusinessPlans();
+    const planId = this.nextPlanId++;
+    const now = new Date().toISOString();
+    const newPlan = {
+      ...data,
+      id: planId,
+      created_at: now,
+      updated_at: now,
+    };
+    this.businessPlans.set(planId, newPlan);
+    return { ...newPlan };
+  }
+
+  public async updateBusinessPlan(id: number | string, data: any) {
+    this.seedInitialBusinessPlans();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const existing = await this.getBusinessPlanById(numericId);
+    if (!existing) return null;
+
+    const updated = {
+      ...existing,
+      ...data,
+      id: existing.id,
+      updated_at: new Date().toISOString(),
+    };
+    this.businessPlans.set(existing.id, updated);
+    return { ...updated };
+  }
+
+  public async deleteBusinessPlan(id: number | string) {
+    this.seedInitialBusinessPlans();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    for (const [key, plan] of this.businessPlans.entries()) {
+      if (plan.id === numericId || plan.id === id) {
+        this.businessPlans.delete(key);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public async getAllBusinessPlansForAdmin() {
+    this.seedInitialBusinessPlans();
+    return Array.from(this.businessPlans.values()).map((p) => ({ ...p }));
+  }
+
+  // --- LOCATION ANALYSIS & SAVED BUSINESS STORAGE ---
+  private seedInitialLocationData(): void {
+    if (this.locationAnalysesSeeded) return;
+    this.locationAnalysesSeeded = true;
+
+    const sample1: LocationAnalysisRow = {
+      id: this.nextLocationAnalysisId++,
+      user_id: 2, // Alex Vance
+      location_name: 'Rajaramnagar, Islampur',
+      address: 'Rajaramnagar, Islampur, Sangli District, Maharashtra, 415409, India',
+      latitude: 17.0505,
+      longitude: 74.2635,
+      radius: 2000,
+      business_count: 28,
+      category_summary: {
+        'Food & Beverage': 10,
+        'Retail': 8,
+        'Healthcare': 4,
+        'Services': 3,
+        'Education': 3,
+      },
+      competition_level: 'MEDIUM',
+      opportunity_score: 74,
+      business_name: 'Specialty Artisan Cafe & Roastery',
+      business_category: 'Cafe',
+      created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+    };
+
+    const sample2: LocationAnalysisRow = {
+      id: this.nextLocationAnalysisId++,
+      user_id: 2, // Alex Vance
+      location_name: 'Connaught Place, New Delhi',
+      address: 'Connaught Place, New Delhi, Delhi, 110001, India',
+      latitude: 28.6315,
+      longitude: 77.2167,
+      radius: 2000,
+      business_count: 86,
+      category_summary: {
+        'Food & Beverage': 38,
+        'Retail': 24,
+        'Finance': 12,
+        'Healthcare': 6,
+        'Services': 6,
+      },
+      competition_level: 'HIGH',
+      opportunity_score: 68,
+      business_name: 'Urban Co-working & Bistro',
+      business_category: 'Restaurant',
+      created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+    };
+
+    this.locationAnalyses.set(sample1.id, sample1);
+    this.locationAnalyses.set(sample2.id, sample2);
+
+    if (!this.savedBusinessesSeeded) {
+      this.savedBusinessesSeeded = true;
+      const bus1: SavedBusinessRow = {
+        id: this.nextSavedBusinessId++,
+        user_id: 2,
+        osm_id: 'node_1001',
+        business_name: 'Green Leaf Cafe & Bakery',
+        category: 'Cafe',
+        latitude: 17.0520,
+        longitude: 74.2642,
+        address: 'College Road, Rajaramnagar, Maharashtra',
+        phone: null,
+        website: null,
+        opening_hours: '08:00-22:00',
+        brand: null,
+        cuisine: 'coffee_shop',
+        distance_meters: 220,
+        saved_at: new Date(Date.now() - 3600000 * 40).toISOString(),
+      };
+      this.savedBusinesses.set(bus1.id, bus1);
+    }
+  }
+
+  public async getLocationAnalyses(userId?: number | string): Promise<LocationAnalysisRow[]> {
+    this.seedInitialLocationData();
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'SELECT * FROM location_analyses';
+        const params: any[] = [];
+        if (userId !== undefined && userId !== null) {
+          const numId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+          query += ' WHERE user_id = ?';
+          params.push(numId);
+        }
+        query += ' ORDER BY created_at DESC';
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(query, params);
+        return rows.map((r) => ({
+          ...r,
+          category_summary: typeof r.category_summary === 'string' ? JSON.parse(r.category_summary) : r.category_summary,
+        })) as LocationAnalysisRow[];
+      } catch (err) {
+        logger.warn('MySQL getLocationAnalyses fallback:', err);
+      }
+    }
+
+    const list = Array.from(this.locationAnalyses.values());
+    if (userId !== undefined && userId !== null) {
+      const numUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+      return list.filter((a) => a.user_id === numUserId).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  public async getLocationAnalysisById(id: number | string, userId?: number | string): Promise<LocationAnalysisRow | null> {
+    this.seedInitialLocationData();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'SELECT * FROM location_analyses WHERE id = ?';
+        const params: any[] = [numericId];
+        if (numericUserId !== undefined) {
+          query += ' AND user_id = ?';
+          params.push(numericUserId);
+        }
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(query, params);
+        if (rows.length > 0) {
+          const r = rows[0];
+          return {
+            ...r,
+            category_summary: typeof r.category_summary === 'string' ? JSON.parse(r.category_summary) : r.category_summary,
+          } as LocationAnalysisRow;
+        }
+        return null;
+      } catch (err) {
+        logger.warn('MySQL getLocationAnalysisById fallback:', err);
+      }
+    }
+
+    const item = this.locationAnalyses.get(numericId);
+    if (!item) return null;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return null;
+    }
+    return { ...item };
+  }
+
+  public async createLocationAnalysis(data: Omit<LocationAnalysisRow, 'id' | 'created_at' | 'updated_at'>): Promise<LocationAnalysisRow> {
+    this.seedInitialLocationData();
+    const now = new Date().toISOString();
+    const recordId = this.nextLocationAnalysisId++;
+    const newRecord: LocationAnalysisRow = {
+      ...data,
+      id: recordId,
+      created_at: now,
+      updated_at: now,
+    };
+
+    if (this.isConnected && this.pool) {
+      try {
+        const [result] = await this.pool.query<mysql.ResultSetHeader>(
+          `INSERT INTO location_analyses 
+            (user_id, location_name, address, latitude, longitude, radius, business_count, category_summary, competition_level, opportunity_score, business_name, business_category, created_at, updated_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+          [
+            data.user_id,
+            data.location_name,
+            data.address,
+            data.latitude,
+            data.longitude,
+            data.radius,
+            data.business_count,
+            typeof data.category_summary === 'object' ? JSON.stringify(data.category_summary) : data.category_summary,
+            data.competition_level,
+            data.opportunity_score,
+            data.business_name || null,
+            data.business_category || null,
+          ]
+        );
+        newRecord.id = result.insertId;
+      } catch (err) {
+        logger.warn('MySQL createLocationAnalysis fallback:', err);
+      }
+    }
+
+    this.locationAnalyses.set(newRecord.id, newRecord);
+    return { ...newRecord };
+  }
+
+  public async deleteLocationAnalysis(id: number | string, userId?: number | string): Promise<boolean> {
+    this.seedInitialLocationData();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'DELETE FROM location_analyses WHERE id = ?';
+        const params: any[] = [numericId];
+        if (numericUserId !== undefined) {
+          query += ' AND user_id = ?';
+          params.push(numericUserId);
+        }
+        const [result] = await this.pool.query<mysql.ResultSetHeader>(query, params);
+        if (result.affectedRows > 0) {
+          this.locationAnalyses.delete(numericId);
+          return true;
+        }
+      } catch (err) {
+        logger.warn('MySQL deleteLocationAnalysis fallback:', err);
+      }
+    }
+
+    const item = this.locationAnalyses.get(numericId);
+    if (!item) return false;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return false;
+    }
+    this.locationAnalyses.delete(numericId);
+    return true;
+  }
+
+  public async getSavedBusinesses(userId?: number | string): Promise<SavedBusinessRow[]> {
+    this.seedInitialLocationData();
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'SELECT * FROM saved_businesses';
+        const params: any[] = [];
+        if (userId !== undefined && userId !== null) {
+          const numId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+          query += ' WHERE user_id = ?';
+          params.push(numId);
+        }
+        query += ' ORDER BY saved_at DESC';
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(query, params);
+        return rows as SavedBusinessRow[];
+      } catch (err) {
+        logger.warn('MySQL getSavedBusinesses fallback:', err);
+      }
+    }
+
+    const list = Array.from(this.savedBusinesses.values());
+    if (userId !== undefined && userId !== null) {
+      const numUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+      return list.filter((b) => b.user_id === numUserId).sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+    }
+    return list.sort((a, b) => new Date(b.saved_at).getTime() - new Date(a.saved_at).getTime());
+  }
+
+  public async saveBusiness(data: Omit<SavedBusinessRow, 'id' | 'saved_at'>): Promise<SavedBusinessRow> {
+    this.seedInitialLocationData();
+    const now = new Date().toISOString();
+
+    // Check duplicate
+    for (const bus of this.savedBusinesses.values()) {
+      if (bus.user_id === data.user_id && String(bus.osm_id) === String(data.osm_id)) {
+        return { ...bus };
+      }
+    }
+
+    const recordId = this.nextSavedBusinessId++;
+    const newRecord: SavedBusinessRow = {
+      ...data,
+      id: recordId,
+      saved_at: now,
+    };
+
+    if (this.isConnected && this.pool) {
+      try {
+        const [result] = await this.pool.query<mysql.ResultSetHeader>(
+          `INSERT INTO saved_businesses 
+            (user_id, osm_id, business_name, category, latitude, longitude, address, phone, website, opening_hours, brand, cuisine, distance_meters, saved_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+           ON DUPLICATE KEY UPDATE business_name = VALUES(business_name)`,
+          [
+            data.user_id,
+            String(data.osm_id),
+            data.business_name,
+            data.category,
+            data.latitude,
+            data.longitude,
+            data.address || null,
+            data.phone || null,
+            data.website || null,
+            data.opening_hours || null,
+            data.brand || null,
+            data.cuisine || null,
+            data.distance_meters ?? null,
+          ]
+        );
+        if (result.insertId) {
+          newRecord.id = result.insertId;
+        }
+      } catch (err) {
+        logger.warn('MySQL saveBusiness fallback:', err);
+      }
+    }
+
+    this.savedBusinesses.set(newRecord.id, newRecord);
+    return { ...newRecord };
+  }
+
+  public async deleteSavedBusiness(id: number | string, userId?: number | string): Promise<boolean> {
+    this.seedInitialLocationData();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'DELETE FROM saved_businesses WHERE id = ?';
+        const params: any[] = [numericId];
+        if (numericUserId !== undefined) {
+          query += ' AND user_id = ?';
+          params.push(numericUserId);
+        }
+        const [result] = await this.pool.query<mysql.ResultSetHeader>(query, params);
+        if (result.affectedRows > 0) {
+          this.savedBusinesses.delete(numericId);
+          return true;
+        }
+      } catch (err) {
+        logger.warn('MySQL deleteSavedBusiness fallback:', err);
+      }
+    }
+
+    const item = this.savedBusinesses.get(numericId);
+    if (!item) return false;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return false;
+    }
+    this.savedBusinesses.delete(numericId);
+    return true;
+  }
+
+  public async getLocationAdminStats() {
+    this.seedInitialLocationData();
+    const analyses = Array.from(this.locationAnalyses.values());
+    const totalAnalyses = analyses.length;
+    const totalBusinessesFound = analyses.reduce((acc, a) => acc + (a.business_count || 0), 0);
+    const avgBusinesses = totalAnalyses > 0 ? Math.round(totalBusinessesFound / totalAnalyses) : 0;
+
+    // Top locations
+    const locMap: Record<string, number> = {};
+    const catMap: Record<string, number> = {};
+    const radiusMap: Record<string, number> = {};
+
+    analyses.forEach((a) => {
+      const locKey = a.location_name || 'Unknown';
+      locMap[locKey] = (locMap[locKey] || 0) + 1;
+
+      const rKey = a.radius ? `${a.radius >= 1000 ? `${a.radius / 1000} km` : `${a.radius} m`}` : '2 km';
+      radiusMap[rKey] = (radiusMap[rKey] || 0) + 1;
+
+      if (a.category_summary && typeof a.category_summary === 'object') {
+        Object.entries(a.category_summary).forEach(([cat, count]) => {
+          catMap[cat] = (catMap[cat] || 0) + Number(count);
+        });
+      }
+    });
+
+    const topLocations = Object.entries(locMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    const topCategories = Object.entries(catMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6);
+
+    const radiusDistribution = Object.entries(radiusMap)
+      .map(([radius, count]) => ({ radius, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalAnalyses,
+      totalSavedBusinesses: this.savedBusinesses.size,
+      avgBusinessesFound: avgBusinesses,
+      mostPopularRadius: radiusDistribution.length > 0 ? radiusDistribution[0].radius : '2 km',
+      topLocations,
+      topCategories,
+      radiusDistribution,
+    };
   }
 
   // --- BUSINESS DATA MANAGEMENT ---

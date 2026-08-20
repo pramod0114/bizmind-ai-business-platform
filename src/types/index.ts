@@ -81,14 +81,83 @@ export interface Competitor {
 
 export interface BusinessPlan {
   id: number | string;
-  userId: number | string;
-  businessId: number | string;
-  planTitle: string;
+  userId?: number | string;
+  user_id?: number | string;
+  businessId?: number | string;
+  business_id?: number | string;
+  planTitle?: string;
+  plan_title?: string;
+  businessName: string;
+  business_name?: string;
+  category: string;
+  description?: string;
+  location?: string;
+  targetCustomer?: string;
+  target_customer?: string;
+  businessModel?: string;
+  business_model?: string;
   executiveSummary?: string;
-  initialCapital: number;
-  plannedTimelineMonths: number;
+  executive_summary?: string;
+
+  // Investment
+  propertyDeposit?: number;
+  interiorSetup?: number;
+  equipmentCost?: number;
+  furnitureCost?: number;
+  licenseCost?: number;
+  technologyCost?: number;
+  initialInventory?: number;
+  launchMarketing?: number;
+  otherInitialCost?: number;
+  totalInitialInvestment: number;
+
+  // Fixed Monthly Expenses
+  rent?: number;
+  salaries?: number;
+  utilities?: number;
+  internet?: number;
+  maintenance?: number;
+  marketing?: number;
+  transportation?: number;
+  insurance?: number;
+  software?: number;
+  loanEmi?: number;
+  otherExpenses?: number;
+  totalMonthlyFixedExpenses: number;
+
+  // Unit Economics & Revenue
+  sellingPrice: number;
+  expectedCustomersPerDay: number;
+  operatingDays: number;
+  variableCostPerUnit: number;
+  expectedMonthlyUnits?: number;
+  monthlyRevenue: number;
+  annualRevenue?: number;
+  monthlyVariableCost: number;
+  totalMonthlyExpenses?: number;
+
+  // Calculated Performance Metrics
+  monthlyProfit: number;
+  annualProfit?: number;
+  profitMargin: number;
+  contributionMarginPerUnit?: number;
+  breakEvenUnits?: number | null;
+  breakEvenRevenue?: number | null;
+  breakEvenCapacityPercentage?: number | null;
+  breakEvenCalculable?: boolean;
+  breakEvenMessage?: string;
+  roi?: number | null;
+  paybackPeriodMonths?: number | null;
+  paybackStatusText?: string;
+  feasibilityScore: number;
+  feasibilityLevel?: 'Highly Feasible' | 'Moderately Feasible' | 'Needs Improvement' | 'High Financial Risk' | string;
+  riskLevel: 'Low Risk' | 'Medium Risk' | 'High Risk' | 'low' | 'moderate' | 'high' | 'critical' | string;
+
   planStatus: 'draft' | 'analyzed' | 'archived';
-  createdAt: string;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
 }
 
 export interface FinancialProjection {
@@ -243,4 +312,144 @@ export interface PlatformSettings {
   defaultCurrency: string;
   aiEngineVersion: string;
 }
+
+export interface GeoLocationResult {
+  place_id: string | number;
+  name: string;
+  display_name: string;
+  latitude: number;
+  longitude: number;
+  type: string;
+  importance?: number;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    suburb?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+    country?: string;
+    road?: string;
+  };
+}
+
+export interface DiscoveredBusiness {
+  osm_id: string;
+  name: string;
+  category: string;
+  broadCategory: 'Food & Beverage' | 'Retail' | 'Healthcare' | 'Education' | 'Finance' | 'Automotive' | 'Services' | 'Fitness' | 'Accommodation' | 'Other';
+  latitude: number;
+  longitude: number;
+  distance_meters: number;
+  distance_formatted: string;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  opening_hours: string | null;
+  brand: string | null;
+  cuisine: string | null;
+  operator: string | null;
+  email: string | null;
+  isDirectCompetitor?: boolean;
+  isRelated?: boolean;
+}
+
+export interface LocationAnalysisResult {
+  targetLocation: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  radiusMeters: number;
+  totalBusinesses: number;
+  categoriesFound: number;
+  nearestBusiness: DiscoveredBusiness | null;
+  mostCommonCategory: string;
+  areaKm2: number;
+  businessDensityPerKm2: number;
+  categoryDistribution: { category: string; broadCategory: string; count: number; percentage: number }[];
+  broadCategoryDistribution: { broadCategory: string; count: number; percentage: number }[];
+  distanceDistribution: { range: string; minM: number; maxM: number; count: number }[];
+  targetBusinessInfo?: {
+    name?: string;
+    category?: string;
+  };
+  competition: {
+    directCompetitorCount: number;
+    relatedBusinessCount: number;
+    directCompetitors: DiscoveredBusiness[];
+    relatedBusinesses: DiscoveredBusiness[];
+    competitionLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    marketGapSignal: 'LOW' | 'MEDIUM' | 'HIGH';
+  };
+  opportunityScore: {
+    overallScore: number;
+    competitionScore: number;
+    categoryGapScore: number;
+    densityScore: number;
+    explanation: string;
+  };
+  attribution: string;
+  dataSource: string;
+  disclaimer: string;
+}
+
+export interface SavedLocationAnalysis {
+  id: number;
+  user_id: number;
+  location_name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  business_count: number;
+  category_summary: Record<string, number> | string;
+  competition_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  opportunity_score: number;
+  business_name?: string | null;
+  business_category?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedBusiness {
+  id: number;
+  user_id: number;
+  osm_id: string | number;
+  business_name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  opening_hours: string | null;
+  brand: string | null;
+  cuisine: string | null;
+  distance_meters: number | null;
+  saved_at: string;
+}
+
+export interface LocationAdminStats {
+  totalAnalyses: number;
+  totalSavedBusinesses: number;
+  avgBusinessesFound: number;
+  mostPopularRadius: string;
+  topLocations: { name: string; count: number }[];
+  topCategories: { name: string; count: number }[];
+  radiusDistribution: { radius: string; count: number }[];
+}
+
+export type {
+  CalculatedFinancialResults,
+  ScenarioResult,
+  SensitivityPoint,
+  RiskIndicator,
+  FeasibilityLevel,
+  OverallRiskLevel,
+} from '../utils/financialCalculator';
+
+
 

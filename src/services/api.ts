@@ -1,11 +1,19 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiResponse } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api';
+// In web preview container environments, default to relative '/api' on the current origin
+const configuredApiUrl = (import.meta as any).env?.VITE_API_URL;
+const API_BASE_URL =
+  configuredApiUrl &&
+  typeof configuredApiUrl === 'string' &&
+  !configuredApiUrl.includes('localhost') &&
+  !configuredApiUrl.includes('127.0.0.1')
+    ? configuredApiUrl
+    : '/api';
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

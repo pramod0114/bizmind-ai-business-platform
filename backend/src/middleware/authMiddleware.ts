@@ -88,6 +88,48 @@ export async function authenticateUser(
 }
 
 /**
+ * Middleware: Optional authentication (attaches user if valid token exists, otherwise proceeds as guest)
+ */
+export async function optionalAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) return next();
+
+    try {
+      const decoded = verifyToken(token);
+      const user = await db.findUserById(decoded.id);
+      if (user && user.is_active) {
+        req.user = {
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          profile_image: user.profile_image,
+          created_at: user.created_at,
+          last_login: user.last_login,
+          is_active: Boolean(user.is_active),
+        };
+      }
+    } catch {
+      // Ignore token verification errors for optional auth
+    }
+    next();
+  } catch {
+    next();
+  }
+}
+
+/**
  * Middleware: Requires the authenticated user to have ADMIN role
  */
 export function requireAdmin(

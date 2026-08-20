@@ -5,7 +5,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { healthService } from '../../services/healthService';
-import { SystemHealth } from '../../types';
+import { planService } from '../../services/planService';
+import { locationApiService } from '../../services/locationService';
+import { SystemHealth, BusinessPlan, SavedLocationAnalysis, SavedBusiness } from '../../types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -22,24 +24,32 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
+  Navigation,
+  Compass,
+  Store,
 } from 'lucide-react';
 
 export const OverviewPage: React.FC = () => {
   const { user } = useAuth();
   const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [plans, setPlans] = useState<BusinessPlan[]>([]);
+  const [locationAnalyses, setLocationAnalyses] = useState<SavedLocationAnalysis[]>([]);
+  const [savedBusinesses, setSavedBusinesses] = useState<SavedBusiness[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    healthService
-      .getSystemHealth()
-      .then((data) => {
-        setHealth(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.warn('System Health Query:', err);
-        setLoading(false);
-      });
+    Promise.all([
+      healthService.getSystemHealth().catch(() => null),
+      planService.getPlans().catch(() => []),
+      locationApiService.listLocationAnalyses().catch(() => []),
+      locationApiService.listSavedBusinesses().catch(() => []),
+    ]).then(([healthData, plansData, analysesData, businessesData]) => {
+      if (healthData) setHealth(healthData);
+      if (plansData) setPlans(plansData);
+      if (analysesData) setLocationAnalyses(analysesData);
+      if (businessesData) setSavedBusinesses(businessesData);
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -47,48 +57,105 @@ export const OverviewPage: React.FC = () => {
       {/* Welcome Page Header */}
       <PageHeader
         title={`Welcome back, ${user?.full_name || 'Entrepreneur'}`}
-        description="AI-powered business decision-support, market intelligence, and predictive success platform."
+        description="AI-powered business decision-support, market intelligence, geospatial discovery, and predictive feasibility platform."
         badge={user?.role ? `${user.role} Workspace` : 'Active Session'}
         actions={
-          <Link to="/business-planner">
-            <Button size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-              Create New Plan
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/location-analysis">
+              <Button variant="outline" size="sm" leftIcon={<MapPin className="w-3.5 h-3.5 text-[#FFBF24]" />}>
+                Explore Map
+              </Button>
+            </Link>
+            <Link to="/business-planner">
+              <Button size="sm" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+                Create New Plan
+              </Button>
+            </Link>
+          </div>
         }
       />
 
-      {/* 4 Core Analytic Stat Cards (Treated as UI Placeholders with clear badge) */}
+      {/* 4 Core Analytic Stat Cards (Populated with live user portfolio data) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Business Plans"
-          value="0"
-          sublabel="Ready for Part 2 Planner Module"
+          value={loading ? '...' : String(plans.length)}
+          sublabel={plans.length > 0 ? 'Active business models in vault' : 'Draft your first plan in Part 2'}
           icon={<FileSpreadsheet className="w-5 h-5" />}
-          isPlaceholder
         />
         <StatCard
-          label="Saved Opportunities"
-          value="0"
-          sublabel="Bookmarked business ventures"
+          label="Bookmarked Businesses"
+          value={loading ? '...' : String(savedBusinesses.length)}
+          sublabel="Saved OSM establishments"
           icon={<Bookmark className="w-5 h-5" />}
-          isPlaceholder
         />
         <StatCard
-          label="Analyses Completed"
-          value="0"
-          sublabel="Market & geospatial simulations"
-          icon={<TrendingUp className="w-5 h-5" />}
-          isPlaceholder
+          label="Location Analyses"
+          value={loading ? '...' : String(locationAnalyses.length)}
+          sublabel="Geospatial competition scans"
+          icon={<MapPin className="w-5 h-5" />}
         />
         <StatCard
-          label="Recommendations"
-          value="0"
-          sublabel="Generated action plans"
+          label="Feasibility Models"
+          value={loading ? '...' : String(plans.filter((p) => p.feasibility_score !== undefined).length)}
+          sublabel="Cashflow & sensitivity computed"
           icon={<Sparkles className="w-5 h-5" />}
-          isPlaceholder
         />
       </div>
+
+      {/* Location Intelligence Spotlight Card */}
+      <Card className="border-[#27272A] bg-[#111113] p-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#27272A]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#FFBF24]/10 border border-[#FFBF24]/20 flex items-center justify-center text-[#FFBF24]">
+              <Compass className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#F8FAFC]">Live Location Intelligence</h3>
+              <p className="text-xs text-[#A1A1AA]">
+                Discover competitors, local density, and calculate rule-based opportunity scores using OpenStreetMap
+              </p>
+            </div>
+          </div>
+
+          <Link to="/location-analysis">
+            <Button size="sm" variant="primary" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
+              Open Spatial Analysis
+            </Button>
+          </Link>
+        </div>
+
+        {/* Recent Location Scans / Quick Actions */}
+        <div className="pt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {locationAnalyses.slice(0, 3).map((item) => (
+            <div
+              key={item.id}
+              className="p-3.5 rounded-xl bg-[#18181B] border border-[#27272A] flex flex-col justify-between space-y-2 group hover:border-[#FFBF24]/40 transition-colors"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#F8FAFC] line-clamp-1">{item.location_name}</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFBF24]/10 text-[#FFBF24]">
+                    {item.opportunity_score}/100
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#A1A1AA] line-clamp-1 mt-1">{item.address}</p>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-[#71717A] pt-1 border-t border-[#27272A]">
+                <span>Radius: {(item.radius / 1000).toFixed(1)} km</span>
+                <span>{item.business_count} POIs</span>
+              </div>
+            </div>
+          ))}
+
+          {locationAnalyses.length === 0 && (
+            <div className="md:col-span-3 p-4 rounded-xl bg-[#18181B] border border-[#27272A] text-center text-xs text-[#A1A1AA] space-y-1">
+              <p className="font-semibold text-[#F8FAFC]">No location scans recorded yet</p>
+              <p className="text-[11px]">Use the Location Analysis tool to scan your local area or target trade zone.</p>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Real-time System & Architecture Status Panel */}
       <Card className="border-[#27272A] bg-[#1A1A1D]">
@@ -138,7 +205,7 @@ export const OverviewPage: React.FC = () => {
                   <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
                 </div>
                 <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                  14 Relational 3NF tables defined • Foreign keys configured • Connection pool ready
+                  14 Relational 3NF tables + Location Intelligence & Saved Business tables
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-[#27272A] text-[10px] font-mono text-[#38BDF8]">
@@ -157,7 +224,7 @@ export const OverviewPage: React.FC = () => {
                   <span className="w-2 h-2 rounded-full bg-[#FACC15]" />
                 </div>
                 <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                  Scikit-learn pipeline bridge • Feature vector schema prepared for Part 5
+                  Scikit-learn pipeline bridge • Spatial features integrated for Part 5
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-[#27272A] text-[10px] font-mono text-[#FACC15]">
@@ -168,9 +235,8 @@ export const OverviewPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Quick Launchpad & Workflow Guidance */}
+      {/* Quick Launchpad */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Quick Launch Cards */}
         <Card>
           <CardHeader>
             <CardTitle>Decision Suite Modules</CardTitle>
@@ -238,32 +304,32 @@ export const OverviewPage: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>9-Part Build Lifecycle</CardTitle>
-              <Badge variant="primary" size="sm">Phase 1 Complete</Badge>
+              <Badge variant="primary" size="sm">Part 4 Active</Badge>
             </div>
             <CardDescription>
               Progression roadmap strictly adhering to capstone development boundaries.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-xs">
-            <div className="p-2 rounded bg-[#FFBF24]/10 border border-[#FFBF24]/30 flex items-center justify-between text-[#FFBF24]">
-              <span className="font-semibold">Part 1: Architecture, Monorepo & UI Shell</span>
-              <span className="font-mono text-[10px] bg-[#FFBF24]/20 px-1.5 py-0.5 rounded">Active</span>
+            <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
+              <span>Part 1: Architecture, Monorepo & UI Shell</span>
+              <span className="text-[10px] text-[#22C55E]">Completed</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
               <span>Part 2: Authentication & Business Planner</span>
-              <span className="text-[10px] text-[#71717A]">Scheduled</span>
+              <span className="text-[10px] text-[#22C55E]">Completed</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 3: Market Analysis & Financial Projections</span>
-              <span className="text-[10px] text-[#71717A]">Scheduled</span>
+              <span>Part 3: Financial Feasibility Engine</span>
+              <span className="text-[10px] text-[#22C55E]">Completed</span>
+            </div>
+            <div className="p-2 rounded bg-[#FFBF24]/10 border border-[#FFBF24]/30 flex items-center justify-between text-[#FFBF24]">
+              <span className="font-semibold">Part 4: Location Intelligence & OSM Discovery</span>
+              <span className="font-mono text-[10px] bg-[#FFBF24]/20 px-1.5 py-0.5 rounded">Active</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 4: Leaflet / OSM Spatial Location Engine</span>
-              <span className="text-[10px] text-[#71717A]">Scheduled</span>
-            </div>
-            <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 5: Python Machine Learning Success Model</span>
-              <span className="text-[10px] text-[#71717A]">Scheduled</span>
+              <span>Part 5: Python ML Model & Success Engine</span>
+              <span className="text-[10px] text-[#71717A]">Next Phase</span>
             </div>
           </CardContent>
         </Card>

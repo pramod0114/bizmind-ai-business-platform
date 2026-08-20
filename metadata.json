@@ -1,6 +1,6 @@
 {
   "name": "BizMind - AI Business Planning Platform",
   "description": "AI-powered business decision-support, market intelligence, financial feasibility, and success prediction platform.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
