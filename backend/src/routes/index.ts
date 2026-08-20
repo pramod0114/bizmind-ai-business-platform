@@ -1,0 +1,26 @@
+import { Router } from 'express';
+import healthRoutes from './healthRoutes.js';
+import authRoutes from './authRoutes.js';
+import userRoutes from './userRoutes.js';
+import businessRoutes from './businessRoutes.js';
+import marketRoutes from './marketRoutes.js';
+import locationRoutes from './locationRoutes.js';
+import planRoutes from './planRoutes.js';
+import predictionRoutes from './predictionRoutes.js';
+import reportRoutes from './reportRoutes.js';
+import adminRoutes from './adminRoutes.js';
+
+const router = Router();
+
+router.use('/', healthRoutes);
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/businesses', businessRoutes);
+router.use('/market', marketRoutes);
+router.use('/locations', locationRoutes);
+router.use('/plans', planRoutes);
+router.use('/predictions', predictionRoutes);
+router.use('/reports', reportRoutes);
+router.use('/admin', adminRoutes);
+
+export default router;
