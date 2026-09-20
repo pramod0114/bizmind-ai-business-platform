@@ -28,6 +28,15 @@ import {
   Layers,
   Info,
   Layers3,
+  Download,
+  Columns,
+  LayoutGrid,
+  Maximize2,
+  X,
+  Phone,
+  Globe,
+  Compass,
+  Tag,
 } from 'lucide-react';
 import { locationApiService } from '../../services/locationService';
 import {
@@ -63,12 +72,17 @@ export const LocationAnalysisPage: React.FC = () => {
   // Geolocation state
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationSuccessMessage, setLocationSuccessMessage] = useState<string | null>(null);
 
   // Analysis & POI State
   const [analysis, setAnalysis] = useState<LocationAnalysisResult | null>(null);
   const [businesses, setBusinesses] = useState<DiscoveredBusiness[]>([]);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState<boolean>(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // View Mode: 'split' (Map + Live Shops Feed), 'map' (Full Map), 'directory' (Full Table)
+  const [viewMode, setViewMode] = useState<'split' | 'map' | 'directory'>('split');
+  const [focusedBusinessId, setFocusedBusinessId] = useState<string | null>(null);
 
   // Filters for business list
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
@@ -131,31 +145,28 @@ export const LocationAnalysisPage: React.FC = () => {
     setAnalysisError(null);
 
     try {
-      // Step A: Reverse Geocode if custom name wasn't supplied
-      if (!customName) {
-        const geoInfo = await locationApiService.reverseGeocode(lat, lng);
-        if (geoInfo) {
-          setLocationName(geoInfo.name);
-          setLocationAddress(geoInfo.display_name);
-        } else {
-          setLocationName(`Coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-          setLocationAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-        }
-      }
-
-      // Step B: Trigger Spatial Analytics
-      const result = await locationApiService.analyzeLocation({
+      // Fetch geocoding (if needed), spatial analytics, and nearby businesses in parallel
+      const geoPromise = !customName ? locationApiService.reverseGeocode(lat, lng) : Promise.resolve(null);
+      const analysisPromise = locationApiService.analyzeLocation({
         latitude: lat,
         longitude: lng,
         radius: rad,
         businessName,
         businessCategory,
       });
+      const nearbyPromise = locationApiService.getNearbyBusinesses(lat, lng, rad);
+
+      const [geoInfo, result, nearbyResult] = await Promise.all([geoPromise, analysisPromise, nearbyPromise]);
+
+      if (geoInfo) {
+        setLocationName(geoInfo.name);
+        setLocationAddress(geoInfo.display_name);
+      } else if (!customName) {
+        setLocationName(`Coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        setLocationAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      }
 
       setAnalysis(result);
-
-      // Step C: Retrieve All POIs
-      const nearbyResult = await locationApiService.getNearbyBusinesses(lat, lng, rad);
 
       // Enhance with competitor tags based on analysis
       const enhancedBusinesses = nearbyResult.businesses.map((b) => {
@@ -177,15 +188,44 @@ export const LocationAnalysisPage: React.FC = () => {
     }
   };
 
-  // 4. Geolocation Trigger ("Use My Current Location")
-  const handleUseCurrentLocation = () => {
+  // 4. Resilient Geolocation Trigger ("Use My Current Location" with Auto-IP Fallback)
+  const handleUseCurrentLocation = async () => {
     setLocationError(null);
+    setLocationSuccessMessage(null);
+    setIsLocating(true);
+
+    const tryIpFallback = async (reason?: string): Promise<boolean> => {
+      try {
+        const ipLoc = await locationApiService.ipLocate();
+        if (ipLoc && ipLoc.latitude && ipLoc.longitude) {
+          setSelectedCoords([ipLoc.latitude, ipLoc.longitude]);
+          setLocationName(ipLoc.name);
+          setLocationAddress(ipLoc.display_name);
+          setLocationSuccessMessage(
+            reason
+              ? `${reason} Pinpointed your location via Network: ${ipLoc.name}`
+              : `Located via Network: ${ipLoc.name}`
+          );
+          setTimeout(() => setLocationSuccessMessage(null), 5000);
+          loadLocationIntelligence(ipLoc.latitude, ipLoc.longitude, radius, ipLoc.name);
+          return true;
+        }
+      } catch (err) {
+        console.error('IP location fallback error:', err);
+      }
+      return false;
+    };
+
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
+      const fallbackOk = await tryIpFallback('Browser GPS not supported.');
+      setIsLocating(false);
+      if (!fallbackOk) {
+        setLocationError('Could not detect location. Please search for a city or click on the map.');
+      }
       return;
     }
 
-    setIsLocating(true);
+    // Try browser geolocation with 6 second timeout, immediately falling back to IP detection
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         setIsLocating(false);
@@ -199,21 +239,22 @@ export const LocationAnalysisPage: React.FC = () => {
 
         setLocationName(resolvedName);
         setLocationAddress(resolvedAddr);
+        setLocationSuccessMessage(`Accurate GPS location acquired: ${resolvedName}`);
+        setTimeout(() => setLocationSuccessMessage(null), 5000);
         loadLocationIntelligence(lat, lng, radius, resolvedName);
       },
-      (error) => {
+      async (error) => {
+        const reason =
+          error.code === error.PERMISSION_DENIED
+            ? 'Browser GPS blocked in iframe.'
+            : 'GPS signal timed out.';
+        const fallbackOk = await tryIpFallback(reason);
         setIsLocating(false);
-        let errorMsg = 'Unable to retrieve your location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMsg = 'Location permission was denied. You can search or click on the map.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMsg = 'Location information is unavailable.';
-        } else if (error.code === error.TIMEOUT) {
-          errorMsg = 'Location request timed out. Please try again.';
+        if (!fallbackOk) {
+          setLocationError('Unable to detect location. Please type a city name in the search bar or click on the map.');
         }
-        setLocationError(errorMsg);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
     );
   };
 
@@ -238,7 +279,30 @@ export const LocationAnalysisPage: React.FC = () => {
       setSearchResults(results);
       setIsSearching(false);
       setShowSearchDropdown(true);
-    }, 450);
+    }, 400);
+  };
+
+  const handleSearchSubmit = async (customQuery?: string) => {
+    const q = (customQuery !== undefined ? customQuery : searchQuery).trim();
+    if (!q) return;
+
+    setIsSearching(true);
+    setLocationError(null);
+    setShowSearchDropdown(false);
+
+    try {
+      const results = await locationApiService.searchLocations(q);
+      setSearchResults(results);
+      if (results.length > 0) {
+        handleSelectSearchResult(results[0]);
+      } else {
+        setLocationError(`No locations found matching "${q}". Try searching for a neighborhood, market, or city.`);
+      }
+    } catch (err: any) {
+      setLocationError('Search request failed. Please try a different query.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleSelectSearchResult = (item: GeoLocationResult) => {
@@ -247,6 +311,8 @@ export const LocationAnalysisPage: React.FC = () => {
     setSelectedCoords([item.latitude, item.longitude]);
     setLocationName(item.name);
     setLocationAddress(item.display_name);
+    setLocationSuccessMessage(`Loaded location: ${item.name}`);
+    setTimeout(() => setLocationSuccessMessage(null), 4000);
     loadLocationIntelligence(item.latitude, item.longitude, radius, item.name);
   };
 
@@ -260,6 +326,8 @@ export const LocationAnalysisPage: React.FC = () => {
   const handleSelectPreset = (preset: { name: string; lat: number; lng: number }) => {
     setSelectedCoords([preset.lat, preset.lng]);
     setLocationName(preset.name);
+    setLocationSuccessMessage(`Exploring preset: ${preset.name}`);
+    setTimeout(() => setLocationSuccessMessage(null), 3000);
     loadLocationIntelligence(preset.lat, preset.lng, radius, preset.name);
   };
 
@@ -322,6 +390,33 @@ export const LocationAnalysisPage: React.FC = () => {
     } catch (err: any) {
       alert('Failed to save business: ' + (err?.message || 'Error occurred'));
     }
+  };
+
+  // Export Businesses to CSV
+  const handleExportCSV = () => {
+    if (businesses.length === 0) return;
+    const headers = ['Business Name', 'Category', 'Industry', 'Distance', 'Latitude', 'Longitude', 'Address', 'Phone', 'Website', 'Direct Competitor', 'OSM ID'];
+    const rows = businesses.map((b) => [
+      `"${(b.name || '').replace(/"/g, '""')}"`,
+      `"${(b.category || '').replace(/"/g, '""')}"`,
+      `"${(b.broadCategory || '').replace(/"/g, '""')}"`,
+      `"${b.distance_formatted || ''}"`,
+      b.latitude,
+      b.longitude,
+      `"${(b.address || '').replace(/"/g, '""')}"`,
+      `"${(b.phone || '').replace(/"/g, '""')}"`,
+      `"${(b.website || '').replace(/"/g, '""')}"`,
+      b.isDirectCompetitor ? 'YES' : 'NO',
+      `"${b.osm_id}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `bizmind_shops_${locationName.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // 11. Load Saved Analysis from Modal
@@ -449,28 +544,58 @@ export const LocationAnalysisPage: React.FC = () => {
         <div className="space-y-4">
           {/* Top Row: Search Input + Live Geolocation Button */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-            {/* Live Autocomplete Search Input */}
-            <div className="relative lg:col-span-8">
-              <div className="relative flex items-center">
+            {/* Live Autocomplete Search Input with Enter Key & Search Button */}
+            <div className="relative lg:col-span-8 flex items-center gap-2">
+              <div className="relative flex-1 flex items-center">
                 <Search className="absolute left-3.5 w-4 h-4 text-[#A1A1AA] pointer-events-none" />
                 <input
                   id="osm-location-search-input"
                   type="text"
                   value={searchQuery}
                   onChange={handleSearchInputChange}
-                  placeholder="Search any city, neighborhood, market, or PIN code (e.g. Indiranagar Bangalore, BKC Mumbai, 415409)..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearchSubmit();
+                    }
+                  }}
+                  placeholder="Search any location, neighborhood, market, or PIN code (e.g. Indiranagar, BKC, Rajaramnagar, 415409)..."
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#18181B] border border-[#27272A] text-xs sm:text-sm text-[#F8FAFC] placeholder-[#71717A] focus:outline-none focus:border-[#FFBF24] focus:ring-1 focus:ring-[#FFBF24] transition-all"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchResults([]);
+                      setShowSearchDropdown(false);
+                    }}
+                    className="absolute right-3.5 p-0.5 rounded text-[#71717A] hover:text-[#F8FAFC] cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {isSearching && (
-                  <div className="absolute right-3.5 w-4 h-4 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin"></div>
+                  <div className="absolute right-9 w-3.5 h-3.5 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin"></div>
                 )}
               </div>
+
+              {/* Direct Search Execution Button */}
+              <button
+                id="osm-search-btn"
+                onClick={() => handleSearchSubmit()}
+                disabled={isSearching || !searchQuery.trim()}
+                className="px-4 py-2.5 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold transition-all shadow-md shadow-[#FFBF24]/10 cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Search</span>
+              </button>
 
               {/* Autocomplete Dropdown */}
               {showSearchDropdown && searchResults.length > 0 && (
                 <div
                   id="osm-search-results-dropdown"
-                  className="absolute left-0 right-0 mt-1.5 z-30 rounded-xl bg-[#111113] border border-[#27272A] shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
+                  className="absolute left-0 right-24 top-full mt-1.5 z-30 rounded-xl bg-[#111113] border border-[#27272A] shadow-2xl overflow-hidden max-h-64 overflow-y-auto"
                 >
                   {searchResults.map((item) => (
                     <button
@@ -493,23 +618,26 @@ export const LocationAnalysisPage: React.FC = () => {
               )}
             </div>
 
-            {/* Geolocation Button */}
+            {/* Geolocation Button with Resilient IP Fallback */}
             <div className="lg:col-span-4 flex items-center gap-2">
               <button
                 id="use-current-location-btn"
                 onClick={handleUseCurrentLocation}
                 disabled={isLocating}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FFBF24]/10 cursor-pointer disabled:opacity-50"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex flex-col items-center justify-center transition-all shadow-lg shadow-[#FFBF24]/10 cursor-pointer disabled:opacity-50"
               >
                 {isLocating ? (
-                  <>
+                  <div className="flex items-center gap-2">
                     <div className="w-3.5 h-3.5 border-2 border-[#0B0B0C] border-t-transparent rounded-full animate-spin"></div>
-                    <span>Locating GPS...</span>
-                  </>
+                    <span>Pinpointing Location...</span>
+                  </div>
                 ) : (
                   <>
-                    <Navigation className="w-3.5 h-3.5" />
-                    <span>Use My Current Location</span>
+                    <div className="flex items-center gap-1.5">
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Use My Current Location</span>
+                    </div>
+                    <span className="text-[10px] font-normal opacity-85">GPS & IP Auto-Detect</span>
                   </>
                 )}
               </button>
@@ -518,13 +646,29 @@ export const LocationAnalysisPage: React.FC = () => {
                 id="refresh-scan-btn"
                 onClick={() => loadLocationIntelligence(selectedCoords[0], selectedCoords[1], radius, locationName)}
                 disabled={isLoadingAnalysis}
-                className="p-2.5 rounded-xl bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-[#A1A1AA] hover:text-[#F8FAFC] transition-colors cursor-pointer shrink-0"
+                className="p-3 rounded-xl bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-[#A1A1AA] hover:text-[#F8FAFC] transition-colors cursor-pointer shrink-0"
                 title="Refresh Map Scan"
               >
                 <RotateCw className={`w-4 h-4 ${isLoadingAnalysis ? 'animate-spin text-[#FFBF24]' : ''}`} />
               </button>
             </div>
           </div>
+
+          {/* Location Success Confirmation Notice */}
+          {locationSuccessMessage && (
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 flex items-center justify-between animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span className="font-semibold">{locationSuccessMessage}</span>
+              </div>
+              <button
+                onClick={() => setLocationSuccessMessage(null)}
+                className="text-[11px] text-emerald-400 hover:underline cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {/* Location Error Warning */}
           {locationError && (
@@ -620,106 +764,378 @@ export const LocationAnalysisPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* SECTION 2: MAP VIEW + ACTIVE LOCATION METRICS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Interactive Map (8 cols) */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="relative">
-            <MapView
-              center={selectedCoords}
-              zoom={14}
-              businesses={businesses}
-              radiusMeters={radius}
-              onLocationSelect={handleMapClick}
-              onBusinessSelect={(b) => {
-                setSelectedBusiness(b);
-                setIsDetailsModalOpen(true);
-              }}
-              targetLocationName={locationName}
-              height="500px"
-            />
+      {/* VIEW MODE SELECTOR & EXPORT CONTROLS */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <div className="flex items-center gap-2 p-1 rounded-xl bg-[#111113] border border-[#27272A] w-fit">
+          <button
+            onClick={() => setViewMode('split')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              viewMode === 'split'
+                ? 'bg-[#FFBF24] text-[#0B0B0C]'
+                : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
+            }`}
+          >
+            <Columns className="w-3.5 h-3.5" />
+            <span>Split View (Map & Local Shops Feed)</span>
+          </button>
 
-            {/* Floating Loading Bar */}
-            {isLoadingAnalysis && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-[#111113]/90 border border-[#FFBF24]/40 text-xs font-semibold text-[#FFBF24] backdrop-blur-md shadow-2xl flex items-center gap-2">
-                <div className="w-3.5 h-3.5 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin"></div>
-                <span>Scanning OpenStreetMap POIs...</span>
+          <button
+            onClick={() => setViewMode('map')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              viewMode === 'map'
+                ? 'bg-[#FFBF24] text-[#0B0B0C]'
+                : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
+            }`}
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>Full Map & Diagnostics</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('directory')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              viewMode === 'directory'
+                ? 'bg-[#FFBF24] text-[#0B0B0C]'
+                : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Shops Directory Table ({businesses.length})</span>
+          </button>
+        </div>
+
+        {/* Export Data Button */}
+        <button
+          onClick={handleExportCSV}
+          disabled={businesses.length === 0}
+          className="px-3.5 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-xs font-semibold text-[#F8FAFC] flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
+          title="Download all discovered businesses as CSV spreadsheet"
+        >
+          <Download className="w-3.5 h-3.5 text-[#FFBF24]" />
+          <span>Export All Shops (CSV)</span>
+        </button>
+      </div>
+
+      {/* SECTION 2: MAP VIEW + ACTIVE LOCATION METRICS */}
+      {viewMode === 'split' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: Map View (7 cols) */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="relative">
+              <MapView
+                center={selectedCoords}
+                zoom={14}
+                businesses={businesses}
+                radiusMeters={radius}
+                onLocationSelect={handleMapClick}
+                onBusinessSelect={(b) => {
+                  setSelectedBusiness(b);
+                  setIsDetailsModalOpen(true);
+                }}
+                targetLocationName={locationName}
+                selectedBusinessId={focusedBusinessId}
+                height="580px"
+              />
+
+              {/* Floating Loading Bar */}
+              {isLoadingAnalysis && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-[#111113]/90 border border-[#FFBF24]/40 text-xs font-semibold text-[#FFBF24] backdrop-blur-md shadow-2xl flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin"></div>
+                  <span>Scanning OpenStreetMap POIs...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Target Coordinates Banner */}
+            <div className="p-4 rounded-xl bg-[#111113] border border-[#27272A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5 overflow-hidden">
+                <div className="text-[11px] font-bold text-[#FFBF24] uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Target Location Pin
+                </div>
+                <h4 className="text-sm font-bold text-[#F8FAFC] truncate">{locationName}</h4>
+                <p className="text-xs text-[#A1A1AA] truncate">{locationAddress}</p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  id="save-current-analysis-btn"
+                  onClick={handleSaveAnalysis}
+                  className="px-4 py-2 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-[#FFBF24]/10 cursor-pointer"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  <span>Save Analysis</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Live Discovered Shops & Businesses Feed (5 cols) */}
+          <div className="lg:col-span-5 space-y-3 flex flex-col">
+            <div className="p-4 rounded-xl bg-[#111113] border border-[#27272A] space-y-3 flex-1 flex flex-col">
+              <div className="flex items-center justify-between border-b border-[#27272A] pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-[#F8FAFC] flex items-center gap-2">
+                    <Store className="w-4 h-4 text-[#FFBF24]" />
+                    <span>Discovered Shops ({filteredBusinesses.length})</span>
+                  </h3>
+                  <p className="text-[11px] text-[#A1A1AA]">
+                    {analysis?.competition.directCompetitorCount || 0} direct competitors in this zone
+                  </p>
+                </div>
+                <button
+                  onClick={handleExportCSV}
+                  className="p-1.5 rounded-lg bg-[#18181B] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#F8FAFC] transition-colors"
+                  title="Export to CSV"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Instant Filter Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#71717A]" />
+                <input
+                  type="text"
+                  value={businessListSearch}
+                  onChange={(e) => setBusinessListSearch(e.target.value)}
+                  placeholder="Filter shops by name or category..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-xs text-[#F8FAFC] placeholder-[#71717A] focus:outline-none focus:border-[#FFBF24]"
+                />
+              </div>
+
+              {/* Scrollable Shops Cards List */}
+              <div className="flex-1 max-h-[460px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {isLoadingAnalysis ? (
+                  <div className="py-16 text-center space-y-2">
+                    <div className="w-6 h-6 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-xs text-[#A1A1AA]">Querying all shops & businesses...</p>
+                  </div>
+                ) : filteredBusinesses.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-[#71717A]">
+                    No businesses matching current filter in this {(radius / 1000).toFixed(1)} km radius.
+                  </div>
+                ) : (
+                  filteredBusinesses.map((b) => {
+                    const isSaved = savedBusinesses.some((sb) => String(sb.osm_id) === String(b.osm_id));
+                    const isFocused = focusedBusinessId === b.osm_id;
+                    return (
+                      <div
+                        key={b.osm_id}
+                        onClick={() => {
+                          setFocusedBusinessId(b.osm_id);
+                        }}
+                        className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                          isFocused
+                            ? 'bg-[#18181B] border-[#FFBF24] shadow-md shadow-[#FFBF24]/10'
+                            : 'bg-[#18181B]/60 border-[#27272A]/70 hover:border-[#3F3F46]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 overflow-hidden">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-[#F8FAFC] truncate">
+                                {b.name}
+                              </span>
+                              {b.isDirectCompetitor && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-red-500/15 text-red-400 border border-red-500/25">
+                                  Competitor
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-[11px] text-[#A1A1AA]">
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/20">
+                                {b.category}
+                              </span>
+                              <span className="font-mono">{b.distance_formatted}</span>
+                            </div>
+
+                            {b.address && (
+                              <p className="text-[11px] text-[#71717A] truncate max-w-[280px]">
+                                {b.address}
+                              </p>
+                            )}
+
+                            {b.phone && (
+                              <div className="flex items-center gap-1 text-[10px] text-[#A1A1AA]">
+                                <Phone className="w-3 h-3 text-[#FFBF24]" />
+                                <span>{b.phone}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                setSelectedBusiness(b);
+                                setIsDetailsModalOpen(true);
+                              }}
+                              className="px-2 py-1 rounded bg-[#27272A] hover:bg-[#3F3F46] text-[10px] font-medium text-[#F8FAFC] transition-colors cursor-pointer"
+                            >
+                              Details
+                            </button>
+                            <button
+                              onClick={() => handleSaveBusiness(b)}
+                              disabled={isSaved}
+                              className={`p-1 rounded transition-colors ${
+                                isSaved
+                                  ? 'text-emerald-400 cursor-default'
+                                  : 'text-[#71717A] hover:text-[#FFBF24] hover:bg-[#27272A]'
+                              }`}
+                              title={isSaved ? 'Saved' : 'Save business'}
+                            >
+                              {isSaved ? <Check className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 2 (ALTERNATIVE): FULL MAP & DIAGNOSTICS */}
+      {viewMode === 'map' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 space-y-4">
+            <div className="relative">
+              <MapView
+                center={selectedCoords}
+                zoom={14}
+                businesses={businesses}
+                radiusMeters={radius}
+                onLocationSelect={handleMapClick}
+                onBusinessSelect={(b) => {
+                  setSelectedBusiness(b);
+                  setIsDetailsModalOpen(true);
+                }}
+                targetLocationName={locationName}
+                selectedBusinessId={focusedBusinessId}
+                height="540px"
+              />
+
+              {isLoadingAnalysis && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 px-4 py-2 rounded-full bg-[#111113]/90 border border-[#FFBF24]/40 text-xs font-semibold text-[#FFBF24] backdrop-blur-md shadow-2xl flex items-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin"></div>
+                  <span>Scanning OpenStreetMap POIs...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#111113] border border-[#27272A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5 overflow-hidden">
+                <div className="text-[11px] font-bold text-[#FFBF24] uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Target Coordinates
+                </div>
+                <h4 className="text-sm font-bold text-[#F8FAFC] truncate">{locationName}</h4>
+                <p className="text-xs text-[#A1A1AA] truncate">{locationAddress}</p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  id="save-current-analysis-btn"
+                  onClick={handleSaveAnalysis}
+                  className="px-4 py-2 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-[#FFBF24]/10 cursor-pointer"
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  <span>Save Analysis</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-4">
+            {analysis ? (
+              <OpportunityScoreCard analysis={analysis} />
+            ) : (
+              <div className="p-8 rounded-2xl bg-[#111113] border border-[#27272A] text-center space-y-2">
+                <div className="w-8 h-8 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-xs text-[#A1A1AA]">Calculating location opportunity score...</p>
               </div>
             )}
-          </div>
 
-          {/* Active Target Banner with Save Button */}
-          <div className="p-4 rounded-xl bg-[#111113] border border-[#27272A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-0.5 overflow-hidden">
-              <div className="text-[11px] font-bold text-[#FFBF24] uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Target Coordinates
+            {analysis && (
+              <Card className="p-4">
+                <CardHeader className="p-0 pb-3 mb-3 border-b border-[#27272A]">
+                  <CardTitle className="text-xs uppercase tracking-wider text-[#A1A1AA]">
+                    Spatial Density & Commercial Footprint
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#A1A1AA]">Total POIs Discovered</span>
+                    <span className="font-bold text-[#F8FAFC] font-mono">{analysis.totalBusinesses}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#A1A1AA]">Trade Area Coverage</span>
+                    <span className="font-bold text-[#F8FAFC] font-mono">{analysis.areaKm2} km²</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#A1A1AA]">Commercial Density</span>
+                    <span className="font-bold text-[#FFBF24] font-mono">{analysis.businessDensityPerKm2} / km²</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#A1A1AA]">Direct Competitors</span>
+                    <span className="font-bold text-rose-400 font-mono">
+                      {analysis.competition.directCompetitorCount}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#A1A1AA]">Nearest Business</span>
+                    <span className="font-semibold text-[#F8FAFC] truncate max-w-[150px]">
+                      {analysis.nearestBusiness ? `${analysis.nearestBusiness.name} (${analysis.nearestBusiness.distance_formatted})` : 'None'}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Diagnostics row underneath split view */}
+      {viewMode === 'split' && analysis && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <OpportunityScoreCard analysis={analysis} />
+          <Card className="p-5">
+            <CardHeader className="p-0 pb-3 mb-3 border-b border-[#27272A]">
+              <CardTitle className="text-xs uppercase tracking-wider text-[#A1A1AA]">
+                Commercial Density & Key Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[#A1A1AA]">Total Discovered Local POIs</span>
+                <span className="font-bold text-[#F8FAFC] font-mono text-sm">{analysis.totalBusinesses} businesses</span>
               </div>
-              <h4 className="text-sm font-bold text-[#F8FAFC] truncate">{locationName}</h4>
-              <p className="text-xs text-[#A1A1AA] truncate">{locationAddress}</p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                id="save-current-analysis-btn"
-                onClick={handleSaveAnalysis}
-                className="px-4 py-2 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-[#FFBF24]/10 cursor-pointer"
-              >
-                <Bookmark className="w-3.5 h-3.5" />
-                <span>Save Analysis</span>
-              </button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#A1A1AA]">Trade Area Circle</span>
+                <span className="font-bold text-[#F8FAFC] font-mono">{analysis.areaKm2} km² (Radius: {(radius / 1000).toFixed(1)}km)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#A1A1AA]">Business Spatial Density</span>
+                <span className="font-bold text-[#FFBF24] font-mono">{analysis.businessDensityPerKm2} shops/km²</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#A1A1AA]">Identified Competitors</span>
+                <span className="font-bold text-rose-400 font-mono">
+                  {analysis.competition.directCompetitorCount} direct ({analysis.competition.competitionLevel} competition)
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#A1A1AA]">Nearest Establishment</span>
+                <span className="font-semibold text-[#F8FAFC] truncate max-w-[200px]">
+                  {analysis.nearestBusiness ? `${analysis.nearestBusiness.name} (${analysis.nearestBusiness.distance_formatted})` : 'None'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Right Column: Opportunity Score & Key Diagnostics (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          {analysis ? (
-            <OpportunityScoreCard analysis={analysis} />
-          ) : (
-            <div className="p-8 rounded-2xl bg-[#111113] border border-[#27272A] text-center space-y-2">
-              <div className="w-8 h-8 border-2 border-[#FFBF24] border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-xs text-[#A1A1AA]">Calculating location opportunity score...</p>
-            </div>
-          )}
-
-          {/* Spatial Density & Summary Quick Stats */}
-          {analysis && (
-            <Card className="p-4">
-              <CardHeader className="p-0 pb-3 mb-3 border-b border-[#27272A]">
-                <CardTitle className="text-xs uppercase tracking-wider text-[#A1A1AA]">
-                  Spatial Density & Commercial Footprint
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#A1A1AA]">Total POIs Discovered</span>
-                  <span className="font-bold text-[#F8FAFC] font-mono">{analysis.totalBusinesses}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#A1A1AA]">Trade Area Coverage</span>
-                  <span className="font-bold text-[#F8FAFC] font-mono">{analysis.areaKm2} km²</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#A1A1AA]">Commercial Density</span>
-                  <span className="font-bold text-[#FFBF24] font-mono">{analysis.businessDensityPerKm2} / km²</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#A1A1AA]">Direct Competitors</span>
-                  <span className="font-bold text-rose-400 font-mono">
-                    {analysis.competition.directCompetitorCount}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#A1A1AA]">Nearest Business</span>
-                  <span className="font-semibold text-[#F8FAFC] truncate max-w-[150px]">
-                    {analysis.nearestBusiness ? `${analysis.nearestBusiness.name} (${analysis.nearestBusiness.distance_formatted})` : 'None'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* SECTION 3: CATEGORY DISTRIBUTION & CHARTS */}
       {analysis && (
@@ -830,6 +1246,17 @@ export const LocationAnalysisPage: React.FC = () => {
                 <option value="name">Sort by Name (A-Z)</option>
                 <option value="category">Sort by Category</option>
               </select>
+
+              {/* Quick CSV Export */}
+              <button
+                onClick={handleExportCSV}
+                disabled={businesses.length === 0}
+                className="px-3 py-1.5 rounded-lg bg-[#27272A] hover:bg-[#3F3F46] text-xs font-semibold text-[#F8FAFC] flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
+                title="Download CSV spreadsheet"
+              >
+                <Download className="w-3.5 h-3.5 text-[#FFBF24]" />
+                <span>CSV</span>
+              </button>
             </div>
           </div>
 

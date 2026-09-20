@@ -36,6 +36,65 @@ export const locationApiService = {
   },
 
   /**
+   * IP Geolocation fallback when browser GPS is blocked/denied in iframe
+   */
+  ipLocate: async (): Promise<{
+    name: string;
+    display_name: string;
+    latitude: number;
+    longitude: number;
+    city?: string;
+    state?: string;
+    country?: string;
+    source?: string;
+  }> => {
+    // Try direct client ip lookup first for true client device IP
+    try {
+      const res = await fetch('https://ipwho.is/');
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.success && json.latitude && json.longitude) {
+          const city = json.city || json.region || 'Detected Location';
+          const state = json.region || '';
+          const country = json.country || '';
+          return {
+            name: state ? `${city}, ${state}` : city,
+            display_name: `${city}, ${state}, ${country}`,
+            latitude: parseFloat(json.latitude),
+            longitude: parseFloat(json.longitude),
+            city,
+            state,
+            country,
+            source: 'ip-direct',
+          };
+        }
+      }
+    } catch {
+      // ignore, proceed to backend fallback
+    }
+
+    try {
+      const response = await api.get<any>('/location/ip-locate');
+      if (response.data && response.data.latitude) {
+        return response.data;
+      }
+    } catch (err) {
+      console.error('ipLocate backend error:', err);
+    }
+
+    return {
+      name: 'Indiranagar, Bengaluru',
+      display_name: 'Indiranagar, 100 Feet Road, Bengaluru, Karnataka, 560038, India',
+      latitude: 12.9784,
+      longitude: 77.6408,
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      country: 'India',
+      source: 'fallback',
+    };
+  },
+
+  /**
    * Discover real businesses within radius from OpenStreetMap Overpass
    */
   getNearbyBusinesses: async (

@@ -63,6 +63,39 @@ export async function reverseGeocodeLocation(req: Request, res: Response): Promi
 }
 
 /**
+ * GET /api/location/ip-locate
+ * Detect user location based on network IP address (reliable fallback for when browser GPS is blocked in iframe)
+ */
+export async function ipLocate(req: Request, res: Response): Promise<void> {
+  try {
+    const rawForwarded = req.headers['x-forwarded-for'];
+    const clientIp = Array.isArray(rawForwarded)
+      ? rawForwarded[0]
+      : typeof rawForwarded === 'string'
+      ? rawForwarded.split(',')[0].trim()
+      : req.socket.remoteAddress || '';
+
+    const result = await locationService.locateByIp(clientIp);
+    sendSuccess(res, result, 'Location pinpointed via IP address');
+  } catch (err: any) {
+    sendSuccess(
+      res,
+      {
+        name: 'Indiranagar, Bengaluru',
+        display_name: 'Indiranagar, 100 Feet Road, Bengaluru, Karnataka, 560038, India',
+        latitude: 12.9784,
+        longitude: 77.6408,
+        city: 'Bengaluru',
+        state: 'Karnataka',
+        country: 'India',
+        source: 'fallback',
+      },
+      'Fallback location provided'
+    );
+  }
+}
+
+/**
  * GET /api/location/nearby-businesses?lat=...&lng=...&radius=...
  * Discover real businesses from OpenStreetMap Overpass within radius
  */

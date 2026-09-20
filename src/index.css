@@ -68,3 +68,9 @@
   background: #1A1A1D !important;
 }
 
+/* High-contrast dark styling for OpenStreetMap tiles without any watermarks or API keys */
+.osm-dark-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.25) brightness(0.75);
+}
+
+

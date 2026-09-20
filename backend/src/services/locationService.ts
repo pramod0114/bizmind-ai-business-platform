@@ -233,9 +233,281 @@ export function buildAddressFromTags(tags: Record<string, string>): string | nul
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
+const FALLBACK_LOCATIONS_DATABASE: {
+  keywords: string[];
+  name: string;
+  display_name: string;
+  latitude: number;
+  longitude: number;
+  type: string;
+  address: { city?: string; suburb?: string; state?: string; country?: string; postcode?: string };
+}[] = [
+  {
+    keywords: ['indiranagar', 'indira nagar', 'indiranagar bangalore', 'indiranagar bengaluru'],
+    name: 'Indiranagar, Bengaluru',
+    display_name: 'Indiranagar, 100 Feet Road, Bengaluru, Karnataka, 560038, India',
+    latitude: 12.9784,
+    longitude: 77.6408,
+    type: 'suburb',
+    address: { city: 'Bengaluru', suburb: 'Indiranagar', state: 'Karnataka', country: 'India', postcode: '560038' },
+  },
+  {
+    keywords: ['koramangala', 'koramangala bangalore'],
+    name: 'Koramangala, Bengaluru',
+    display_name: 'Koramangala, 5th Block, Bengaluru, Karnataka, 560034, India',
+    latitude: 12.9352,
+    longitude: 77.6245,
+    type: 'suburb',
+    address: { city: 'Bengaluru', suburb: 'Koramangala', state: 'Karnataka', country: 'India', postcode: '560034' },
+  },
+  {
+    keywords: ['whitefield', 'whitefield bangalore'],
+    name: 'Whitefield, Bengaluru',
+    display_name: 'Whitefield, ITPL Main Road, Bengaluru, Karnataka, 560066, India',
+    latitude: 12.9698,
+    longitude: 77.7500,
+    type: 'suburb',
+    address: { city: 'Bengaluru', suburb: 'Whitefield', state: 'Karnataka', country: 'India', postcode: '560066' },
+  },
+  {
+    keywords: ['hsr', 'hsr layout', 'hsr layout bangalore'],
+    name: 'HSR Layout, Bengaluru',
+    display_name: 'HSR Layout, Sector 1, Bengaluru, Karnataka, 560102, India',
+    latitude: 12.9121,
+    longitude: 77.6446,
+    type: 'suburb',
+    address: { city: 'Bengaluru', suburb: 'HSR Layout', state: 'Karnataka', country: 'India', postcode: '560102' },
+  },
+  {
+    keywords: ['bangalore', 'bengaluru'],
+    name: 'Bengaluru, Karnataka',
+    display_name: 'Bengaluru, Bengaluru Urban, Karnataka, 560001, India',
+    latitude: 12.9716,
+    longitude: 77.5946,
+    type: 'city',
+    address: { city: 'Bengaluru', state: 'Karnataka', country: 'India', postcode: '560001' },
+  },
+  {
+    keywords: ['connaught place', 'cp delhi', 'connaught place delhi', 'rajiv chowk'],
+    name: 'Connaught Place, New Delhi',
+    display_name: 'Connaught Place, New Delhi, Delhi, 110001, India',
+    latitude: 28.6315,
+    longitude: 77.2167,
+    type: 'suburb',
+    address: { city: 'New Delhi', suburb: 'Connaught Place', state: 'Delhi', country: 'India', postcode: '110001' },
+  },
+  {
+    keywords: ['delhi', 'new delhi'],
+    name: 'New Delhi, India',
+    display_name: 'New Delhi, Delhi, 110001, India',
+    latitude: 28.6139,
+    longitude: 77.2090,
+    type: 'city',
+    address: { city: 'New Delhi', state: 'Delhi', country: 'India', postcode: '110001' },
+  },
+  {
+    keywords: ['bkc', 'bandra kurla complex', 'bkc mumbai'],
+    name: 'Bandra Kurla Complex (BKC), Mumbai',
+    display_name: 'Bandra Kurla Complex, G Block, Mumbai, Maharashtra, 400051, India',
+    latitude: 19.0657,
+    longitude: 72.8654,
+    type: 'commercial',
+    address: { city: 'Mumbai', suburb: 'BKC', state: 'Maharashtra', country: 'India', postcode: '400051' },
+  },
+  {
+    keywords: ['mumbai', 'bombay'],
+    name: 'Mumbai, Maharashtra',
+    display_name: 'Mumbai, Mumbai Suburban, Maharashtra, 400001, India',
+    latitude: 19.0760,
+    longitude: 72.8777,
+    type: 'city',
+    address: { city: 'Mumbai', state: 'Maharashtra', country: 'India', postcode: '400001' },
+  },
+  {
+    keywords: ['bandra', 'bandra west'],
+    name: 'Bandra West, Mumbai',
+    display_name: 'Bandra West, Linking Road, Mumbai, Maharashtra, 400050, India',
+    latitude: 19.0596,
+    longitude: 72.8295,
+    type: 'suburb',
+    address: { city: 'Mumbai', suburb: 'Bandra West', state: 'Maharashtra', country: 'India', postcode: '400050' },
+  },
+  {
+    keywords: ['andheri', 'andheri west', 'andheri east'],
+    name: 'Andheri, Mumbai',
+    display_name: 'Andheri, Mumbai Suburban, Maharashtra, 400053, India',
+    latitude: 19.1136,
+    longitude: 72.8697,
+    type: 'suburb',
+    address: { city: 'Mumbai', suburb: 'Andheri', state: 'Maharashtra', country: 'India', postcode: '400053' },
+  },
+  {
+    keywords: ['t nagar', 't. nagar', 't nagar chennai', 'thyagaraya nagar'],
+    name: 'T. Nagar, Chennai',
+    display_name: 'T. Nagar, Thyagaraya Road, Chennai, Tamil Nadu, 600017, India',
+    latitude: 13.0418,
+    longitude: 80.2341,
+    type: 'suburb',
+    address: { city: 'Chennai', suburb: 'T. Nagar', state: 'Tamil Nadu', country: 'India', postcode: '600017' },
+  },
+  {
+    keywords: ['chennai', 'madras'],
+    name: 'Chennai, Tamil Nadu',
+    display_name: 'Chennai, Tamil Nadu, 600001, India',
+    latitude: 13.0827,
+    longitude: 80.2707,
+    type: 'city',
+    address: { city: 'Chennai', state: 'Tamil Nadu', country: 'India', postcode: '600001' },
+  },
+  {
+    keywords: ['hitec city', 'cyberabad', 'madhapur', 'gachibowli', 'financial district hyderabad'],
+    name: 'Hitec City, Hyderabad',
+    display_name: 'Hitec City, Madhapur, Hyderabad, Telangana, 500081, India',
+    latitude: 17.4474,
+    longitude: 78.3762,
+    type: 'commercial',
+    address: { city: 'Hyderabad', suburb: 'Hitec City', state: 'Telangana', country: 'India', postcode: '500081' },
+  },
+  {
+    keywords: ['hyderabad', 'secunderabad'],
+    name: 'Hyderabad, Telangana',
+    display_name: 'Hyderabad, Telangana, 500001, India',
+    latitude: 17.3850,
+    longitude: 78.4867,
+    type: 'city',
+    address: { city: 'Hyderabad', state: 'Telangana', country: 'India', postcode: '500001' },
+  },
+  {
+    keywords: ['pune', 'kothrud', 'viman nagar', 'hinjewadi'],
+    name: 'Pune, Maharashtra',
+    display_name: 'Pune, Maharashtra, 411001, India',
+    latitude: 18.5204,
+    longitude: 73.8567,
+    type: 'city',
+    address: { city: 'Pune', state: 'Maharashtra', country: 'India', postcode: '411001' },
+  },
+  {
+    keywords: ['kolkata', 'calcutta', 'park street kolkata', 'salt lake kolkata'],
+    name: 'Kolkata, West Bengal',
+    display_name: 'Kolkata, West Bengal, 700001, India',
+    latitude: 22.5726,
+    longitude: 88.3639,
+    type: 'city',
+    address: { city: 'Kolkata', state: 'West Bengal', country: 'India', postcode: '700001' },
+  },
+  {
+    keywords: ['ahmedabad', 'sg highway'],
+    name: 'Ahmedabad, Gujarat',
+    display_name: 'Ahmedabad, Gujarat, 380001, India',
+    latitude: 23.0225,
+    longitude: 72.5714,
+    type: 'city',
+    address: { city: 'Ahmedabad', state: 'Gujarat', country: 'India', postcode: '380001' },
+  },
+  {
+    keywords: ['jaipur', 'pink city'],
+    name: 'Jaipur, Rajasthan',
+    display_name: 'Jaipur, Rajasthan, 302001, India',
+    latitude: 26.9124,
+    longitude: 75.7873,
+    type: 'city',
+    address: { city: 'Jaipur', state: 'Rajasthan', country: 'India', postcode: '302001' },
+  },
+  {
+    keywords: ['gurgaon', 'gurugram', 'cyber hub'],
+    name: 'Cyber City, Gurugram',
+    display_name: 'DLF Cyber City, Gurugram, Haryana, 122002, India',
+    latitude: 28.4952,
+    longitude: 77.0892,
+    type: 'commercial',
+    address: { city: 'Gurugram', suburb: 'Cyber City', state: 'Haryana', country: 'India', postcode: '122002' },
+  },
+  {
+    keywords: ['noida', 'sector 18 noida'],
+    name: 'Sector 18, Noida',
+    display_name: 'Sector 18 Market, Noida, Uttar Pradesh, 201301, India',
+    latitude: 28.5708,
+    longitude: 77.3271,
+    type: 'commercial',
+    address: { city: 'Noida', suburb: 'Sector 18', state: 'Uttar Pradesh', country: 'India', postcode: '201301' },
+  },
+  {
+    keywords: ['rajaramnagar', 'islampur', '415409'],
+    name: 'Rajaramnagar, Islampur',
+    display_name: 'Rajaramnagar, Islampur, Sangli, Maharashtra, 415409, India',
+    latitude: 17.0543,
+    longitude: 74.2691,
+    type: 'town',
+    address: { city: 'Islampur', suburb: 'Rajaramnagar', state: 'Maharashtra', country: 'India', postcode: '415409' },
+  },
+  {
+    keywords: ['new york', 'nyc', 'manhattan'],
+    name: 'Manhattan, New York',
+    display_name: 'Manhattan, New York, NY, USA',
+    latitude: 40.7831,
+    longitude: -73.9712,
+    type: 'city',
+    address: { city: 'New York', state: 'NY', country: 'USA' },
+  },
+  {
+    keywords: ['san francisco', 'sf'],
+    name: 'San Francisco, CA',
+    display_name: 'San Francisco, California, USA',
+    latitude: 37.7749,
+    longitude: -122.4194,
+    type: 'city',
+    address: { city: 'San Francisco', state: 'CA', country: 'USA' },
+  },
+  {
+    keywords: ['london'],
+    name: 'London, United Kingdom',
+    display_name: 'City of London, Greater London, England, UK',
+    latitude: 51.5074,
+    longitude: -0.1278,
+    type: 'city',
+    address: { city: 'London', country: 'UK' },
+  },
+  {
+    keywords: ['singapore'],
+    name: 'Singapore',
+    display_name: 'Downtown Core, Singapore, 018989',
+    latitude: 1.2897,
+    longitude: 103.8501,
+    type: 'city',
+    address: { city: 'Singapore', country: 'Singapore' },
+  },
+  {
+    keywords: ['dubai'],
+    name: 'Downtown Dubai, UAE',
+    display_name: 'Downtown Dubai, Dubai, United Arab Emirates',
+    latitude: 25.1972,
+    longitude: 55.2744,
+    type: 'city',
+    address: { city: 'Dubai', country: 'UAE' },
+  },
+  {
+    keywords: ['tokyo'],
+    name: 'Shibuya, Tokyo',
+    display_name: 'Shibuya, Tokyo, Japan',
+    latitude: 35.6580,
+    longitude: 139.7016,
+    type: 'city',
+    address: { city: 'Tokyo', country: 'Japan' },
+  },
+  {
+    keywords: ['sydney'],
+    name: 'Sydney CBD, NSW',
+    display_name: 'Sydney, New South Wales, Australia',
+    latitude: -33.8688,
+    longitude: 151.2093,
+    type: 'city',
+    address: { city: 'Sydney', country: 'Australia' },
+  },
+];
+
 export class LocationService {
   /**
-   * Search locations by query using OpenStreetMap Nominatim
+   * Search locations by query using OpenStreetMap Nominatim with local dictionary fallback
    */
   public async searchLocations(query: string): Promise<GeoLocationResult[]> {
     const trimmed = query.trim();
@@ -247,9 +519,26 @@ export class LocationService {
       return cached.data;
     }
 
+    // First check local dictionary for instant matching
+    const normalizedQuery = trimmed.toLowerCase();
+    const matchedFallback = FALLBACK_LOCATIONS_DATABASE.filter((loc) =>
+      loc.keywords.some((k) => normalizedQuery.includes(k) || k.includes(normalizedQuery)) ||
+      loc.name.toLowerCase().includes(normalizedQuery) ||
+      loc.display_name.toLowerCase().includes(normalizedQuery)
+    ).map((loc, idx) => ({
+      place_id: `dict-${idx + 1}-${loc.name.replace(/\s+/g, '-').toLowerCase()}`,
+      name: loc.name,
+      display_name: loc.display_name,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      type: loc.type,
+      importance: 0.95,
+      address: loc.address,
+    }));
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
 
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
         trimmed
@@ -299,15 +588,28 @@ export class LocationService {
         };
       });
 
+      // Combine OSM results with local fallback matches (avoid duplicates)
+      const combined = [...formatted];
+      for (const fb of matchedFallback) {
+        const alreadyHas = combined.some(
+          (c) => Math.abs(c.latitude - fb.latitude) < 0.05 && Math.abs(c.longitude - fb.longitude) < 0.05
+        );
+        if (!alreadyHas) {
+          combined.push(fb);
+        }
+      }
+
+      const finalResults = combined.length > 0 ? combined : matchedFallback;
+
       geocodeCache.set(cacheKey, {
-        data: formatted,
+        data: finalResults,
         expiresAt: Date.now() + 1000 * 60 * 60, // 1 hour
       });
 
-      return formatted;
+      return finalResults;
     } catch (err: any) {
-      logger.warn('Nominatim geocode error:', err.message || err);
-      return [];
+      logger.warn('Nominatim geocode error, using local dictionary:', err.message || err);
+      return matchedFallback.length > 0 ? matchedFallback : [];
     }
   }
 
@@ -477,12 +779,11 @@ export class LocationService {
 
     let data: any = null;
 
-    // Fast multi-mirror check (timeout 3500ms per endpoint, stop immediately upon success)
-    for (const endpoint of OVERPASS_ENDPOINTS) {
+    // Fast parallel multi-mirror check (timeout 3500ms, first successful endpoint wins)
+    const mirrorRequests = OVERPASS_ENDPOINTS.map(async (endpoint) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -492,18 +793,24 @@ export class LocationService {
           body: `data=${encodeURIComponent(overpassQuery)}`,
           signal: controller.signal,
         });
-
         clearTimeout(timeoutId);
-
         if (response.ok) {
-          data = await response.json();
-          if (data && Array.isArray(data.elements) && data.elements.length > 0) {
-            break;
+          const json = await response.json();
+          if (json && Array.isArray(json.elements) && json.elements.length > 0) {
+            return json;
           }
         }
-      } catch (err: any) {
-        // Continue to next mirror immediately
+        throw new Error(`Mirror ${endpoint} returned non-200 or empty elements`);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
       }
+    });
+
+    try {
+      data = await Promise.any(mirrorRequests);
+    } catch {
+      data = null;
     }
 
     let businesses: DiscoveredBusiness[] = [];
@@ -565,6 +872,66 @@ export class LocationService {
     });
 
     return businesses;
+  }
+
+  /**
+   * IP Geolocation resolver to reliably locate the user when browser GPS is blocked in iframe
+   */
+  public async locateByIp(clientIp?: string): Promise<{
+    name: string;
+    display_name: string;
+    latitude: number;
+    longitude: number;
+    city: string;
+    state?: string;
+    country: string;
+    source: string;
+  }> {
+    try {
+      const cleanIp = clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1' ? clientIp : '';
+      const url = cleanIp ? `https://ipwho.is/${encodeURIComponent(cleanIp)}` : 'https://ipwho.is/';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.latitude && data.longitude) {
+          const city = data.city || data.region || 'Current Area';
+          const region = data.region || data.country || '';
+          const country = data.country || '';
+          const name = region ? `${city}, ${region}` : city;
+          const display_name = `${city}, ${data.region || ''}, ${country}`;
+
+          return {
+            name,
+            display_name,
+            latitude: parseFloat(data.latitude),
+            longitude: parseFloat(data.longitude),
+            city,
+            state: data.region,
+            country,
+            source: 'ip',
+          };
+        }
+      }
+    } catch (err: any) {
+      logger.warn('locateByIp error:', err?.message || err);
+    }
+
+    // Default fallback location
+    return {
+      name: 'Indiranagar, Bengaluru',
+      display_name: 'Indiranagar, 100 Feet Road, Bengaluru, Karnataka, 560038, India',
+      latitude: 12.9784,
+      longitude: 77.6408,
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      country: 'India',
+      source: 'fallback',
+    };
   }
 
   /**

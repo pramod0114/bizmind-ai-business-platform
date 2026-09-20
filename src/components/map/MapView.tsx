@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Layers, MapPin, ZoomIn, ZoomOut, Compass, Navigation } from 'lucide-react';
+import { Layers, MapPin, ZoomIn, ZoomOut, Compass, Navigation, Maximize2, Tag } from 'lucide-react';
 import { DiscoveredBusiness } from '../../types';
 
 // Fix default marker icon issues in Vite/Leaflet
@@ -26,6 +26,58 @@ export interface MapViewProps {
   targetLocationName?: string;
 }
 
+export type MapTileLayer = 'esri-dark' | 'osm-dark' | 'osm-standard' | 'satellite';
+
+interface TileLayerOption {
+  id: MapTileLayer;
+  name: string;
+  url: string;
+  options: L.TileLayerOptions;
+}
+
+const TILE_LAYER_CONFIGS: Record<MapTileLayer, TileLayerOption> = {
+  'esri-dark': {
+    id: 'esri-dark',
+    name: 'Dark Matter',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      maxNativeZoom: 16,
+      attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noreferrer">Esri</a> &copy; OpenStreetMap contributors',
+    },
+  },
+  'osm-dark': {
+    id: 'osm-dark',
+    name: 'Midnight OSM',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      className: 'osm-dark-tiles',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+    },
+  },
+  'osm-standard': {
+    id: 'osm-standard',
+    name: 'Standard OSM',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+    },
+  },
+  'satellite': {
+    id: 'satellite',
+    name: 'Satellite Aerial',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noreferrer">Esri</a> &mdash; Earthstar Geographics',
+    },
+  },
+};
+
 export const MapView: React.FC<MapViewProps> = ({
   center = [28.6139, 77.2090], // Default: New Delhi or user coordinate
   zoom = 13,
@@ -44,9 +96,11 @@ export const MapView: React.FC<MapViewProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const circleLayerRef = useRef<L.Circle | null>(null);
-  const [selectedTileLayer, setSelectedTileLayer] = useState<'carto-dark' | 'carto-voyager' | 'osm-standard'>('carto-dark');
+  const [selectedTileLayer, setSelectedTileLayer] = useState<MapTileLayer>('esri-dark');
+  const [showLabelsOnMap, setShowLabelsOnMap] = useState<boolean>(true);
   const [currentCoords, setCurrentCoords] = useState<[number, number]>(center);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const businessMarkersMapRef = useRef<Map<string, L.Marker>>(new Map());
 
   // Get marker color based on category and competition
   const getMarkerColor = (b: DiscoveredBusiness): { bg: string; border: string } => {
@@ -77,16 +131,6 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  const getTileUrl = (type: 'carto-dark' | 'carto-voyager' | 'osm-standard') => {
-    if (type === 'carto-dark') {
-      return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    }
-    if (type === 'carto-voyager') {
-      return 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    }
-    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  };
-
   // Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -98,15 +142,13 @@ export const MapView: React.FC<MapViewProps> = ({
       attributionControl: false,
     });
 
-    const tileLayer = L.tileLayer(getTileUrl(selectedTileLayer), {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(map);
+    const activeConfig = TILE_LAYER_CONFIGS[selectedTileLayer];
+    const tileLayer = L.tileLayer(activeConfig.url, activeConfig.options).addTo(map);
 
     tileLayerRef.current = tileLayer;
 
     // Attribution
-    L.control.attribution({ position: 'bottomright', prefix: 'Leaflet & OSM' }).addTo(map);
+    L.control.attribution({ position: 'bottomright', prefix: false }).addTo(map);
 
     const markersLayer = L.layerGroup().addTo(map);
     markersLayerRef.current = markersLayer;
@@ -140,9 +182,8 @@ export const MapView: React.FC<MapViewProps> = ({
     if (!mapInstanceRef.current || !tileLayerRef.current) return;
     tileLayerRef.current.remove();
 
-    tileLayerRef.current = L.tileLayer(getTileUrl(selectedTileLayer), {
-      maxZoom: 19,
-    }).addTo(mapInstanceRef.current);
+    const activeConfig = TILE_LAYER_CONFIGS[selectedTileLayer];
+    tileLayerRef.current = L.tileLayer(activeConfig.url, activeConfig.options).addTo(mapInstanceRef.current);
   }, [selectedTileLayer]);
 
   // Update Center & Zoom
@@ -158,11 +199,22 @@ export const MapView: React.FC<MapViewProps> = ({
     setCurrentCoords(center);
   }, [center[0], center[1], zoom]);
 
+  // Auto-focus selected business marker if changed
+  useEffect(() => {
+    if (!selectedBusinessId || !mapInstanceRef.current) return;
+    const marker = businessMarkersMapRef.current.get(selectedBusinessId);
+    if (marker) {
+      mapInstanceRef.current.panTo(marker.getLatLng(), { animate: true });
+      marker.openPopup();
+    }
+  }, [selectedBusinessId]);
+
   // Update Target Marker, Radius & Business POIs
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
     markersLayerRef.current.clearLayers();
+    businessMarkersMapRef.current.clear();
 
     // 1. Draw Radius Circle
     if (circleLayerRef.current) {
@@ -185,15 +237,18 @@ export const MapView: React.FC<MapViewProps> = ({
     const targetIcon = L.divIcon({
       className: 'custom-primary-pin',
       html: `
-        <div style="position: relative; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 191, 36, 0.25); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="width: 26px; height: 26px; border-radius: 50%; background: #FFBF24; border: 3px solid #0B0B0C; box-shadow: 0 0 16px rgba(255,191,36,0.8); display: flex; align-items: center; justify-content: center; color: #0B0B0C; font-weight: 900; font-size: 11px;">
+        <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 191, 36, 0.3); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #FFBF24; border: 3px solid #0B0B0C; box-shadow: 0 0 16px rgba(255,191,36,0.9); display: flex; align-items: center; justify-content: center; color: #0B0B0C; font-weight: 900; font-size: 13px;">
             ★
+          </div>
+          <div style="position: absolute; top: 36px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: rgba(11,11,12,0.92); border: 1.5px solid #FFBF24; border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 800; color: #FFBF24; box-shadow: 0 4px 12px rgba(0,0,0,0.6); pointer-events: none; z-index: 1000;">
+            TARGET POINT
           </div>
         </div>
       `,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
     });
 
     const centerMarker = L.marker(currentCoords, { icon: targetIcon, zIndexOffset: 1000 }).addTo(
@@ -201,7 +256,7 @@ export const MapView: React.FC<MapViewProps> = ({
     );
 
     centerMarker.bindPopup(`
-      <div style="padding: 6px; font-family: system-ui, sans-serif; color: #0B0B0C; min-width: 180px;">
+      <div style="padding: 6px; font-family: system-ui, sans-serif; color: #0B0B0C; min-width: 200px;">
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #D97706; font-weight: 700;">Analyzed Target Location</div>
         <div style="font-weight: 700; font-size: 13px; color: #0B0B0C; margin-top: 2px;">${targetLocationName || 'Selected Location'}</div>
         <div style="font-size: 11px; color: #4B5563; margin-top: 2px; font-family: monospace;">
@@ -213,61 +268,119 @@ export const MapView: React.FC<MapViewProps> = ({
       </div>
     `);
 
-    // 3. Render Discovered Businesses
+    // 3. Render Discovered Businesses with Rich Labels & Tooltips
     businesses.forEach((b) => {
       const isSelected = selectedBusinessId === b.osm_id;
       const colors = getMarkerColor(b);
       const isComp = b.isDirectCompetitor;
 
+      // Safe truncate name for on-map tag
+      const displayName = b.name.length > 22 ? `${b.name.substring(0, 20)}…` : b.name;
+
       const icon = L.divIcon({
         className: `custom-poi-marker ${isSelected ? 'selected' : ''}`,
         html: `
-          <div style="
-            background-color: ${colors.bg};
-            width: ${isSelected ? '24px' : isComp ? '18px' : '14px'};
-            height: ${isSelected ? '24px' : isComp ? '18px' : '14px'};
-            border-radius: 50%;
-            border: 2px solid ${isSelected ? '#FFFFFF' : '#0B0B0C'};
-            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-          ">
-            ${isComp ? '<div style="width: 5px; height: 5px; border-radius: 50%; background: #FFFFFF;"></div>' : ''}
+          <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+            ${
+              showLabelsOnMap
+                ? `
+                <div style="
+                  margin-bottom: 3px;
+                  white-space: nowrap;
+                  background: ${isSelected ? '#FFBF24' : isComp ? '#7F1D1D' : 'rgba(17,17,19,0.92)'};
+                  border: 1px solid ${isSelected ? '#FFFFFF' : isComp ? '#EF4444' : '#3F3F46'};
+                  border-radius: 6px;
+                  padding: 2px 6px;
+                  font-size: 10px;
+                  font-weight: 700;
+                  color: ${isSelected ? '#0B0B0C' : isComp ? '#FEE2E2' : '#F8FAFC'};
+                  box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+                  pointer-events: none;
+                  max-width: 130px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  line-height: 1.2;
+                ">
+                  ${isComp ? '⚠️ ' : ''}${displayName}
+                </div>
+              `
+                : ''
+            }
+            <div style="
+              background-color: ${colors.bg};
+              width: ${isSelected ? '24px' : isComp ? '18px' : '14px'};
+              height: ${isSelected ? '24px' : isComp ? '18px' : '14px'};
+              border-radius: 50%;
+              border: 2px solid ${isSelected ? '#FFFFFF' : '#0B0B0C'};
+              box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+            ">
+              ${isComp ? '<div style="width: 5px; height: 5px; border-radius: 50%; background: #FFFFFF;"></div>' : ''}
+            </div>
           </div>
         `,
-        iconSize: [isSelected ? 24 : 18, isSelected ? 24 : 18],
-        iconAnchor: [isSelected ? 12 : 9, isSelected ? 12 : 9],
+        iconSize: [isSelected ? 30 : 20, isSelected ? 30 : 20],
+        iconAnchor: [isSelected ? 15 : 10, isSelected ? 15 : 10],
       });
 
       const markerObj = L.marker([b.latitude, b.longitude], { icon }).addTo(markersLayerRef.current!);
+      businessMarkersMapRef.current.set(b.osm_id, markerObj);
 
+      // Instant Tooltip on Hover
+      markerObj.bindTooltip(
+        `
+        <div style="font-family: system-ui, sans-serif; padding: 2px;">
+          <div style="font-weight: 700; font-size: 12px; color: #0F172A;">${b.name}</div>
+          <div style="font-size: 10px; color: ${isComp ? '#DC2626' : '#2563EB'}; font-weight: 600;">
+            ${isComp ? '⚠️ Direct Competitor' : b.category} • ${b.distance_formatted}
+          </div>
+          ${b.address ? `<div style="font-size: 10px; color: #64748B; margin-top: 2px;">📍 ${b.address.substring(0, 45)}</div>` : ''}
+        </div>
+      `,
+        {
+          direction: 'top',
+          offset: [0, -8],
+          opacity: 0.96,
+        }
+      );
+
+      // Rich Click Popup with Google Maps link & Actions
       const popupContent = `
-        <div style="padding: 6px; font-family: system-ui, sans-serif; color: #0B0B0C; min-width: 220px; max-width: 280px;">
+        <div style="padding: 8px; font-family: system-ui, sans-serif; color: #0B0B0C; min-width: 230px; max-width: 290px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
-            <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: ${isComp ? '#DC2626' : '#2563EB'};">
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${isComp ? '#DC2626' : '#2563EB'};">
               ${isComp ? '⚠️ Direct Competitor' : b.broadCategory}
             </span>
-            <span style="font-size: 10px; background: #F3F4F6; padding: 1px 6px; border-radius: 4px; font-weight: 600; color: #374151;">
+            <span style="font-size: 10px; background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #374151;">
               ${b.distance_formatted}
             </span>
           </div>
 
-          <div style="font-weight: 700; font-size: 13px; color: #111827; margin-top: 4px; line-height: 1.3;">
+          <div style="font-weight: 800; font-size: 14px; color: #111827; margin-top: 4px; line-height: 1.3;">
             ${b.name}
           </div>
 
-          <div style="font-size: 11px; color: #4B5563; margin-top: 2px;">
-            <span style="color: #D97706; font-weight: 600;">${b.category}</span>
+          <div style="font-size: 11px; color: #4B5563; margin-top: 3px;">
+            <span style="color: #D97706; font-weight: 700;">${b.category}</span>
             ${b.cuisine ? ` • Cuisine: ${b.cuisine}` : ''}
           </div>
 
-          ${b.address ? `<div style="font-size: 11px; color: #6B7280; margin-top: 4px; border-top: 1px solid #E5E7EB; padding-top: 4px;">📍 ${b.address}</div>` : ''}
+          ${b.address ? `<div style="font-size: 11px; color: #6B7280; margin-top: 6px; border-top: 1px solid #E5E7EB; padding-top: 4px;">📍 ${b.address}</div>` : ''}
+          ${b.phone ? `<div style="font-size: 11px; color: #4B5563; margin-top: 2px;">📞 ${b.phone}</div>` : ''}
 
-          <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #E5E7EB; font-size: 10px; color: #9CA3AF; display: flex; justify-content: space-between;">
-            <span>OSM ID: ${b.osm_id}</span>
-            ${b.opening_hours ? `<span style="color: #059669;">🕒 Open</span>` : ''}
+          <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <a 
+              href="https://www.google.com/maps/search/?api=1&query=${b.latitude},${b.longitude}" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style="font-size: 11px; color: #2563EB; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 3px;"
+            >
+              Google Maps ↗
+            </a>
+            <span style="font-size: 10px; color: #9CA3AF;">OSM: ${b.osm_id.split('/')[1] || b.osm_id}</span>
           </div>
         </div>
       `;
@@ -280,11 +393,21 @@ export const MapView: React.FC<MapViewProps> = ({
         }
       });
     });
-  }, [businesses, radiusMeters, currentCoords, selectedBusinessId, targetLocationName]);
+  }, [businesses, radiusMeters, currentCoords, selectedBusinessId, targetLocationName, showLabelsOnMap]);
 
   const handleRecenter = () => {
     if (!mapInstanceRef.current) return;
     mapInstanceRef.current.setView(currentCoords, 14, { animate: true });
+  };
+
+  const handleFitAll = () => {
+    if (!mapInstanceRef.current || businesses.length === 0) return;
+    const markersToFit = [
+      L.latLng(currentCoords[0], currentCoords[1]),
+      ...businesses.map((b) => L.latLng(b.latitude, b.longitude)),
+    ];
+    const bounds = L.latLngBounds(markersToFit);
+    mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
   };
 
   return (
@@ -298,14 +421,44 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Floating Controls Overlay */}
       {showControls && (
         <>
-          {/* Top-Right: Layer Switcher & Businesses Count */}
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs font-medium text-[#A1A1AA] backdrop-blur-md shadow-lg">
+          {/* Top-Right: Controls Bar */}
+          <div className="absolute top-3 right-3 z-10 flex flex-wrap items-center gap-2">
+            {/* Business Count Badge */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs font-medium text-[#A1A1AA] backdrop-blur-md shadow-lg">
               <span className="w-2 h-2 rounded-full bg-[#FFBF24] animate-pulse"></span>
               <span className="text-[#F8FAFC] font-semibold">{businesses.length}</span>
-              <span>POIs in {(radiusMeters / 1000).toFixed(1)}km</span>
+              <span>Shops & POIs</span>
             </div>
 
+            {/* Toggle Shop Names on Map */}
+            <button
+              id="map-toggle-labels-btn"
+              onClick={() => setShowLabelsOnMap((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold backdrop-blur-md shadow-lg transition-all cursor-pointer ${
+                showLabelsOnMap
+                  ? 'bg-[#FFBF24] border-[#FFBF24] text-[#0B0B0C]'
+                  : 'bg-[#111113]/90 hover:bg-[#1A1A1D] border-[#27272A] text-[#F8FAFC]'
+              }`}
+              title="Show or hide business names directly on the map"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>{showLabelsOnMap ? 'Shop Names: ON' : 'Shop Names: OFF'}</span>
+            </button>
+
+            {/* Fit All Discovered Businesses */}
+            {businesses.length > 0 && (
+              <button
+                id="map-fit-bounds-btn"
+                onClick={handleFitAll}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-xs font-semibold text-[#F8FAFC] backdrop-blur-md shadow-lg transition-colors cursor-pointer"
+                title="Fit all discovered shops in view"
+              >
+                <Maximize2 className="w-3.5 h-3.5 text-[#FFBF24]" />
+                <span>Fit All</span>
+              </button>
+            )}
+
+            {/* Tile Layer Switcher */}
             <div className="relative group">
               <button
                 id="map-toggle-layer-btn"
@@ -313,40 +466,28 @@ export const MapView: React.FC<MapViewProps> = ({
                 title="Change Map Style"
               >
                 <Layers className="w-3.5 h-3.5 text-[#FFBF24]" />
-                <span className="capitalize">
-                  {selectedTileLayer === 'carto-dark'
-                    ? 'Dark Matter'
-                    : selectedTileLayer === 'carto-voyager'
-                    ? 'Voyager'
-                    : 'Standard'}
+                <span>
+                  {TILE_LAYER_CONFIGS[selectedTileLayer]?.name || 'Dark Matter'}
                 </span>
               </button>
 
               <div className="absolute right-0 mt-1 w-36 rounded-lg bg-[#111113] border border-[#27272A] shadow-xl p-1 hidden group-hover:block transition-all z-20">
-                <button
-                  onClick={() => setSelectedTileLayer('carto-dark')}
-                  className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors cursor-pointer ${
-                    selectedTileLayer === 'carto-dark' ? 'bg-[#FFBF24]/10 text-[#FFBF24]' : 'text-[#A1A1AA] hover:bg-[#1A1A1D]'
-                  }`}
-                >
-                  Dark Matter
-                </button>
-                <button
-                  onClick={() => setSelectedTileLayer('carto-voyager')}
-                  className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors cursor-pointer ${
-                    selectedTileLayer === 'carto-voyager' ? 'bg-[#FFBF24]/10 text-[#FFBF24]' : 'text-[#A1A1AA] hover:bg-[#1A1A1D]'
-                  }`}
-                >
-                  Voyager Light
-                </button>
-                <button
-                  onClick={() => setSelectedTileLayer('osm-standard')}
-                  className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors cursor-pointer ${
-                    selectedTileLayer === 'osm-standard' ? 'bg-[#FFBF24]/10 text-[#FFBF24]' : 'text-[#A1A1AA] hover:bg-[#1A1A1D]'
-                  }`}
-                >
-                  OSM Standard
-                </button>
+                {(Object.keys(TILE_LAYER_CONFIGS) as MapTileLayer[]).map((key) => {
+                  const layer = TILE_LAYER_CONFIGS[key];
+                  return (
+                    <button
+                      key={layer.id}
+                      onClick={() => setSelectedTileLayer(layer.id)}
+                      className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors cursor-pointer ${
+                        selectedTileLayer === layer.id
+                          ? 'bg-[#FFBF24]/10 text-[#FFBF24] font-medium'
+                          : 'text-[#A1A1AA] hover:bg-[#1A1A1D] hover:text-[#F8FAFC]'
+                      }`}
+                    >
+                      {layer.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -402,3 +543,4 @@ export const MapView: React.FC<MapViewProps> = ({
     </div>
   );
 };
+

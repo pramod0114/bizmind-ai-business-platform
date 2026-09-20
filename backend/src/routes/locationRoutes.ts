@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   geocodeLocation,
   reverseGeocodeLocation,
+  ipLocate,
   getNearbyBusinesses,
   analyzeLocation,
   saveLocationAnalysis,
@@ -21,6 +22,7 @@ const router = Router();
 router.get('/geocode', geocodeLocation);
 router.get('/search', geocodeLocation);
 router.get('/reverse-geocode', reverseGeocodeLocation);
+router.get('/ip-locate', ipLocate);
 router.get('/nearby-businesses', getNearbyBusinesses);
 router.post('/analyze', analyzeLocation);
 
