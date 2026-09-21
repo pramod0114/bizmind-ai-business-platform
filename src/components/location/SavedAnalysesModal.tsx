@@ -96,7 +96,7 @@ export const SavedAnalysesModal: React.FC<SavedAnalysesModalProps> = ({
 
                   <div className="flex items-center gap-3 text-[11px] text-[#71717A] pt-1">
                     <span>
-                      Radius: <strong>{(item.radius / 1000).toFixed(1)} km</strong>
+                      Radius: <strong>{((Number(item.radius) || 0) / 1000).toFixed(1)} km</strong>
                     </span>
                     <span>•</span>
                     <span>

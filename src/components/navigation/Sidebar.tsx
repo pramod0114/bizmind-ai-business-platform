@@ -31,7 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
   const mainNavItems = [
     { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Business Planner', path: '/business-planner', icon: FileSpreadsheet },
+    { name: 'Business Plans', path: '/business-plans', icon: FileText },
+    { name: 'Planner Wizard', path: '/business-planner', icon: FileSpreadsheet },
     { name: 'Market Analysis', path: '/market-analysis', icon: TrendingUp },
     { name: 'Location Analysis', path: '/location-analysis', icon: MapPin, badge: 'OSM Map' },
     { name: 'Comparison', path: '/comparison', icon: GitCompare },

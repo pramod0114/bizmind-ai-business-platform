@@ -87,9 +87,9 @@ export const SavedBusinessesModal: React.FC<SavedBusinessesModalProps> = ({
                   </p>
 
                   <div className="flex items-center gap-3 text-[11px] text-[#71717A] pt-1 flex-wrap">
-                    {item.distance_meters !== null && (
+                    {item.distance_meters != null && (
                       <span>
-                        Distance: <strong>{item.distance_meters < 1000 ? `${item.distance_meters} m` : `${(item.distance_meters / 1000).toFixed(1)} km`}</strong>
+                        Distance: <strong>{Number(item.distance_meters) < 1000 ? `${item.distance_meters} m` : `${((Number(item.distance_meters) || 0) / 1000).toFixed(1)} km`}</strong>
                       </span>
                     )}
                     {item.phone && (

@@ -226,4 +226,14 @@ export const locationApiService = {
     const response = await api.get<LocationAdminStats>('/location/admin/stats');
     return response.data;
   },
+
+  /**
+   * Alias for listSavedBusinesses
+   */
+  getSavedBusinesses: async (): Promise<SavedBusiness[]> => {
+    return locationApiService.listSavedBusinesses();
+  },
 };
+
+export const locationService = locationApiService;
+

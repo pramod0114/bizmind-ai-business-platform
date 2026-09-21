@@ -188,42 +188,42 @@ export const ReportsPage: React.FC = () => {
                     <td className="py-2.5 px-4">Commercial Property Deposit</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.propertyDeposit)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.propertyDeposit / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.propertyDeposit) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4">Interior Setup & Architecture Renovation</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.interiorSetup)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.interiorSetup / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.interiorSetup) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4">Commercial Equipment & Machinery</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.equipment)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.equipment / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.equipment) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4">Opening Inventory & Consumables</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.initialInventory)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.initialInventory / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.initialInventory) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4">Legal, Regulatory & Licenses</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.licenses)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.licenses / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.licenses) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-4">Launch Marketing & Signage</td>
                     <td className="py-2.5 px-4 text-right">{formatCurrency(plan.marketing)}</td>
                     <td className="py-2.5 px-4 text-right text-[#A1A1AA]">
-                      {((plan.marketing / (plan.totalInitialInvestment || 1)) * 100).toFixed(1)}%
+                      {(((Number(plan.marketing) || 0) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                     </td>
                   </tr>
                   <tr className="bg-[#18181B] font-bold text-[#FFBF24]">
@@ -316,7 +316,7 @@ export const ReportsPage: React.FC = () => {
                 <div className="flex justify-between text-xs text-[#A1A1AA]">
                   <span>Projected Annual ROI:</span>
                   <span className="text-emerald-400 font-bold">
-                    {((((plan.monthlyProfit * 12) / (plan.totalInitialInvestment || 1))) * 100).toFixed(1)}%
+                    {((((Number(plan.monthlyProfit) || 0) * 12) / (Number(plan.totalInitialInvestment) || 1)) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-[#A1A1AA] pt-2 border-t border-[#27272A]">

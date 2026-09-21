@@ -830,6 +830,33 @@ export class DatabaseService {
     return false;
   }
 
+  public async duplicateBusinessPlan(id: number | string, userId: number | string) {
+    this.seedInitialBusinessPlans();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const existing = await this.getBusinessPlanById(numericId);
+    if (!existing) return null;
+
+    const newId = this.nextPlanId++;
+    const now = new Date().toISOString();
+    const originalName = existing.businessName || existing.business_name || 'Business Plan';
+    const copiedName = `${originalName} - Copy`;
+    const numUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+
+    const duplicatedPlan = {
+      ...existing,
+      id: newId,
+      user_id: numUserId,
+      userId: numUserId,
+      businessName: copiedName,
+      business_name: copiedName,
+      created_at: now,
+      updated_at: now,
+    };
+
+    this.businessPlans.set(newId, duplicatedPlan);
+    return { ...duplicatedPlan };
+  }
+
   public async getAllBusinessPlansForAdmin() {
     this.seedInitialBusinessPlans();
     return Array.from(this.businessPlans.values()).map((p) => ({ ...p }));

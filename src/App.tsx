@@ -24,6 +24,10 @@ import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
 // User / Entrepreneur Dashboard Pages
 import { OverviewPage } from './pages/dashboard/OverviewPage';
 import { BusinessPlannerPage } from './pages/dashboard/BusinessPlannerPage';
+import { BusinessPlansPage } from './pages/dashboard/BusinessPlansPage';
+import { BusinessPlanDetailPage } from './pages/dashboard/BusinessPlanDetailPage';
+import { BusinessPlanFormPage } from './pages/dashboard/BusinessPlanFormPage';
+import { FinancialAnalysisPage } from './pages/dashboard/FinancialAnalysisPage';
 import { MarketAnalysisPage } from './pages/dashboard/MarketAnalysisPage';
 import { LocationAnalysisPage } from './pages/dashboard/LocationAnalysisPage';
 import { ComparisonPage } from './pages/dashboard/ComparisonPage';
@@ -81,6 +85,11 @@ export default function App() {
           >
             <Route path="/dashboard" element={<OverviewPage />} />
             <Route path="/business-planner" element={<BusinessPlannerPage />} />
+            <Route path="/business-plans" element={<BusinessPlansPage />} />
+            <Route path="/business-plans/new" element={<BusinessPlanFormPage />} />
+            <Route path="/business-plans/:id" element={<BusinessPlanDetailPage />} />
+            <Route path="/business-plans/:id/edit" element={<BusinessPlanFormPage />} />
+            <Route path="/business-plans/:id/financial-analysis" element={<FinancialAnalysisPage />} />
             <Route path="/market-analysis" element={<MarketAnalysisPage />} />
             <Route path="/location-analysis" element={<LocationAnalysisPage />} />
             <Route path="/comparison" element={<ComparisonPage />} />

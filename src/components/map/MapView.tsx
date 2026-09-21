@@ -260,10 +260,10 @@ export const MapView: React.FC<MapViewProps> = ({
         <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #D97706; font-weight: 700;">Analyzed Target Location</div>
         <div style="font-weight: 700; font-size: 13px; color: #0B0B0C; margin-top: 2px;">${targetLocationName || 'Selected Location'}</div>
         <div style="font-size: 11px; color: #4B5563; margin-top: 2px; font-family: monospace;">
-          ${currentCoords[0].toFixed(5)}, ${currentCoords[1].toFixed(5)}
+          ${currentCoords?.[0] != null ? Number(currentCoords[0]).toFixed(5) : '0.00000'}, ${currentCoords?.[1] != null ? Number(currentCoords[1]).toFixed(5) : '0.00000'}
         </div>
         <div style="font-size: 11px; color: #374151; margin-top: 4px; padding-top: 4px; border-top: 1px solid #E5E7EB;">
-          Scan Radius: <strong>${(radiusMeters / 1000).toFixed(1)} km</strong>
+          Scan Radius: <strong>${((Number(radiusMeters) || 0) / 1000).toFixed(1)} km</strong>
         </div>
       </div>
     `);
@@ -524,11 +524,11 @@ export const MapView: React.FC<MapViewProps> = ({
           <div className="absolute bottom-3 left-3 z-10 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-[11px] font-mono text-[#F8FAFC] backdrop-blur-md shadow-lg flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-[#FFBF24]" />
             <span>
-              {currentCoords[0].toFixed(4)}, {currentCoords[1].toFixed(4)}
+              {currentCoords?.[0] != null ? Number(currentCoords[0]).toFixed(4) : '0.0000'}, {currentCoords?.[1] != null ? Number(currentCoords[1]).toFixed(4) : '0.0000'}
             </span>
             {radiusMeters && (
               <span className="text-[#FFBF24] pl-1 border-l border-[#27272A]">
-                {(radiusMeters / 1000).toFixed(1)} km radius
+                {((Number(radiusMeters) || 0) / 1000).toFixed(1)} km radius
               </span>
             )}
           </div>

@@ -92,6 +92,11 @@ export interface BusinessPlan {
   category: string;
   description?: string;
   location?: string;
+  location_name?: string;
+  city?: string;
+  area?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   targetCustomer?: string;
   target_customer?: string;
   businessModel?: string;
@@ -101,13 +106,17 @@ export interface BusinessPlan {
 
   // Investment
   propertyDeposit?: number;
+  securityDeposit?: number;
   interiorSetup?: number;
+  setupCost?: number;
   equipmentCost?: number;
   furnitureCost?: number;
   licenseCost?: number;
   technologyCost?: number;
   initialInventory?: number;
+  initialInventoryCost?: number;
   launchMarketing?: number;
+  marketingLaunchCost?: number;
   otherInitialCost?: number;
   totalInitialInvestment: number;
 
@@ -116,16 +125,36 @@ export interface BusinessPlan {
   salaries?: number;
   utilities?: number;
   internet?: number;
+  internetCost?: number;
   maintenance?: number;
   marketing?: number;
   transportation?: number;
   insurance?: number;
   software?: number;
+  softwareCost?: number;
   loanEmi?: number;
   otherExpenses?: number;
+  otherFixedExpenses?: number;
   totalMonthlyFixedExpenses: number;
 
+  // Variable Monthly Expenses
+  rawMaterialCost?: number;
+  inventoryMonthlyCost?: number;
+  packagingCost?: number;
+  deliveryCost?: number;
+  paymentGatewayCost?: number;
+  salesCommission?: number;
+  marketingCost?: number;
+  otherVariableExpenses?: number;
+  variableExpensePercentage?: number;
+  totalMonthlyVariableExpenses?: number;
+
   // Unit Economics & Revenue
+  revenueApproach?: 'direct' | 'calculated';
+  expectedMonthlySales?: number;
+  averageSellingPrice?: number;
+  estimatedCustomers?: number;
+  otherRevenue?: number;
   sellingPrice: number;
   expectedCustomersPerDay: number;
   operatingDays: number;
@@ -133,24 +162,36 @@ export interface BusinessPlan {
   expectedMonthlyUnits?: number;
   monthlyRevenue: number;
   annualRevenue?: number;
+  annualExpenses?: number;
   monthlyVariableCost: number;
   totalMonthlyExpenses?: number;
+
+  // Targets & Assumptions
+  targetMonthlyProfit?: number;
+  targetRoi?: number;
+  targetPaybackPeriod?: number;
+  targetProfitMargin?: number;
+  revenueGrowthRate?: number;
 
   // Calculated Performance Metrics
   monthlyProfit: number;
   annualProfit?: number;
   profitMargin: number;
   contributionMarginPerUnit?: number;
+  contributionMarginRatio?: number;
   breakEvenUnits?: number | null;
   breakEvenRevenue?: number | null;
   breakEvenCapacityPercentage?: number | null;
   breakEvenCalculable?: boolean;
   breakEvenMessage?: string;
   roi?: number | null;
+  annualRoi?: number | null;
   paybackPeriodMonths?: number | null;
+  paybackPeriod?: number | null;
   paybackStatusText?: string;
   feasibilityScore: number;
-  feasibilityLevel?: 'Highly Feasible' | 'Moderately Feasible' | 'Needs Improvement' | 'High Financial Risk' | string;
+  feasibilityLevel?: string;
+  feasibilityStatus?: string;
   riskLevel: 'Low Risk' | 'Medium Risk' | 'High Risk' | 'low' | 'moderate' | 'high' | 'critical' | string;
 
   planStatus: 'draft' | 'analyzed' | 'archived';
@@ -445,11 +486,20 @@ export interface LocationAdminStats {
 export type {
   CalculatedFinancialResults,
   ScenarioResult,
+  ScenarioAdjustmentConfig,
   SensitivityPoint,
+  SensitivityAnalysisResult,
+  MonthProjection,
   RiskIndicator,
-  FeasibilityLevel,
-  OverallRiskLevel,
+  FeasibilityStatus,
+  TargetComparisonItem,
+  FinancialTargetsInput,
+  InitialInvestmentInput,
+  MonthlyExpensesInput,
+  RevenueAndUnitEconomicsInput,
+  FullFinancialInput,
 } from '../utils/financialCalculator';
+
 
 
 

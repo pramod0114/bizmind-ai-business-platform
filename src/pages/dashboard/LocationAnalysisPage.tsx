@@ -162,8 +162,8 @@ export const LocationAnalysisPage: React.FC = () => {
         setLocationName(geoInfo.name);
         setLocationAddress(geoInfo.display_name);
       } else if (!customName) {
-        setLocationName(`Coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
-        setLocationAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        setLocationName(`Coordinates (${lat != null ? Number(lat).toFixed(4) : '0.0000'}, ${lng != null ? Number(lng).toFixed(4) : '0.0000'})`);
+        setLocationAddress(`${lat != null ? Number(lat).toFixed(5) : '0.00000'}, ${lng != null ? Number(lng).toFixed(5) : '0.00000'}`);
       }
 
       setAnalysis(result);
@@ -235,7 +235,7 @@ export const LocationAnalysisPage: React.FC = () => {
 
         const geo = await locationApiService.reverseGeocode(lat, lng);
         const resolvedName = geo?.name || 'My Current Location';
-        const resolvedAddr = geo?.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        const resolvedAddr = geo?.display_name || `${lat != null ? Number(lat).toFixed(5) : '0.00000'}, ${lng != null ? Number(lng).toFixed(5) : '0.00000'}`;
 
         setLocationName(resolvedName);
         setLocationAddress(resolvedAddr);

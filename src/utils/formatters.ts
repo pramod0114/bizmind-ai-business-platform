@@ -22,36 +22,37 @@ export function formatCurrency(amount: number | null | undefined, currency = 'IN
 }
 
 export function formatPercentage(value: number | null | undefined, decimals = 1): string {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || isNaN(Number(value))) {
     return '0.0%';
   }
-  return `${value.toFixed(decimals)}%`;
+  return `${Number(value).toFixed(decimals)}%`;
 }
 
 export const formatPercent = formatPercentage;
 
 export function formatNumber(num: number | null | undefined, locale = 'en-IN'): string {
-  if (num === null || num === undefined || isNaN(num)) {
+  if (num === null || num === undefined || isNaN(Number(num))) {
     return '0';
   }
-  return new Intl.NumberFormat(locale).format(num);
+  return new Intl.NumberFormat(locale).format(Number(num));
 }
 
 export function formatCompactNumber(num: number | null | undefined): string {
-  if (num === null || num === undefined || isNaN(num)) {
+  if (num === null || num === undefined || isNaN(Number(num))) {
     return '0';
   }
-  const abs = Math.abs(num);
+  const val = Number(num);
+  const abs = Math.abs(val);
   if (abs >= 10000000) {
-    return `${(num / 10000000).toFixed(1)}Cr`;
+    return `${(val / 10000000).toFixed(1)}Cr`;
   }
   if (abs >= 100000) {
-    return `${(num / 100000).toFixed(1)}L`;
+    return `${(val / 100000).toFixed(1)}L`;
   }
   if (abs >= 1000) {
-    return `${(num / 1000).toFixed(1)}k`;
+    return `${(val / 1000).toFixed(1)}k`;
   }
-  return num.toString();
+  return val.toString();
 }
 
 export function formatDate(dateStr: string | Date | undefined | null): string {

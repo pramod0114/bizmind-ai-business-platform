@@ -74,30 +74,35 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
   const [costBreakdownView, setCostBreakdownView] = useState<'capex' | 'opex'>('capex');
 
   const {
-    totalInitialInvestment,
-    totalMonthlyFixedExpenses,
-    totalMonthlyExpenses,
-    monthlyRevenue,
-    annualRevenue,
-    monthlyProfit,
-    annualProfit,
-    profitMargin,
-    contributionMarginPerUnit,
-    breakEvenUnits,
-    breakEvenRevenue,
-    breakEvenCapacityPercentage,
-    breakEvenCalculable,
-    breakEvenMessage,
+    totalInitialInvestment = 0,
+    totalMonthlyFixedExpenses = 0,
+    totalMonthlyExpenses = 0,
+    monthlyRevenue = 0,
+    annualRevenue = 0,
+    monthlyProfit = 0,
+    annualProfit = 0,
+    profitMargin = 0,
+    contributionMarginPerUnit = 0,
+    breakEvenUnits = null,
+    breakEvenRevenue = null,
+    breakEvenCapacityPercentage = null,
+    breakEvenCalculable = false,
+    breakEvenMessage = '',
     roi,
+    annualRoi,
     paybackPeriodMonths,
-    paybackStatusText,
-    feasibilityScore,
-    feasibilityLevel,
-    riskLevel,
+    paybackPeriod,
+    paybackStatusText = 'N/A',
+    feasibilityScore = 50,
+    feasibilityLevel = 'Moderate',
+    riskLevel = 'Medium Risk',
     scenarios,
     sensitivityMatrix,
     breakdown: rawBreakdown,
-  } = analysis;
+  } = (analysis as any) || {};
+
+  const effectiveRoi = roi ?? annualRoi ?? analysis?.annualRoi ?? analysis?.roi ?? null;
+  const effectivePaybackMonths = paybackPeriodMonths ?? paybackPeriod ?? analysis?.paybackPeriod ?? null;
 
   // Safe breakdown fallback
   const breakdown: Record<string, number> = {
@@ -446,10 +451,10 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
           </div>
           <p
             className={`text-lg font-bold font-mono ${
-              profitMargin >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
+              (profitMargin ?? 0) >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
             }`}
           >
-            {profitMargin.toFixed(1)}%
+            {profitMargin != null ? `${Number(profitMargin).toFixed(1)}%` : '0.0%'}
           </p>
           <p className="text-[10px] text-[#71717A]">Net margin on sales</p>
         </div>
@@ -461,10 +466,10 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
             <Scale className="w-3.5 h-3.5 text-[#FFBF24]" />
           </div>
           <p className="text-lg font-bold text-[#F8FAFC] font-mono">
-            {breakEvenCalculable ? `${breakEvenUnits.toLocaleString('en-IN')} units` : 'N/A'}
+            {breakEvenCalculable && breakEvenUnits != null ? `${Math.round(breakEvenUnits).toLocaleString('en-IN')} units` : 'N/A'}
           </p>
           <p className="text-[10px] text-[#71717A]">
-            {breakEvenCalculable ? `${formatCurrency(breakEvenRevenue)} / mo` : 'Negative margin'}
+            {breakEvenCalculable && breakEvenRevenue != null ? `${formatCurrency(breakEvenRevenue)} / mo` : 'Negative margin'}
           </p>
         </div>
 
@@ -476,14 +481,14 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
           </div>
           <p
             className={`text-lg font-bold font-mono ${
-              breakEvenCapacityPercentage <= 75
+              (breakEvenCapacityPercentage ?? 100) <= 75
                 ? 'text-[#22C55E]'
-                : breakEvenCapacityPercentage <= 90
+                : (breakEvenCapacityPercentage ?? 100) <= 90
                 ? 'text-[#FFBF24]'
                 : 'text-[#EF4444]'
             }`}
           >
-            {breakEvenCalculable ? `${breakEvenCapacityPercentage.toFixed(1)}%` : 'N/A'}
+            {breakEvenCalculable && breakEvenCapacityPercentage != null ? `${Number(breakEvenCapacityPercentage).toFixed(1)}%` : 'N/A'}
           </p>
           <p className="text-[10px] text-[#71717A]">Capacity needed to break even</p>
         </div>
@@ -496,10 +501,10 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
           </div>
           <p
             className={`text-lg font-bold font-mono ${
-              roi >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
+              effectiveRoi !== null && effectiveRoi >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'
             }`}
           >
-            {roi.toFixed(1)}%
+            {effectiveRoi != null ? `${Number(effectiveRoi).toFixed(1)}%` : 'N/A'}
           </p>
           <p className="text-[10px] text-[#71717A]">Annual net return on CapEx</p>
         </div>
@@ -759,11 +764,11 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
                         {formatCurrency(safeScenarios.conservative.monthlyProfit)}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#A1A1AA]">
-                        {safeScenarios.conservative.profitMargin.toFixed(1)}%
+                        {safeScenarios.conservative?.profitMargin != null ? `${Number(safeScenarios.conservative.profitMargin).toFixed(1)}%` : '0.0%'}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#A1A1AA]">
-                        {safeScenarios.conservative.paybackPeriodMonths
-                          ? `${safeScenarios.conservative.paybackPeriodMonths} mo`
+                        {safeScenarios.conservative?.paybackPeriodMonths || (safeScenarios.conservative as any)?.paybackPeriod
+                          ? `${safeScenarios.conservative?.paybackPeriodMonths || (safeScenarios.conservative as any)?.paybackPeriod} mo`
                           : 'N/A'}
                       </td>
                     </tr>
@@ -784,11 +789,11 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
                         {formatCurrency(safeScenarios.expected.monthlyProfit)}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#FFBF24] font-semibold">
-                        {safeScenarios.expected.profitMargin.toFixed(1)}%
+                        {safeScenarios.expected?.profitMargin != null ? `${Number(safeScenarios.expected.profitMargin).toFixed(1)}%` : '0.0%'}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#F8FAFC] font-semibold">
-                        {safeScenarios.expected.paybackPeriodMonths
-                          ? `${safeScenarios.expected.paybackPeriodMonths} mo`
+                        {safeScenarios.expected?.paybackPeriodMonths || (safeScenarios.expected as any)?.paybackPeriod
+                          ? `${safeScenarios.expected?.paybackPeriodMonths || (safeScenarios.expected as any)?.paybackPeriod} mo`
                           : 'N/A'}
                       </td>
                     </tr>
@@ -805,11 +810,11 @@ export const Step6FinancialDashboard: React.FC<Step6Props> = ({
                         {formatCurrency(safeScenarios.optimistic.monthlyProfit)}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#A1A1AA]">
-                        {safeScenarios.optimistic.profitMargin.toFixed(1)}%
+                        {safeScenarios.optimistic?.profitMargin != null ? `${Number(safeScenarios.optimistic.profitMargin).toFixed(1)}%` : '0.0%'}
                       </td>
                       <td className="py-2.5 text-right font-mono text-[#A1A1AA]">
-                        {safeScenarios.optimistic.paybackPeriodMonths
-                          ? `${safeScenarios.optimistic.paybackPeriodMonths} mo`
+                        {safeScenarios.optimistic?.paybackPeriodMonths || (safeScenarios.optimistic as any)?.paybackPeriod
+                          ? `${safeScenarios.optimistic?.paybackPeriodMonths || (safeScenarios.optimistic as any)?.paybackPeriod} mo`
                           : 'N/A'}
                       </td>
                     </tr>

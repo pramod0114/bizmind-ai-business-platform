@@ -228,7 +228,7 @@ export const Step2InitialInvestment: React.FC<Step2Props> = ({ data = {} as Init
                       key={f.key}
                       style={{ width: `${pct}%` }}
                       className={`${colors[i % colors.length]} transition-all`}
-                      title={`${f.label}: ${pct.toFixed(1)}%`}
+                      title={`${f.label}: ${(Number(pct) || 0).toFixed(1)}%`}
                     />
                   );
                 })}

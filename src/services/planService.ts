@@ -2,46 +2,88 @@
  * BizMind – Business Plan & Financial Feasibility API Service
  */
 import { api } from './api';
-import { BusinessPlan, CalculatedFinancialResults } from '../types';
+import {
+  BusinessPlan,
+  CalculatedFinancialResults,
+  MonthProjection,
+  ScenarioResult,
+  ScenarioAdjustmentConfig,
+  SensitivityAnalysisResult,
+} from '../types';
 
 export interface PlanCreatePayload {
   businessName: string;
   category: string;
   description?: string;
   location?: string;
+  location_name?: string;
+  city?: string;
+  area?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   targetCustomer?: string;
   businessModel?: string;
   executiveSummary?: string;
 
   // Investment
-  propertyDeposit?: number;
-  interiorSetup?: number;
   equipmentCost?: number;
   furnitureCost?: number;
+  setupCost?: number;
+  interiorSetup?: number;
+  securityDeposit?: number;
+  propertyDeposit?: number;
   licenseCost?: number;
   technologyCost?: number;
-  initialInventory?: number;
+  marketingLaunchCost?: number;
   launchMarketing?: number;
+  initialInventoryCost?: number;
+  initialInventory?: number;
   otherInitialCost?: number;
 
   // Fixed Monthly Expenses
   rent?: number;
   salaries?: number;
   utilities?: number;
+  internetCost?: number;
   internet?: number;
-  maintenance?: number;
-  marketing?: number;
-  transportation?: number;
-  insurance?: number;
+  softwareCost?: number;
   software?: number;
+  insurance?: number;
   loanEmi?: number;
+  maintenance?: number;
+  otherFixedExpenses?: number;
   otherExpenses?: number;
 
+  // Variable Monthly Expenses
+  rawMaterialCost?: number;
+  inventoryMonthlyCost?: number;
+  packagingCost?: number;
+  deliveryCost?: number;
+  paymentGatewayCost?: number;
+  salesCommission?: number;
+  marketingCost?: number;
+  otherVariableExpenses?: number;
+  variableExpensePercentage?: number;
+  variableExpenseMode?: 'itemized' | 'percentage' | 'unit_based';
+
   // Unit Economics & Revenue
-  sellingPrice: number;
-  expectedCustomersPerDay: number;
-  operatingDays: number;
-  variableCostPerUnit: number;
+  revenueApproach?: 'direct' | 'calculated';
+  expectedMonthlySales?: number;
+  directMonthlyRevenue?: number;
+  averageSellingPrice?: number;
+  sellingPrice?: number;
+  expectedCustomersPerDay?: number;
+  estimatedCustomers?: number;
+  operatingDays?: number;
+  otherRevenue?: number;
+  variableCostPerUnit?: number;
+
+  // Targets & Assumptions
+  targetMonthlyProfit?: number;
+  targetRoi?: number;
+  targetPaybackPeriod?: number;
+  targetProfitMargin?: number;
+  revenueGrowthRate?: number;
 
   planStatus?: 'draft' | 'analyzed';
 }
@@ -112,6 +154,98 @@ export const planService = {
   },
 
   /**
+   * Duplicate a business plan (creates clone named "[original] - Copy")
+   */
+  async duplicatePlan(id: string | number): Promise<BusinessPlan> {
+    const response = await api.post<BusinessPlan>(`/business-plans/${id}/duplicate`);
+    if (!response.data) throw new Error('Failed to duplicate business plan');
+    return response.data;
+  },
+
+  /**
+   * Calculate financial metrics for existing plan
+   */
+  async calculatePlan(
+    id: string | number,
+    payload?: Partial<PlanCreatePayload>
+  ): Promise<{ plan: BusinessPlan; analysis: CalculatedFinancialResults }> {
+    const response = await api.post<{ plan: BusinessPlan; analysis: CalculatedFinancialResults }>(
+      `/business-plans/${id}/calculate`,
+      payload || {}
+    );
+    if (!response.data) throw new Error('Failed to calculate business plan metrics');
+    return response.data;
+  },
+
+  /**
+   * Get comprehensive financial analysis for a plan
+   */
+  async getFinancialAnalysis(id: string | number, growthRate?: number): Promise<CalculatedFinancialResults> {
+    const query = growthRate !== undefined ? `?growthRate=${growthRate}` : '';
+    const response = await api.get<CalculatedFinancialResults>(`/business-plans/${id}/financial-analysis${query}`);
+    if (!response.data) throw new Error('Failed to retrieve financial analysis');
+    return response.data;
+  },
+
+  /**
+   * Get 12-month projection for a plan
+   */
+  async get12MonthProjection(
+    id: string | number,
+    growthRate?: number
+  ): Promise<{ growthRate: number; projection: MonthProjection[] }> {
+    const query = growthRate !== undefined ? `?growthRate=${growthRate}` : '';
+    const response = await api.get<{ growthRate: number; projection: MonthProjection[] }>(
+      `/business-plans/${id}/projection${query}`
+    );
+    if (!response.data) throw new Error('Failed to retrieve 12-month projection');
+    return response.data;
+  },
+
+  /**
+   * Get scenario analysis for a plan
+   */
+  async getScenarios(
+    id: string | number
+  ): Promise<{ scenarios: Record<string, ScenarioResult>; adjustments: ScenarioAdjustmentConfig }> {
+    const response = await api.get<{
+      scenarios: Record<string, ScenarioResult>;
+      adjustments: ScenarioAdjustmentConfig;
+    }>(`/business-plans/${id}/scenarios`);
+    if (!response.data) throw new Error('Failed to retrieve scenario analysis');
+    return response.data;
+  },
+
+  /**
+   * Calculate custom scenarios with user-defined percentage adjustments
+   */
+  async calculateCustomScenarios(
+    id: string | number,
+    customAdjustments: {
+      conservativeRevenue?: number;
+      conservativeExpense?: number;
+      optimisticRevenue?: number;
+      optimisticExpense?: number;
+    }
+  ): Promise<{ scenarios: Record<string, ScenarioResult>; adjustments: ScenarioAdjustmentConfig }> {
+    const response = await api.post<{
+      scenarios: Record<string, ScenarioResult>;
+      adjustments: ScenarioAdjustmentConfig;
+    }>(`/business-plans/${id}/scenarios/calculate`, customAdjustments);
+    if (!response.data) throw new Error('Failed to calculate custom scenarios');
+    return response.data;
+  },
+
+  /**
+   * Get sensitivity analysis for a plan
+   */
+  async getSensitivity(id: string | number): Promise<SensitivityAnalysisResult> {
+    const response = await api.get<SensitivityAnalysisResult>(`/business-plans/${id}/sensitivity`);
+    if (!response.data) throw new Error('Failed to retrieve sensitivity analysis');
+    return response.data;
+  },
+
+  /**
    * Trigger full feasibility analysis
    */
   async analyzePlan(id: string | number): Promise<{ plan: BusinessPlan; analysis: CalculatedFinancialResults }> {
@@ -123,7 +257,7 @@ export const planService = {
   },
 
   /**
-   * Preview server-side financial calculations
+   * Preview server-side financial calculations without persisting
    */
   async previewCalculations(payload: any): Promise<CalculatedFinancialResults> {
     const response = await api.post<CalculatedFinancialResults>('/business-plans/calculate', payload);

@@ -210,7 +210,7 @@ export const Step4RevenueEconomics: React.FC<Step4Props> = ({
                 {formatCurrency(unitContribution)}
                 <span className="text-xs font-normal text-[#A1A1AA]">
                   {' '}
-                  ({contributionMarginPercent.toFixed(1)}%)
+                  ({(Number(contributionMarginPercent) || 0).toFixed(1)}%)
                 </span>
               </p>
               <p className="text-[10px] text-[#71717A] mt-0.5 font-mono">

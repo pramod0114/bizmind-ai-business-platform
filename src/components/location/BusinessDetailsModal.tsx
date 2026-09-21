@@ -69,7 +69,7 @@ export const BusinessDetailsModal: React.FC<BusinessDetailsModalProps> = ({
                 {business.address || <span className="text-[#71717A] italic">Not available in OpenStreetMap data</span>}
               </div>
               <div className="text-[11px] font-mono text-[#71717A]">
-                Coordinates: {business.latitude.toFixed(5)}, {business.longitude.toFixed(5)}
+                Coordinates: {business.latitude != null ? Number(business.latitude).toFixed(5) : 'N/A'}, {business.longitude != null ? Number(business.longitude).toFixed(5) : 'N/A'}
               </div>
             </div>
           </div>
