@@ -34,16 +34,24 @@ export interface LocationAnalysisRow {
   id: number;
   user_id: number;
   location_name: string;
+  city?: string | null;
   address: string;
   latitude: number;
   longitude: number;
-  radius: number;
-  business_count: number;
-  category_summary: Record<string, number> | string;
-  competition_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  opportunity_score: number;
-  business_name?: string | null;
+  business_idea?: string | null;
   business_category?: string | null;
+  radius_km?: number;
+  total_businesses?: number;
+  relevant_businesses?: number;
+  business_density?: number;
+  average_relevant_distance?: string | number | null;
+  concentration_level?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  radius?: number;
+  business_count?: number;
+  category_summary?: Record<string, number> | string;
+  competition_level?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  opportunity_score?: number;
+  business_name?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1010,9 +1018,28 @@ export class DatabaseService {
     this.seedInitialLocationData();
     const now = new Date().toISOString();
     const recordId = this.nextLocationAnalysisId++;
+    const radiusKm = data.radius_km !== undefined ? Number(data.radius_km) : (data.radius ? Number(data.radius) / 1000 : 2);
+    const totalB = data.total_businesses !== undefined ? Number(data.total_businesses) : (data.business_count !== undefined ? Number(data.business_count) : 0);
+    const relevantB = data.relevant_businesses !== undefined ? Number(data.relevant_businesses) : 0;
+    const density = data.business_density !== undefined ? Number(data.business_density) : 0;
+    const avgDist = data.average_relevant_distance || null;
+    const concLevel = data.concentration_level || data.competition_level || 'LOW';
+    const bIdea = data.business_idea || data.business_name || null;
+    const city = data.city || null;
+
     const newRecord: LocationAnalysisRow = {
       ...data,
       id: recordId,
+      city,
+      business_idea: bIdea,
+      radius_km: radiusKm,
+      total_businesses: totalB,
+      relevant_businesses: relevantB,
+      business_density: density,
+      average_relevant_distance: avgDist,
+      concentration_level: concLevel,
+      radius: data.radius || radiusKm * 1000,
+      business_count: totalB,
       created_at: now,
       updated_at: now,
     };
@@ -1029,12 +1056,12 @@ export class DatabaseService {
             data.address,
             data.latitude,
             data.longitude,
-            data.radius,
-            data.business_count,
-            typeof data.category_summary === 'object' ? JSON.stringify(data.category_summary) : data.category_summary,
-            data.competition_level,
-            data.opportunity_score,
-            data.business_name || null,
+            newRecord.radius,
+            newRecord.business_count,
+            typeof data.category_summary === 'object' ? JSON.stringify(data.category_summary) : (data.category_summary || '{}'),
+            data.competition_level || 'MEDIUM',
+            data.opportunity_score || 70,
+            bIdea,
             data.business_category || null,
           ]
         );

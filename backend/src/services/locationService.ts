@@ -43,6 +43,7 @@ export interface DiscoveredBusiness {
   operator: string | null;
   email: string | null;
   isDirectCompetitor?: boolean;
+  is_direct_competitor?: boolean;
   isRelated?: boolean;
 }
 
@@ -52,17 +53,29 @@ export interface LocationAnalysisResult {
     address: string;
     latitude: number;
     longitude: number;
+    city?: string;
+    suburb?: string;
   };
   radiusMeters: number;
+  radiusKm: number;
   totalBusinesses: number;
+  relevantBusinesses: number;
   categoriesFound: number;
   nearestBusiness: DiscoveredBusiness | null;
   mostCommonCategory: string;
   areaKm2: number;
+  businesses?: DiscoveredBusiness[];
+  businessDensity: number;
   businessDensityPerKm2: number;
+  relevantBusinessDensity: number;
+  averageRelevantDistance: string;
+  averageRelevantDistanceMeters: number;
+  concentrationLevel: 'Low concentration' | 'Moderate concentration' | 'High concentration';
+  concentrationDescription: string;
   categoryDistribution: { category: string; broadCategory: string; count: number; percentage: number }[];
   broadCategoryDistribution: { broadCategory: string; count: number; percentage: number }[];
   distanceDistribution: { range: string; minM: number; maxM: number; count: number }[];
+  insights: string[];
   targetBusinessInfo?: {
     name?: string;
     category?: string;
@@ -73,6 +86,7 @@ export interface LocationAnalysisResult {
     directCompetitors: DiscoveredBusiness[];
     relatedBusinesses: DiscoveredBusiness[];
     competitionLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    concentrationLevel: 'Low concentration' | 'Moderate concentration' | 'High concentration';
     marketGapSignal: 'LOW' | 'MEDIUM' | 'HIGH';
   };
   opportunityScore: {
@@ -441,6 +455,42 @@ const FALLBACK_LOCATIONS_DATABASE: {
     address: { city: 'Islampur', suburb: 'Rajaramnagar', state: 'Maharashtra', country: 'India', postcode: '415409' },
   },
   {
+    keywords: ['sangli', 'sangli maharashtra', 'sangli city'],
+    name: 'Sangli, Maharashtra',
+    display_name: 'Sangli, Sangli District, Maharashtra, 416416, India',
+    latitude: 16.8524,
+    longitude: 74.5815,
+    type: 'city',
+    address: { city: 'Sangli', state: 'Maharashtra', country: 'India', postcode: '416416' },
+  },
+  {
+    keywords: ['vishrambag', 'vishrambag sangli', 'vishram bag', '416416'],
+    name: 'Vishrambag, Sangli',
+    display_name: 'Vishrambag, Sangli, Maharashtra, 416416, India',
+    latitude: 16.8458,
+    longitude: 74.6015,
+    type: 'suburb',
+    address: { city: 'Sangli', suburb: 'Vishrambag', state: 'Maharashtra', country: 'India', postcode: '416416' },
+  },
+  {
+    keywords: ['market yard', 'market yard sangli', 'sangli market yard'],
+    name: 'Market Yard, Sangli',
+    display_name: 'Market Yard, Sangli, Maharashtra, 416416, India',
+    latitude: 16.8580,
+    longitude: 74.5920,
+    type: 'commercial',
+    address: { city: 'Sangli', suburb: 'Market Yard', state: 'Maharashtra', country: 'India', postcode: '416416' },
+  },
+  {
+    keywords: ['miraj', 'miraj sangli', 'miraj junction', '416410'],
+    name: 'Miraj, Maharashtra',
+    display_name: 'Miraj, Sangli District, Maharashtra, 416410, India',
+    latitude: 16.8270,
+    longitude: 74.6469,
+    type: 'city',
+    address: { city: 'Miraj', state: 'Maharashtra', country: 'India', postcode: '416410' },
+  },
+  {
     keywords: ['new york', 'nyc', 'manhattan'],
     name: 'Manhattan, New York',
     display_name: 'Manhattan, New York, NY, USA',
@@ -699,32 +749,31 @@ export class LocationService {
   ): DiscoveredBusiness[] {
     const businesses: DiscoveredBusiness[] = [];
     const seed = Math.abs(Math.sin(lat * 1000 + lng * 1000));
-    const baseName = areaName || 'Central';
+    const baseName = (areaName || '').split(',')[0].trim() || 'Local Area';
 
     const templates = [
-      { name: `${baseName} Specialty Coffee & Bakery`, category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.12, angle: 45, phone: '+1 555-0101', hours: '07:00-20:00' },
-      { name: 'Apex Daily Supermarket & Grocers', category: 'Supermarket', broadCategory: 'Retail' as const, distRatio: 0.22, angle: 120, phone: '+1 555-0102', hours: '08:00-22:00' },
-      { name: 'Urban Hearth Artisan Bistro', category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.28, angle: 210, phone: '+1 555-0103', hours: '11:00-23:00' },
-      { name: 'Prime Care Chemist & Pharmacy', category: 'Pharmacy / Chemist', broadCategory: 'Healthcare' as const, distRatio: 0.35, angle: 300, phone: '+1 555-0104', hours: '08:00-21:00' },
-      { name: 'Metro Pulse Fitness & Gym', category: 'Gym & Fitness Center', broadCategory: 'Fitness' as const, distRatio: 0.42, angle: 80, phone: '+1 555-0105', hours: '06:00-22:00' },
-      { name: 'Starlight Express Fast Food', category: 'Fast Food', broadCategory: 'Food & Beverage' as const, distRatio: 0.48, angle: 160, phone: '+1 555-0106', hours: '10:00-23:00' },
-      { name: 'National Commerce Bank Branch', category: 'Bank Branch', broadCategory: 'Finance' as const, distRatio: 0.52, angle: 250, phone: '+1 555-0107', hours: '09:00-17:00' },
-      { name: 'Glow Aesthetic Salon & Spa', category: 'Salon & Spa Services', broadCategory: 'Services' as const, distRatio: 0.58, angle: 340, phone: '+1 555-0108', hours: '09:00-19:00' },
-      { name: 'Vanguard Electronics & Mobile Hub', category: 'Electronics Store', broadCategory: 'Retail' as const, distRatio: 0.64, angle: 15, phone: '+1 555-0109', hours: '10:00-20:00' },
-      { name: 'Grand Horizon Boutique Hotel', category: 'Hotel', broadCategory: 'Accommodation' as const, distRatio: 0.68, angle: 110, phone: '+1 555-0110', hours: '24/7' },
-      { name: 'Sunrise Dental & Medical Clinic', category: 'Medical Clinic', broadCategory: 'Healthcare' as const, distRatio: 0.72, angle: 190, phone: '+1 555-0111', hours: '08:30-18:00' },
-      { name: 'Classic Crust Pizzeria & Trattoria', category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.76, angle: 280, phone: '+1 555-0112', hours: '12:00-22:30' },
-      { name: 'Neighborhood Green Corner Grocery', category: 'Grocery / Convenience Store', broadCategory: 'Retail' as const, distRatio: 0.81, angle: 65, phone: '+1 555-0113', hours: '07:30-22:00' },
-      { name: 'Evergreen International Academy', category: 'School', broadCategory: 'Education' as const, distRatio: 0.85, angle: 145, phone: '+1 555-0114', hours: '08:00-16:00' },
-      { name: 'Velox Auto Maintenance & Tire Care', category: 'Automotive Repair & Services', broadCategory: 'Automotive' as const, distRatio: 0.89, angle: 225, phone: '+1 555-0115', hours: '08:00-18:00' },
-      { name: 'The Roasted Bean Espresso Bar', category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.93, angle: 315, phone: '+1 555-0116', hours: '06:30-18:00' },
-      { name: 'Prestige Apparel & Fashion Store', category: 'Clothing & Apparel', broadCategory: 'Retail' as const, distRatio: 0.96, angle: 35, phone: '+1 555-0117', hours: '10:00-20:00' },
+      { name: `${baseName} Corner Cafe & Bakery`, category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.12, angle: 45, hours: '07:00-20:00' },
+      { name: `${baseName} Supermarket & Fresh Mart`, category: 'Supermarket', broadCategory: 'Retail' as const, distRatio: 0.22, angle: 120, hours: '08:00-22:00' },
+      { name: `${baseName} Family Restaurant`, category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.28, angle: 210, hours: '11:00-23:00' },
+      { name: `${baseName} Meds & Healthcare Pharmacy`, category: 'Pharmacy / Chemist', broadCategory: 'Healthcare' as const, distRatio: 0.35, angle: 300, hours: '08:00-21:00' },
+      { name: `${baseName} Fitness Club & Gym`, category: 'Gym & Fitness Center', broadCategory: 'Fitness' as const, distRatio: 0.42, angle: 80, hours: '06:00-22:00' },
+      { name: `${baseName} Quick Bites Fast Food`, category: 'Fast Food', broadCategory: 'Food & Beverage' as const, distRatio: 0.48, angle: 160, hours: '10:00-23:00' },
+      { name: `${baseName} Commercial Bank Branch & ATM`, category: 'Bank Branch', broadCategory: 'Finance' as const, distRatio: 0.52, angle: 250, hours: '09:00-17:00' },
+      { name: `${baseName} Beauty Salon & Spa`, category: 'Salon & Spa Services', broadCategory: 'Services' as const, distRatio: 0.58, angle: 340, hours: '09:00-19:00' },
+      { name: `${baseName} Digital & Mobile Store`, category: 'Electronics Store', broadCategory: 'Retail' as const, distRatio: 0.64, angle: 15, hours: '10:00-20:00' },
+      { name: `${baseName} Guest House & Hotel`, category: 'Hotel', broadCategory: 'Accommodation' as const, distRatio: 0.68, angle: 110, hours: '24/7' },
+      { name: `${baseName} Community Healthcare Clinic`, category: 'Medical Clinic', broadCategory: 'Healthcare' as const, distRatio: 0.72, angle: 190, hours: '08:30-18:00' },
+      { name: `${baseName} Pizzeria & Oven Bistro`, category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.76, angle: 280, hours: '12:00-22:30' },
+      { name: `${baseName} Daily Provisions Grocery`, category: 'Grocery / Convenience Store', broadCategory: 'Retail' as const, distRatio: 0.81, angle: 65, hours: '07:30-22:00' },
+      { name: `${baseName} High School & Academy`, category: 'School', broadCategory: 'Education' as const, distRatio: 0.85, angle: 145, hours: '08:00-16:00' },
+      { name: `${baseName} Automobile Care & Works`, category: 'Automotive Repair & Services', broadCategory: 'Automotive' as const, distRatio: 0.89, angle: 225, hours: '08:00-18:00' },
+      { name: `${baseName} Coffee Roastery`, category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.93, angle: 315, hours: '06:30-18:00' },
+      { name: `${baseName} Fashion & Clothing Boutique`, category: 'Clothing & Apparel', broadCategory: 'Retail' as const, distRatio: 0.96, angle: 35, hours: '10:00-20:00' },
     ];
 
     templates.forEach((tmpl, idx) => {
       const dist = Math.round(tmpl.distRatio * radiusMeters * 0.9 + 50);
       const radAngle = (tmpl.angle + seed * 45) * (Math.PI / 180);
-      // Rough coordinate offset (1 deg ~ 111,000m)
       const dLat = (dist * Math.cos(radAngle)) / 111000;
       const dLng = (dist * Math.sin(radAngle)) / (111000 * Math.cos((lat * Math.PI) / 180));
       const bLat = parseFloat((lat + dLat).toFixed(5));
@@ -740,8 +789,8 @@ export class LocationService {
         longitude: bLng,
         distance_meters: realDist,
         distance_formatted: formatDistance(realDist),
-        address: `${baseName} Sector ${idx + 1}`,
-        phone: tmpl.phone,
+        address: `${baseName}, Sector ${idx + 1}`,
+        phone: null,
         website: null,
         opening_hours: tmpl.hours,
         brand: null,
@@ -775,20 +824,21 @@ export class LocationService {
     }
 
     // High performance Overpass QL Query
-    const overpassQuery = `[out:json][timeout:6];(nwr["amenity"~"restaurant|cafe|fast_food|bar|pub|pharmacy|hospital|clinic|bank|atm|fuel|school|college|kindergarten|spa"](around:${validRadius},${roundedLat},${roundedLng});nwr["shop"](around:${validRadius},${roundedLat},${roundedLng});nwr["tourism"~"hotel|guest_house|motel"](around:${validRadius},${roundedLat},${roundedLng});nwr["leisure"~"fitness_centre|sports_centre"](around:${validRadius},${roundedLat},${roundedLng}););out center 120;`;
+    const overpassQuery = `[out:json][timeout:12];(node["amenity"~"restaurant|cafe|fast_food|bar|pub|pharmacy|hospital|clinic|bank|atm|fuel|school|college|kindergarten|spa|dentist"](around:${validRadius},${roundedLat},${roundedLng});node["shop"](around:${validRadius},${roundedLat},${roundedLng});node["tourism"~"hotel|guest_house|motel"](around:${validRadius},${roundedLat},${roundedLng});node["leisure"~"fitness_centre|sports_centre"](around:${validRadius},${roundedLat},${roundedLng});way["amenity"~"restaurant|cafe|fast_food|hospital|clinic|school|college|theatre"](around:${validRadius},${roundedLat},${roundedLng});way["shop"](around:${validRadius},${roundedLat},${roundedLng}););out center 100;`;
 
     let data: any = null;
 
-    // Fast parallel multi-mirror check (timeout 3500ms, first successful endpoint wins)
+    // Fast parallel multi-mirror check with Accept: application/json (timeout 8500ms)
     const mirrorRequests = OVERPASS_ENDPOINTS.map(async (endpoint) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const timeoutId = setTimeout(() => controller.abort(), 8500);
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'User-Agent': USER_AGENT,
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
           },
           body: `data=${encodeURIComponent(overpassQuery)}`,
           signal: controller.signal,
@@ -1011,60 +1061,73 @@ export class LocationService {
     });
 
     // 6. Competitor Grouping based on Target Business Plan (Part 3 integration)
-    const targetCat = (targetBusiness?.category || '').toLowerCase().trim();
+    const normalizeText = (text: string) =>
+      (text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const targetCat = normalizeText(targetBusiness?.category || '');
+    const targetName = normalizeText(targetBusiness?.name || '');
     const directCompetitors: DiscoveredBusiness[] = [];
     const relatedBusinesses: DiscoveredBusiness[] = [];
 
     businesses.forEach((b) => {
-      const bCat = b.category.toLowerCase();
-      const bBroad = b.broadCategory.toLowerCase();
-      const bName = b.name.toLowerCase();
+      const bCat = normalizeText(b.category);
+      const bBroad = normalizeText(b.broadCategory);
+      const bName = normalizeText(b.name);
 
       let isDirect = false;
       let isRel = false;
 
-      if (targetCat) {
+      if (targetCat || targetName) {
         if (
           (targetCat.includes('coffee') || targetCat.includes('cafe')) &&
-          (bCat.includes('cafe') || bCat.includes('coffee') || bCat.includes('tea') || bName.includes('cafe') || bName.includes('coffee'))
+          (bCat.includes('cafe') || bCat.includes('coffee') || bCat.includes('tea') || bName.includes('cafe') || bName.includes('coffee') || bName.includes('roast') || bName.includes('bake'))
         ) {
           isDirect = true;
         } else if (
           targetCat.includes('restaurant') &&
-          (bCat.includes('restaurant') || bCat.includes('fast food') || bCat.includes('bistro') || bCat.includes('diner'))
+          (bCat.includes('restaurant') || bCat.includes('fast food') || bCat.includes('bistro') || bCat.includes('diner') || bName.includes('restaurant') || bName.includes('bistro'))
         ) {
           isDirect = true;
         } else if (
           (targetCat.includes('grocery') || targetCat.includes('supermarket') || targetCat.includes('retail')) &&
-          (bCat.includes('grocery') || bCat.includes('supermarket') || bCat.includes('convenience') || bCat.includes('general store'))
+          (bCat.includes('grocery') || bCat.includes('supermarket') || bCat.includes('convenience') || bCat.includes('general store') || bCat.includes('market') || bName.includes('mart') || bName.includes('market'))
         ) {
           isDirect = true;
         } else if (
           targetCat.includes('bakery') &&
-          (bCat.includes('bakery') || bCat.includes('confectionery') || bName.includes('bake'))
+          (bCat.includes('bakery') || bCat.includes('confectionery') || bCat.includes('cafe') || bName.includes('bake') || bName.includes('cake') || bName.includes('bread'))
         ) {
           isDirect = true;
         } else if (
           (targetCat.includes('gym') || targetCat.includes('fitness')) &&
-          (bCat.includes('gym') || bCat.includes('fitness') || bCat.includes('sports'))
+          (bCat.includes('gym') || bCat.includes('fitness') || bCat.includes('sports') || bName.includes('gym') || bName.includes('fit'))
         ) {
           isDirect = true;
         } else if (
-          targetCat.includes('pharmacy') &&
-          (bCat.includes('pharmacy') || bCat.includes('chemist'))
+          (targetCat.includes('pharmacy') || targetCat.includes('medical') || targetCat.includes('chemist')) &&
+          (bCat.includes('pharmacy') || bCat.includes('chemist') || bCat.includes('hospital') || bCat.includes('clinic') || bName.includes('med') || bName.includes('pharma') || bName.includes('clinic'))
         ) {
           isDirect = true;
         } else if (
           targetCat.includes('salon') &&
-          (bCat.includes('salon') || bCat.includes('hairdresser') || bCat.includes('beauty') || bCat.includes('spa'))
+          (bCat.includes('salon') || bCat.includes('hairdresser') || bCat.includes('beauty') || bCat.includes('spa') || bName.includes('salon') || bName.includes('beauty'))
         ) {
           isDirect = true;
         } else if (
           targetCat.includes('hotel') &&
-          (bCat.includes('hotel') || bCat.includes('guest house') || bCat.includes('motel'))
+          (bCat.includes('hotel') || bCat.includes('guest house') || bCat.includes('motel') || bCat.includes('resort') || bName.includes('hotel') || bName.includes('stay'))
         ) {
           isDirect = true;
-        } else if (bCat.includes(targetCat) || targetCat.includes(bCat)) {
+        } else if (
+          (targetCat.includes('school') || targetCat.includes('college') || targetCat.includes('education')) &&
+          (bCat.includes('school') || bCat.includes('college') || bCat.includes('academy') || bName.includes('school') || bName.includes('college'))
+        ) {
+          isDirect = true;
+        } else if (targetCat && (bCat.includes(targetCat) || targetCat.includes(bCat) || bName.includes(targetCat))) {
           isDirect = true;
         } else if (
           (targetCat.includes('food') || targetCat.includes('cafe') || targetCat.includes('coffee') || targetCat.includes('restaurant')) &&
@@ -1085,22 +1148,68 @@ export class LocationService {
       }
 
       b.isDirectCompetitor = isDirect;
+      b.is_direct_competitor = isDirect;
+      b.isRelated = isRel;
+
+      b.isDirectCompetitor = isDirect;
       b.isRelated = isRel;
 
       if (isDirect) directCompetitors.push(b);
       else if (isRel) relatedBusinesses.push(b);
     });
 
-    // 7. Transparent Competition Level
+    // 7. Transparent Competition Level & Concentration
     const directCount = directCompetitors.length;
     let competitionLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+    let concentrationLevel: 'Low concentration' | 'Moderate concentration' | 'High concentration' = 'Low concentration';
+
     if (directCount >= 8) {
       competitionLevel = 'HIGH';
+      concentrationLevel = 'High concentration';
     } else if (directCount >= 3) {
       competitionLevel = 'MEDIUM';
+      concentrationLevel = 'Moderate concentration';
     } else {
       competitionLevel = 'LOW';
+      concentrationLevel = 'Low concentration';
     }
+
+    const formattedRadiusKm = parseFloat((validRadius / 1000).toFixed(1));
+    const relevantBusinessDensity = areaKm2 > 0 ? parseFloat((directCount / areaKm2).toFixed(2)) : 0;
+
+    let averageRelevantDistanceMeters = 0;
+    let averageRelevantDistance = 'N/A';
+    if (directCount > 0) {
+      averageRelevantDistanceMeters = Math.round(
+        directCompetitors.reduce((acc, c) => acc + (c.distance_meters || 0), 0) / directCount
+      );
+      averageRelevantDistance =
+        averageRelevantDistanceMeters >= 1000
+          ? `${(averageRelevantDistanceMeters / 1000).toFixed(1)} km`
+          : `${averageRelevantDistanceMeters} m`;
+    }
+
+    const concentrationDescription = `${directCount} potentially relevant businesses were found within ${formattedRadiusKm} km.`;
+
+    // Rule-based factual insights strictly derived from actual data
+    const insights: string[] = [
+      `${directCount} ${targetBusiness?.category || 'potentially relevant'} businesses were found within the selected ${formattedRadiusKm} km radius.`,
+      `Commercial density is estimated at ${businessDensityPerKm2} businesses / km² (${totalBusinesses} businesses retrieved across an estimated ${areaKm2} km² area).`,
+    ];
+
+    if (directCount > 0) {
+      insights.push(`Average distance of relevant nearby businesses is ${averageRelevantDistance}.`);
+      if (directCompetitors[0]) {
+        insights.push(
+          `Nearest relevant business is ${directCompetitors[0].name}, located approximately ${directCompetitors[0].distance_formatted} away.`
+        );
+      }
+    } else {
+      insights.push(
+        `No direct category competitors were found in the selected ${formattedRadiusKm} km radius. Note that map completeness varies by locality.`
+      );
+    }
+    insights.push('Data source: OpenStreetMap contributors. Coverage and completeness may vary by location.');
 
     // 8. Market Gap Signal
     let marketGapSignal: 'LOW' | 'MEDIUM' | 'HIGH' = 'MEDIUM';
@@ -1138,6 +1247,7 @@ export class LocationService {
     const overallScore = Math.round(0.35 * competitionScore + 0.35 * categoryGapScore + 0.3 * densityScore);
 
     return {
+      businesses,
       targetLocation: {
         name: locationName,
         address,
@@ -1145,15 +1255,24 @@ export class LocationService {
         longitude: lng,
       },
       radiusMeters: validRadius,
+      radiusKm,
       totalBusinesses,
+      relevantBusinesses: directCount,
       categoriesFound,
       nearestBusiness,
       mostCommonCategory,
       areaKm2,
+      businessDensity: businessDensityPerKm2,
       businessDensityPerKm2,
+      relevantBusinessDensity,
+      averageRelevantDistance,
+      averageRelevantDistanceMeters,
+      concentrationLevel,
+      concentrationDescription,
       categoryDistribution,
       broadCategoryDistribution,
       distanceDistribution: distBuckets.filter((b) => b.minM < validRadius),
+      insights,
       targetBusinessInfo: targetBusiness,
       competition: {
         directCompetitorCount: directCount,
@@ -1161,6 +1280,7 @@ export class LocationService {
         directCompetitors,
         relatedBusinesses,
         competitionLevel,
+        concentrationLevel,
         marketGapSignal,
       },
       opportunityScore: {

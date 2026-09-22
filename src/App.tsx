@@ -91,6 +91,7 @@ export default function App() {
             <Route path="/business-plans/:id/edit" element={<BusinessPlanFormPage />} />
             <Route path="/business-plans/:id/financial-analysis" element={<FinancialAnalysisPage />} />
             <Route path="/market-analysis" element={<MarketAnalysisPage />} />
+            <Route path="/location-intelligence" element={<LocationAnalysisPage />} />
             <Route path="/location-analysis" element={<LocationAnalysisPage />} />
             <Route path="/comparison" element={<ComparisonPage />} />
             <Route path="/predictions" element={<PredictionsPage />} />

@@ -110,7 +110,8 @@ export async function getNearbyBusinesses(req: Request, res: Response): Promise<
       return;
     }
 
-    const businesses = await locationService.getNearbyBusinesses(lat, lng, radius);
+    const areaName = (req.query.areaName as string) || (req.query.name as string) || (req.query.locationName as string) || undefined;
+    const businesses = await locationService.getNearbyBusinesses(lat, lng, radius, areaName);
     sendSuccess(
       res,
       {
@@ -165,47 +166,76 @@ export async function saveLocationAnalysis(req: AuthRequest, res: Response): Pro
     const {
       location_name,
       locationName,
+      city,
       address,
       latitude,
       longitude,
-      radius = 2000,
-      business_count,
-      businessCount,
-      category_summary,
-      categorySummary,
-      competition_level,
-      competitionLevel,
-      opportunity_score,
-      opportunityScore,
+      business_idea,
+      businessIdea,
       business_name,
       businessName,
       business_category,
       businessCategory,
+      radius_km,
+      radiusKm,
+      radius = 2000,
+      total_businesses,
+      totalBusinesses,
+      business_count,
+      businessCount,
+      relevant_businesses,
+      relevantBusinesses,
+      business_density,
+      businessDensity,
+      average_relevant_distance,
+      averageRelevantDistance,
+      concentration_level,
+      concentrationLevel,
+      competition_level,
+      competitionLevel,
+      opportunity_score,
+      opportunityScore,
+      category_summary,
+      categorySummary,
     } = req.body;
 
     const locName = location_name || locationName || 'Target Location';
     const locAddr = address || `${latitude}, ${longitude}`;
     const lat = typeof latitude === 'number' ? latitude : parseFloat(latitude);
     const lng = typeof longitude === 'number' ? longitude : parseFloat(longitude);
-    const rad = typeof radius === 'number' ? radius : parseInt(radius, 10) || 2000;
-    const bCount = business_count !== undefined ? Number(business_count) : Number(businessCount) || 0;
+    const radKm = radius_km !== undefined ? Number(radius_km) : (radiusKm !== undefined ? Number(radiusKm) : (radius ? Number(radius) / 1000 : 2));
+    const radM = typeof radius === 'number' ? radius : parseInt(radius, 10) || Math.round(radKm * 1000);
+    const totalB = total_businesses !== undefined ? Number(total_businesses) : (totalBusinesses !== undefined ? Number(totalBusinesses) : (business_count !== undefined ? Number(business_count) : Number(businessCount) || 0));
+    const relB = relevant_businesses !== undefined ? Number(relevant_businesses) : (relevantBusinesses !== undefined ? Number(relevantBusinesses) : 0);
+    const density = business_density !== undefined ? Number(business_density) : (businessDensity !== undefined ? Number(businessDensity) : 0);
+    const avgDist = average_relevant_distance || averageRelevantDistance || null;
+    const concLevel = concentration_level || concentrationLevel || competition_level || competitionLevel || 'Low concentration';
     const catSum = category_summary || categorySummary || {};
-    const compLevel = competition_level || competitionLevel || 'MEDIUM';
     const oppScore = opportunity_score !== undefined ? Number(opportunity_score) : Number(opportunityScore) || 70;
+    const bIdea = business_idea || businessIdea || business_name || businessName || null;
+    const bCat = business_category || businessCategory || null;
 
     const record = await db.createLocationAnalysis({
       user_id: userId,
       location_name: locName,
+      city: city || null,
       address: locAddr,
       latitude: lat,
       longitude: lng,
-      radius: rad,
-      business_count: bCount,
+      business_idea: bIdea,
+      business_category: bCat,
+      radius_km: radKm,
+      total_businesses: totalB,
+      relevant_businesses: relB,
+      business_density: density,
+      average_relevant_distance: avgDist,
+      concentration_level: concLevel,
+      radius: radM,
+      business_count: totalB,
       category_summary: catSum,
-      competition_level: compLevel as 'LOW' | 'MEDIUM' | 'HIGH',
+      competition_level: (concLevel.toUpperCase().includes('HIGH') ? 'HIGH' : concLevel.toUpperCase().includes('MOD') || concLevel.toUpperCase().includes('MED') ? 'MEDIUM' : 'LOW') as 'LOW' | 'MEDIUM' | 'HIGH',
       opportunity_score: oppScore,
-      business_name: business_name || businessName || null,
-      business_category: business_category || businessCategory || null,
+      business_name: bIdea,
     });
 
     sendSuccess(res, record, 'Location analysis saved successfully');

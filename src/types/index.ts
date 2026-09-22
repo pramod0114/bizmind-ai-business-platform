@@ -376,6 +376,7 @@ export interface GeoLocationResult {
 }
 
 export interface DiscoveredBusiness {
+  id?: string | number;
   osm_id: string;
   name: string;
   category: string;
@@ -393,6 +394,7 @@ export interface DiscoveredBusiness {
   operator: string | null;
   email: string | null;
   isDirectCompetitor?: boolean;
+  is_direct_competitor?: boolean;
   isRelated?: boolean;
 }
 
@@ -402,17 +404,29 @@ export interface LocationAnalysisResult {
     address: string;
     latitude: number;
     longitude: number;
+    city?: string;
+    suburb?: string;
   };
   radiusMeters: number;
+  radiusKm?: number;
+  businesses?: DiscoveredBusiness[];
   totalBusinesses: number;
+  relevantBusinesses?: number;
   categoriesFound: number;
   nearestBusiness: DiscoveredBusiness | null;
   mostCommonCategory: string;
   areaKm2: number;
+  businessDensity?: number;
   businessDensityPerKm2: number;
+  relevantBusinessDensity?: number;
+  averageRelevantDistance?: string;
+  averageRelevantDistanceMeters?: number;
+  concentrationLevel?: 'Low concentration' | 'Moderate concentration' | 'High concentration';
+  concentrationDescription?: string;
   categoryDistribution: { category: string; broadCategory: string; count: number; percentage: number }[];
   broadCategoryDistribution: { broadCategory: string; count: number; percentage: number }[];
   distanceDistribution: { range: string; minM: number; maxM: number; count: number }[];
+  insights?: string[];
   targetBusinessInfo?: {
     name?: string;
     category?: string;
@@ -423,6 +437,7 @@ export interface LocationAnalysisResult {
     directCompetitors: DiscoveredBusiness[];
     relatedBusinesses: DiscoveredBusiness[];
     competitionLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+    concentrationLevel?: 'Low concentration' | 'Moderate concentration' | 'High concentration';
     marketGapSignal: 'LOW' | 'MEDIUM' | 'HIGH';
   };
   opportunityScore: {
@@ -441,16 +456,24 @@ export interface SavedLocationAnalysis {
   id: number;
   user_id: number;
   location_name: string;
+  city?: string | null;
   address: string;
   latitude: number;
   longitude: number;
-  radius: number;
-  business_count: number;
-  category_summary: Record<string, number> | string;
-  competition_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  opportunity_score: number;
-  business_name?: string | null;
+  business_idea?: string | null;
   business_category?: string | null;
+  radius_km?: number;
+  total_businesses?: number;
+  relevant_businesses?: number;
+  business_density?: number;
+  average_relevant_distance?: string | number | null;
+  concentration_level?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  radius?: number;
+  business_count?: number;
+  category_summary?: Record<string, number> | string;
+  competition_level?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+  opportunity_score?: number;
+  business_name?: string | null;
   created_at: string;
   updated_at: string;
 }

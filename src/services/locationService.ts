@@ -100,15 +100,17 @@ export const locationApiService = {
   getNearbyBusinesses: async (
     lat: number,
     lng: number,
-    radius: number = 2000
+    radius: number = 2000,
+    areaName?: string
   ): Promise<{ total: number; radius: number; businesses: DiscoveredBusiness[]; attribution: string }> => {
     try {
+      const areaParam = areaName ? `&areaName=${encodeURIComponent(areaName)}` : '';
       const response = await api.get<{
         total: number;
         radius: number;
         businesses: DiscoveredBusiness[];
         attribution: string;
-      }>(`/location/nearby-businesses?lat=${lat}&lng=${lng}&radius=${radius}`);
+      }>(`/location/nearby-businesses?lat=${lat}&lng=${lng}&radius=${radius}${areaParam}`);
       return response.data || { total: 0, radius, businesses: [], attribution: '© OpenStreetMap contributors' };
     } catch (err) {
       console.error('getNearbyBusinesses error:', err);
@@ -135,16 +137,24 @@ export const locationApiService = {
    */
   saveLocationAnalysis: async (data: {
     location_name: string;
+    city?: string | null;
     address: string;
     latitude: number;
     longitude: number;
-    radius: number;
-    business_count: number;
-    category_summary: Record<string, number>;
-    competition_level: 'LOW' | 'MEDIUM' | 'HIGH';
-    opportunity_score: number;
-    business_name?: string | null;
+    business_idea?: string | null;
     business_category?: string | null;
+    radius_km?: number;
+    radius?: number;
+    total_businesses?: number;
+    business_count?: number;
+    relevant_businesses?: number;
+    business_density?: number;
+    average_relevant_distance?: string | number | null;
+    concentration_level?: string;
+    category_summary?: Record<string, number> | string;
+    competition_level?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+    opportunity_score?: number;
+    business_name?: string | null;
   }): Promise<SavedLocationAnalysis> => {
     const response = await api.post<SavedLocationAnalysis>('/location/analyses', data);
     return response.data;

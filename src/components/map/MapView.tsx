@@ -38,12 +38,13 @@ interface TileLayerOption {
 const TILE_LAYER_CONFIGS: Record<MapTileLayer, TileLayerOption> = {
   'esri-dark': {
     id: 'esri-dark',
-    name: 'Dark Matter',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    name: 'Midnight Dark',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     options: {
       maxZoom: 19,
-      maxNativeZoom: 16,
-      attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noreferrer">Esri</a> &copy; OpenStreetMap contributors',
+      subdomains: ['a', 'b', 'c'],
+      className: 'osm-dark-tiles',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
     },
   },
   'osm-dark': {
@@ -96,7 +97,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const circleLayerRef = useRef<L.Circle | null>(null);
-  const [selectedTileLayer, setSelectedTileLayer] = useState<MapTileLayer>('esri-dark');
+  const [selectedTileLayer, setSelectedTileLayer] = useState<MapTileLayer>('osm-dark');
   const [showLabelsOnMap, setShowLabelsOnMap] = useState<boolean>(true);
   const [currentCoords, setCurrentCoords] = useState<[number, number]>(center);
   const tileLayerRef = useRef<L.TileLayer | null>(null);

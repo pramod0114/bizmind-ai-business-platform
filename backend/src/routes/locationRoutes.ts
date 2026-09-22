@@ -22,15 +22,19 @@ const router = Router();
 router.get('/geocode', geocodeLocation);
 router.get('/search', geocodeLocation);
 router.get('/reverse-geocode', reverseGeocodeLocation);
+router.get('/reverse', reverseGeocodeLocation);
 router.get('/ip-locate', ipLocate);
 router.get('/nearby-businesses', getNearbyBusinesses);
+router.get('/nearby', getNearbyBusinesses);
 router.post('/analyze', analyzeLocation);
 
 // User Saved Analyses & Saved Businesses (Supports authenticated user or guest session)
 router.post('/analyses', optionalAuth, saveLocationAnalysis);
 router.get('/analyses', optionalAuth, listLocationAnalyses);
 router.get('/analyses/:id', optionalAuth, getLocationAnalysisById);
+router.get('/analysis/:id', optionalAuth, getLocationAnalysisById);
 router.delete('/analyses/:id', optionalAuth, deleteLocationAnalysis);
+router.delete('/analysis/:id', optionalAuth, deleteLocationAnalysis);
 
 router.post('/saved-businesses', optionalAuth, saveBusiness);
 router.get('/saved-businesses', optionalAuth, listSavedBusinesses);
