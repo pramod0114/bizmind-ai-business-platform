@@ -1,21 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin,
-  Target,
   Bookmark,
   RotateCw,
   GitCompare,
   Building,
   Check,
   AlertCircle,
-  Download,
-  FileSpreadsheet,
-  FileText,
   Sparkles,
-  ShieldCheck,
-  Layers,
   Compass,
+  Briefcase,
+  Layers,
+  ArrowRight,
+  Loader2,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { locationApiService } from '../../services/locationService';
@@ -27,7 +25,7 @@ import {
   SavedBusiness,
 } from '../../types';
 
-// Reusable Location Modular Components (Section 33)
+// Modular Location Components
 import { LocationSearch } from '../../components/location/LocationSearch';
 import { CurrentLocationButton } from '../../components/location/CurrentLocationButton';
 import { RadiusSelector } from '../../components/location/RadiusSelector';
@@ -44,18 +42,27 @@ import { LocationComparison } from '../../components/location/LocationComparison
 import { DataSourceInfo } from '../../components/location/DataSourceInfo';
 import { BusinessDetailsModal } from '../../components/location/BusinessDetailsModal';
 
+// Standard Google Places supported categories
 const CATEGORY_PRESETS = [
-  'Café',
+  'Cafe',
   'Restaurant',
-  'Grocery Store',
-  'Retail Shop',
-  'Pharmacy',
   'Bakery',
-  'Gym',
-  'Hospital',
-  'Hotel',
-  'Clothing Store',
+  'Grocery Store',
   'Supermarket',
+  'Clothing Store',
+  'Electronics Store',
+  'Mobile Phone Store',
+  'Pharmacy',
+  'Salon',
+  'Gym',
+  'Hotel',
+  'Book Store',
+  'Furniture Store',
+  'Jewelry Store',
+  'Automotive',
+  'Education',
+  'Healthcare',
+  'Other',
 ];
 
 export const LocationAnalysisPage: React.FC = () => {
@@ -66,20 +73,22 @@ export const LocationAnalysisPage: React.FC = () => {
   const paramLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : 74.5815;
   const paramName = searchParams.get('name') || 'Sangli, Maharashtra';
 
-  // Target location state (defaults to Sangli, Maharashtra as requested in context)
+  // Target location state
   const [selectedCoords, setSelectedCoords] = useState<[number, number]>([paramLat, paramLng]);
   const [locationName, setLocationName] = useState<string>(paramName);
   const [locationAddress, setLocationAddress] = useState<string>(paramName);
   const [radiusMeters, setRadiusMeters] = useState<number>(2000); // 2 km default
+  const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
 
   // Target business profile state
   const [businessIdea, setBusinessIdea] = useState<string>('Specialty Artisan Cafe & Roastery');
-  const [businessCategory, setBusinessCategory] = useState<string>('Café');
+  const [businessCategory, setBusinessCategory] = useState<string>('Cafe');
 
   // Analysis result state
   const [analysis, setAnalysis] = useState<LocationAnalysisResult | null>(null);
   const [businesses, setBusinesses] = useState<DiscoveredBusiness[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingStage, setLoadingStage] = useState<string>('Finding nearby businesses...');
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Selected business for modal
@@ -102,15 +111,19 @@ export const LocationAnalysisPage: React.FC = () => {
 
   // Comparison selection
   const [compareIds, setCompareIds] = useState<number[]>([]);
-  const [showComparison, setShowComparison] = useState<boolean>(false);
 
   // Active section tab: 'analysis' | 'saved' | 'comparison'
   const [activeTab, setActiveTab] = useState<'analysis' | 'saved' | 'comparison'>('analysis');
+
+  const loadingTimerRef = useRef<NodeJS.Timeout[]>([]);
 
   // Initial load
   useEffect(() => {
     loadAnalysis(selectedCoords[0], selectedCoords[1], radiusMeters);
     loadSavedRecords();
+    return () => {
+      loadingTimerRef.current.forEach(clearTimeout);
+    };
   }, []);
 
   const loadSavedRecords = async () => {
@@ -132,23 +145,47 @@ export const LocationAnalysisPage: React.FC = () => {
     radius: number,
     customName?: string,
     customAddr?: string,
-    categoryOverride?: string
+    categoryOverride?: string,
+    ideaOverride?: string
   ) => {
     setIsLoading(true);
     setAnalysisError(null);
+    setLoadingStage('Finding nearby businesses...');
+
+    // Staged progress indicators (Section 35)
+    loadingTimerRef.current.forEach(clearTimeout);
+    loadingTimerRef.current = [];
+
+    const t1 = setTimeout(() => {
+      setLoadingStage('Analyzing competitors...');
+    }, 600);
+    const t2 = setTimeout(() => {
+      setLoadingStage('Preparing location insights...');
+    }, 1300);
+    loadingTimerRef.current.push(t1, t2);
 
     const catToUse = categoryOverride !== undefined ? categoryOverride : businessCategory;
+    const ideaToUse = ideaOverride !== undefined ? ideaOverride : businessIdea;
+
     try {
       const areaToUse = customName || locationName || '';
       const analysisPromise = locationApiService.analyzeLocation({
         latitude: lat,
         longitude: lng,
         radius,
-        businessName: businessIdea,
+        businessName: ideaToUse,
         businessCategory: catToUse,
       });
 
-      const nearbyPromise = locationApiService.getNearbyBusinesses(lat, lng, radius, areaToUse);
+      const nearbyPromise = locationApiService.getNearbyBusinesses(
+        lat,
+        lng,
+        radius,
+        areaToUse,
+        catToUse,
+        ideaToUse
+      );
+
       const [analysisRes, nearbyRes] = await Promise.all([analysisPromise, nearbyPromise]);
 
       if (customName) {
@@ -161,7 +198,6 @@ export const LocationAnalysisPage: React.FC = () => {
 
       setAnalysis(analysisRes);
 
-      // Prefer businesses returned directly from spatial analysis for 100% sync
       const rawBusinesses =
         analysisRes.businesses && analysisRes.businesses.length > 0
           ? analysisRes.businesses
@@ -169,11 +205,13 @@ export const LocationAnalysisPage: React.FC = () => {
 
       // Enhance discovered businesses with direct competitor flag
       const competitorOsmIds = new Set(
-        (analysisRes.competition?.directCompetitors || []).map((c) => String(c.osm_id))
+        (analysisRes.competition?.directCompetitors || []).map((c) => String(c.osm_id || c.id))
       );
 
       const enhanced = rawBusinesses.map((b) => {
-        const isComp = competitorOsmIds.has(String(b.osm_id)) || Boolean(b.isDirectCompetitor);
+        const isComp =
+          competitorOsmIds.has(String(b.osm_id || b.id)) ||
+          Boolean(b.isDirectCompetitor || b.is_direct_competitor);
         return {
           ...b,
           is_direct_competitor: isComp,
@@ -184,9 +222,13 @@ export const LocationAnalysisPage: React.FC = () => {
       setBusinesses(enhanced);
     } catch (err: any) {
       console.error('Error running location analysis:', err);
-      setAnalysisError(err?.message || 'Unable to retrieve location analysis from OpenStreetMap. Please try again.');
+      setAnalysisError(
+        err?.message ||
+          'Unable to load nearby businesses. Please check your Google Maps API configuration.'
+      );
     } finally {
       setIsLoading(false);
+      loadingTimerRef.current.forEach(clearTimeout);
     }
   };
 
@@ -195,6 +237,11 @@ export const LocationAnalysisPage: React.FC = () => {
     setSelectedCoords([item.latitude, item.longitude]);
     setLocationName(item.name || item.display_name.split(',')[0]);
     setLocationAddress(item.display_name);
+
+    if (item.type === 'current_location') {
+      setCurrentLocation([item.latitude, item.longitude]);
+    }
+
     loadAnalysis(item.latitude, item.longitude, radiusMeters, item.name, item.display_name);
   };
 
@@ -224,9 +271,17 @@ export const LocationAnalysisPage: React.FC = () => {
     loadAnalysis(selectedCoords[0], selectedCoords[1], newRadius, locationName, locationAddress);
   };
 
-  // Trigger analysis rerun with updated business idea/category
-  const handleRerunAnalysis = () => {
-    loadAnalysis(selectedCoords[0], selectedCoords[1], radiusMeters, locationName, locationAddress);
+  // Trigger fresh analysis button click
+  const handleAnalyzeLocation = () => {
+    loadAnalysis(
+      selectedCoords[0],
+      selectedCoords[1],
+      radiusMeters,
+      locationName,
+      locationAddress,
+      businessCategory,
+      businessIdea
+    );
   };
 
   // Save current analysis
@@ -241,106 +296,100 @@ export const LocationAnalysisPage: React.FC = () => {
         longitude: selectedCoords[1],
         business_idea: businessIdea,
         business_category: businessCategory,
-        radius_km: analysis.radiusKm || radiusMeters / 1000,
-        total_businesses: analysis.totalBusinesses || 0,
-        relevant_businesses: analysis.relevantBusinesses || analysis.competition?.directCompetitorCount || 0,
-        business_density: analysis.businessDensity || analysis.businessDensityPerKm2 || 0,
-        average_relevant_distance: analysis.averageRelevantDistance || 'N/A',
-        concentration_level: analysis.concentrationLevel || 'Low concentration',
+        radius_km: radiusMeters / 1000,
         radius: radiusMeters,
-        business_count: analysis.totalBusinesses || 0,
-        category_summary: (analysis.categoryDistribution || []).reduce<Record<string, number>>((acc, item) => {
-          acc[item.category] = item.count;
-          return acc;
-        }, {}),
-        competition_level: analysis.competition?.competitionLevel || 'LOW',
+        total_businesses: businesses.length,
+        business_count: businesses.length,
+        relevant_businesses: analysis.competition?.directCompetitorCount || 0,
+        business_density: analysis.businessDensityPerKm2,
+        average_relevant_distance: analysis.averageRelevantDistance || null,
+        concentration_level: analysis.concentrationLevel || 'LOW',
         opportunity_score: analysis.opportunityScore?.overallScore || 70,
-        business_name: businessIdea,
+        category_summary: analysis.categoryDistribution.reduce((acc, curr) => {
+          acc[curr.category] = curr.count;
+          return acc;
+        }, {} as Record<string, number>),
       });
 
-      setSavedAnalyses((prev) => [saved, ...prev.filter((a) => a.id !== saved.id)]);
-      setSaveSuccessMsg('Location analysis successfully saved to your portfolio!');
-      setTimeout(() => setSaveSuccessMsg(null), 3500);
+      setSavedAnalyses((prev) => [saved, ...prev]);
+      setSaveSuccessMsg(`Location analysis for "${locationName}" saved to your portfolio.`);
+      setTimeout(() => setSaveSuccessMsg(null), 4000);
     } catch (err: any) {
-      alert('Failed to save analysis: ' + (err?.message || 'Unknown error'));
+      console.error('Failed to save location analysis:', err);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Save single business bookmark
   const handleSaveBusiness = async (biz: DiscoveredBusiness) => {
     try {
       const saved = await locationApiService.saveBusiness({
-        osm_id: biz.osm_id,
+        osm_id: String(biz.osm_id || biz.id),
         business_name: biz.name,
-        category: biz.category || 'Commercial',
+        category: biz.category,
         latitude: biz.latitude,
         longitude: biz.longitude,
         address: biz.address,
         phone: biz.phone,
         website: biz.website,
+        opening_hours: biz.opening_hours,
+        brand: biz.brand,
+        cuisine: biz.cuisine,
         distance_meters: biz.distance_meters,
       });
-      setSavedBusinesses((prev) => [saved, ...prev.filter((b) => b.osm_id !== saved.osm_id)]);
-    } catch (err) {
-      console.warn('Failed to save business:', err);
+      setSavedBusinesses((prev) => [saved, ...prev]);
+    } catch (err: any) {
+      console.error('Failed to save business:', err);
     }
   };
 
-  // Delete saved analysis
-  const handleDeleteAnalysis = async (id: number | string) => {
+  const handleDeleteAnalysis = async (id: number) => {
     try {
       await locationApiService.deleteLocationAnalysis(id);
       setSavedAnalyses((prev) => prev.filter((a) => a.id !== id));
-      setCompareIds((prev) => prev.filter((cid) => cid !== id));
+      setCompareIds((prev) => prev.filter((x) => x !== id));
     } catch (err) {
-      console.warn('Failed to delete analysis:', err);
+      console.error('Failed to delete analysis:', err);
     }
   };
 
-  // Load saved analysis onto map
   const handleLoadSavedAnalysis = (saved: SavedLocationAnalysis) => {
     setSelectedCoords([saved.latitude, saved.longitude]);
     setLocationName(saved.location_name);
     setLocationAddress(saved.address);
-    if (saved.business_idea) setBusinessIdea(saved.business_idea);
+    if (saved.radius) setRadiusMeters(saved.radius);
     if (saved.business_category) setBusinessCategory(saved.business_category);
-    const rad = saved.radius || (saved.radius_km ? saved.radius_km * 1000 : 2000);
-    setRadiusMeters(rad);
-    loadAnalysis(saved.latitude, saved.longitude, rad, saved.location_name, saved.address);
+    if (saved.business_idea) setBusinessIdea(saved.business_idea);
     setActiveTab('analysis');
+    loadAnalysis(saved.latitude, saved.longitude, saved.radius || 2000, saved.location_name, saved.address);
   };
 
-  // Toggle compare selection
   const handleToggleCompare = (id: number) => {
     setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 4) {
-        alert('You can compare up to 4 locations side-by-side.');
-        return prev;
+      if (prev.includes(id)) {
+        return prev.filter((x) => x !== id);
+      }
+      if (prev.length >= 3) {
+        return [prev[1], prev[2], id];
       }
       return [...prev, id];
     });
   };
 
-  // Filter and sort businesses for list display
+  // Filtered businesses
   const filteredBusinesses = useMemo(() => {
     return businesses
       .filter((biz) => {
-        // Category filter
         if (filters.category !== 'ALL') {
           const cat = (biz.category || '').toLowerCase();
           const targetCat = filters.category.toLowerCase();
           if (!cat.includes(targetCat) && !targetCat.includes(cat)) return false;
         }
 
-        // Competitors only
         if (filters.competitorsOnly && !biz.is_direct_competitor) {
           return false;
         }
 
-        // Search query
         if (filters.searchQuery.trim()) {
           const q = filters.searchQuery.toLowerCase();
           const matchesName = (biz.name || '').toLowerCase().includes(q);
@@ -364,7 +413,6 @@ export const LocationAnalysisPage: React.FC = () => {
       });
   }, [businesses, filters]);
 
-  // Categories count list for filter bar
   const availableCategoryCounts = useMemo(() => {
     const map: Record<string, number> = {};
     businesses.forEach((b) => {
@@ -375,7 +423,7 @@ export const LocationAnalysisPage: React.FC = () => {
   }, [businesses]);
 
   const savedOsmIdSet = useMemo(() => {
-    return new Set(savedBusinesses.map((b) => b.osm_id));
+    return new Set(savedBusinesses.map((b) => String(b.osm_id)));
   }, [savedBusinesses]);
 
   const compareList = useMemo(() => {
@@ -389,12 +437,13 @@ export const LocationAnalysisPage: React.FC = () => {
         <div>
           <PageHeader
             title="Location Intelligence & Geospatial Analytics"
-            subtitle="Discover nearby commercial presence, measure commercial density, and analyze transparent competitor concentration powered by OpenStreetMap."
+            subtitle="Discover nearby commercial presence, calculate business density, and evaluate transparent competition powered by Google Maps Platform & Google Places API (New)."
           />
         </div>
 
-        {/* Global Action Header Buttons */}
+        {/* Global Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Send to Market Analysis */}
           <button
             type="button"
             onClick={() => {
@@ -405,7 +454,23 @@ export const LocationAnalysisPage: React.FC = () => {
             className="px-3.5 py-2 rounded-lg bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Market Analysis (Part 6)</span>
+            <span>Open in Market Analysis</span>
+          </button>
+
+          {/* Send to Business Planner */}
+          <button
+            type="button"
+            onClick={() => {
+              const compCount = analysis?.relevantBusinesses || analysis?.competition?.directCompetitorCount || 0;
+              const densityVal = analysis?.businessDensityPerKm2 || 0;
+              navigate(
+                `/business-plans/new?location=${encodeURIComponent(locationName)}&lat=${selectedCoords[0]}&lng=${selectedCoords[1]}&category=${encodeURIComponent(businessCategory)}&businessName=${encodeURIComponent(businessIdea)}&competitors=${compCount}&density=${densityVal}`
+              );
+            }}
+            className="px-3.5 py-2 rounded-lg bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Briefcase className="w-3.5 h-3.5 text-[#38BDF8]" />
+            <span>Apply to Business Plan</span>
           </button>
 
           <button
@@ -415,7 +480,7 @@ export const LocationAnalysisPage: React.FC = () => {
             className="px-3.5 py-2 rounded-lg bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
           >
             <Bookmark className="w-3.5 h-3.5 text-[#FFBF24]" />
-            <span>{isSaving ? 'Saving...' : 'Save Analysis'}</span>
+            <span>{isSaving ? 'Saving...' : 'Save Site'}</span>
           </button>
 
           <button
@@ -428,27 +493,27 @@ export const LocationAnalysisPage: React.FC = () => {
             }`}
           >
             <Building className="w-3.5 h-3.5 text-[#A1A1AA]" />
-            <span>Saved Portfolio ({savedAnalyses.length})</span>
+            <span>Saved Sites ({savedAnalyses.length})</span>
           </button>
-
-          {compareIds.length >= 2 && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('comparison')}
-              className="px-3.5 py-2 rounded-lg bg-[#FFBF24]/10 hover:bg-[#FFBF24]/20 border border-[#FFBF24]/30 text-[#FFBF24] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <GitCompare className="w-3.5 h-3.5" />
-              <span>Compare Sites ({compareIds.length})</span>
-            </button>
-          )}
         </div>
       </div>
 
       {/* Save Success Notice */}
       {saveSuccessMsg && (
-        <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-xs font-semibold text-emerald-400 flex items-center gap-2 animate-in fade-in duration-200">
+        <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-xs font-semibold text-emerald-400 flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-400" />
           <span>{saveSuccessMsg}</span>
+        </div>
+      )}
+
+      {/* Staged Loading Bar (Section 35) */}
+      {isLoading && (
+        <div className="p-3.5 rounded-xl bg-[#111113] border border-[#FFBF24]/30 shadow-lg flex items-center justify-between gap-4 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-4 h-4 animate-spin text-[#FFBF24]" />
+            <span className="text-xs font-semibold text-[#F8FAFC]">{loadingStage}</span>
+          </div>
+          <span className="text-[11px] text-[#A1A1AA] font-mono">Google Places (New) live lookup</span>
         </div>
       )}
 
@@ -464,7 +529,7 @@ export const LocationAnalysisPage: React.FC = () => {
           }`}
         >
           <MapPin className="w-3.5 h-3.5" />
-          <span>Live Spatial Analysis</span>
+          <span>Live Location Analysis</span>
         </button>
 
         <button
@@ -477,7 +542,7 @@ export const LocationAnalysisPage: React.FC = () => {
           }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
-          <span>Saved Locations ({savedAnalyses.length})</span>
+          <span>Saved Sites ({savedAnalyses.length})</span>
         </button>
 
         {compareIds.length >= 2 && (
@@ -496,17 +561,17 @@ export const LocationAnalysisPage: React.FC = () => {
         )}
       </div>
 
-      {/* Main Tab: Live Spatial Analysis */}
+      {/* Main Tab: Live Location Analysis */}
       {activeTab === 'analysis' && (
         <div className="space-y-6">
-          {/* Top Controls Box */}
+          {/* Top Controls Box: Location Search & Analysis Controls */}
           <div className="p-4 bg-[#111113] rounded-xl border border-[#27272A] shadow-sm space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-              {/* Location Search Input */}
-              <div className="lg:col-span-6 space-y-1.5">
+              {/* Location Search Input (Section 5) */}
+              <div className="lg:col-span-5 space-y-1.5">
                 <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider flex items-center gap-1">
                   <MapPin className="w-3 h-3 text-[#FFBF24]" />
-                  Target Location
+                  Search Location (Any City, Area, Address or PIN)
                 </label>
                 <div className="flex items-center gap-2">
                   <LocationSearch
@@ -518,50 +583,28 @@ export const LocationAnalysisPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Business Idea Context */}
+              {/* Business Idea Context (Section 11) */}
               <div className="lg:col-span-3 space-y-1.5">
                 <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider">
-                  Business Idea Name
+                  Enter Your Business Idea
                 </label>
                 <input
                   type="text"
                   value={businessIdea}
                   onChange={(e) => setBusinessIdea(e.target.value)}
-                  placeholder="e.g. Specialty Artisan Cafe"
+                  placeholder="e.g. Coffee Shop, Mobile Repair, Bakery"
                   className="w-full px-3 py-2 bg-[#1A1A1D] border border-[#27272A] focus:border-[#FFBF24] rounded-lg text-xs text-[#F8FAFC] focus:outline-none"
                 />
               </div>
 
-              {/* Business Category Selection */}
-              <div className="lg:col-span-3 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider">
-                    Category Match
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleRerunAnalysis}
-                    disabled={isLoading}
-                    className="text-[10px] text-[#FFBF24] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <RotateCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </button>
-                </div>
+              {/* Business Category Selection (Section 10) */}
+              <div className="lg:col-span-2 space-y-1.5">
+                <label className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider">
+                  Category
+                </label>
                 <select
                   value={businessCategory}
-                  onChange={(e) => {
-                    const newCat = e.target.value;
-                    setBusinessCategory(newCat);
-                    loadAnalysis(
-                      selectedCoords[0],
-                      selectedCoords[1],
-                      radiusMeters,
-                      locationName,
-                      locationAddress,
-                      newCat
-                    );
-                  }}
+                  onChange={(e) => setBusinessCategory(e.target.value)}
                   className="w-full px-3 py-2 bg-[#1A1A1D] border border-[#27272A] focus:border-[#FFBF24] rounded-lg text-xs text-[#F8FAFC] focus:outline-none cursor-pointer"
                 >
                   {CATEGORY_PRESETS.map((cat) => (
@@ -571,9 +614,22 @@ export const LocationAnalysisPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+
+              {/* Primary Analyze Location Button (Section 20) */}
+              <div className="lg:col-span-2">
+                <button
+                  type="button"
+                  onClick={handleAnalyzeLocation}
+                  disabled={isLoading}
+                  className="w-full py-2 px-3.5 rounded-lg bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  <Sparkles className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>{isLoading ? 'Analyzing...' : 'Analyze Location'}</span>
+                </button>
+              </div>
             </div>
 
-            {/* Radius Selector */}
+            {/* Radius Selector (Section 9) */}
             <div className="pt-3 border-t border-[#27272A]">
               <RadiusSelector
                 selectedRadiusMeters={radiusMeters}
@@ -583,10 +639,10 @@ export const LocationAnalysisPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Data Source Notice Banner */}
+          {/* Data Source Notice Banner (Section 36) */}
           <DataSourceInfo variant="banner" />
 
-          {/* Analysis Error Message if any */}
+          {/* Analysis Error Message */}
           {analysisError && (
             <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
@@ -594,22 +650,22 @@ export const LocationAnalysisPage: React.FC = () => {
             </div>
           )}
 
-          {/* Analytical KPI Cards (Section 9) */}
+          {/* Analytical KPI Cards */}
           {analysis && <LocationKpiCards analysis={analysis} />}
 
           {/* Split Main Layout: Map & POIs on Left, Analytical Cards on Right */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left 7 Columns: Interactive Map + Discovered POI List */}
+            {/* Left 7 Columns: Google Map + Discovered Places List */}
             <div className="lg:col-span-7 space-y-4">
-              {/* Location Map (Section 5 & 6) */}
+              {/* Location Map Container (Section 4) */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs px-1">
                   <div className="flex items-center gap-1.5 text-[#F8FAFC] font-semibold truncate">
                     <MapPin className="w-3.5 h-3.5 text-[#FFBF24]" />
                     <span className="truncate">{locationName}</span>
                   </div>
-                  <span className="text-[#71717A] text-[11px]">
-                    Coordinates: {selectedCoords[0].toFixed(4)}, {selectedCoords[1].toFixed(4)}
+                  <span className="text-[#A1A1AA] text-[11px] font-mono">
+                    {selectedCoords[0].toFixed(4)}, {selectedCoords[1].toFixed(4)}
                   </span>
                 </div>
 
@@ -620,16 +676,17 @@ export const LocationAnalysisPage: React.FC = () => {
                   targetLocationName={locationName}
                   selectedBusinessId={selectedBusiness?.id}
                   onLocationSelect={handleMapClick}
+                  currentLocation={currentLocation}
                   onBusinessSelect={(biz) => {
                     setSelectedBusiness(biz);
                     setIsModalOpen(true);
                   }}
                   onBusinessSave={handleSaveBusiness}
-                  height="450px"
+                  height="460px"
                 />
               </div>
 
-              {/* Filters for Discovered Businesses (Section 7) */}
+              {/* Filters for Discovered Places */}
               <BusinessFilters
                 filters={filters}
                 onChangeFilters={setFilters}
@@ -638,7 +695,7 @@ export const LocationAnalysisPage: React.FC = () => {
                 competitorCount={analysis?.relevantBusinesses || analysis?.competition?.directCompetitorCount || 0}
               />
 
-              {/* Structured Nearby Businesses List (Section 8) */}
+              {/* Nearby Business List (Section 14) */}
               <NearbyBusinessList
                 businesses={filteredBusinesses}
                 onSelectBusiness={(biz) => {
@@ -655,10 +712,10 @@ export const LocationAnalysisPage: React.FC = () => {
 
             {/* Right 5 Columns: Spatial Intelligence & Analysis Cards */}
             <div className="lg:col-span-5 space-y-4">
-              {/* Business Density Card (Section 10) */}
+              {/* Business Density Card (Section 18) */}
               {analysis && <BusinessDensityCard analysis={analysis} />}
 
-              {/* Competitor Analysis Card (Section 11 & 12) */}
+              {/* Competitor Analysis Card (Section 16 & 17) */}
               {analysis && (
                 <CompetitorAnalysis
                   analysis={analysis}
@@ -669,13 +726,13 @@ export const LocationAnalysisPage: React.FC = () => {
                 />
               )}
 
-              {/* Category Distribution Chart (Section 13) */}
+              {/* Category Distribution Chart */}
               {analysis && <CategoryDistributionChart analysis={analysis} />}
 
-              {/* Location Insights Engine (Section 14) */}
+              {/* Location Insights Engine (Section 19) */}
               {analysis && <LocationInsights analysis={analysis} />}
 
-              {/* Data Source Transparency Card (Section 18) */}
+              {/* Data Source Disclosure Card (Section 36) */}
               <DataSourceInfo variant="card" />
             </div>
           </div>
@@ -723,7 +780,7 @@ export const LocationAnalysisPage: React.FC = () => {
           setSelectedBusiness(null);
         }}
         onSave={handleSaveBusiness}
-        isSaved={selectedBusiness ? savedOsmIdSet.has(selectedBusiness.osm_id) : false}
+        isSaved={selectedBusiness ? savedOsmIdSet.has(String(selectedBusiness.osm_id || selectedBusiness.id)) : false}
       />
     </div>
   );

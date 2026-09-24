@@ -3,6 +3,7 @@
  * No fake data. Real OpenStreetMap Nominatim and Overpass API integration with caching and resilience.
  */
 import { logger } from '../utils/logger.js';
+import { googlePlacesService } from './googlePlacesService.js';
 
 export interface GeoLocationResult {
   place_id: string | number;
@@ -563,6 +564,18 @@ export class LocationService {
     const trimmed = query.trim();
     if (!trimmed) return [];
 
+    // Prioritize Google Geocoding API if key is available
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        const googleResults = await googlePlacesService.geocode(trimmed);
+        if (googleResults && googleResults.length > 0) {
+          return googleResults;
+        }
+      } catch (err: any) {
+        logger.warn('Google Geocode error, falling back:', err?.message || err);
+      }
+    }
+
     const cacheKey = trimmed.toLowerCase();
     const cached = geocodeCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
@@ -669,6 +682,19 @@ export class LocationService {
   public async reverseGeocode(lat: number, lng: number): Promise<GeoLocationResult | null> {
     const roundedLat = parseFloat(lat.toFixed(4));
     const roundedLng = parseFloat(lng.toFixed(4));
+
+    // Prioritize Google Reverse Geocoding API if key is available
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        const googleResult = await googlePlacesService.reverseGeocode(roundedLat, roundedLng);
+        if (googleResult) {
+          return googleResult;
+        }
+      } catch (err: any) {
+        logger.warn('Google Reverse Geocode error, falling back:', err?.message || err);
+      }
+    }
+
     const cacheKey = `${roundedLat},${roundedLng}`;
 
     const cached = reverseGeocodeCache.get(cacheKey);
@@ -745,11 +771,51 @@ export class LocationService {
     lat: number,
     lng: number,
     radiusMeters = 2000,
-    _areaName?: string
+    _areaName?: string,
+    businessCategory?: string,
+    businessIdea?: string
   ): Promise<DiscoveredBusiness[]> {
-    const validRadius = Math.min(Math.max(radiusMeters, 500), 10000);
-    const roundedLat = parseFloat(lat.toFixed(4));
-    const roundedLng = parseFloat(lng.toFixed(4));
+    const validRadius = Math.min(Math.max(radiusMeters, 100), 50000);
+    const roundedLat = parseFloat(lat.toFixed(5));
+    const roundedLng = parseFloat(lng.toFixed(5));
+
+    // 1. Primary Engine: Google Places API (New) with fresh lookups
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        let rawPlaces: any[] = [];
+        if (businessIdea && businessIdea.trim().length > 0) {
+          rawPlaces = await googlePlacesService.searchText({
+            textQuery: businessIdea.trim(),
+            latitude: roundedLat,
+            longitude: roundedLng,
+            radiusMeters: validRadius,
+            maxResultCount: 20,
+          });
+        } else {
+          const placeTypes = googlePlacesService.mapCategoryToGoogleTypes(businessCategory || 'store');
+          rawPlaces = await googlePlacesService.searchNearby({
+            latitude: roundedLat,
+            longitude: roundedLng,
+            radiusMeters: validRadius,
+            placeTypes,
+            maxResultCount: 20,
+          });
+        }
+
+        if (rawPlaces && rawPlaces.length > 0) {
+          return googlePlacesService.normalizeGooglePlaces(
+            rawPlaces,
+            roundedLat,
+            roundedLng,
+            businessCategory,
+            businessIdea
+          );
+        }
+      } catch (err: any) {
+        logger.warn('Google Places API call in getNearbyBusinesses failed, attempting secondary:', err?.message || err);
+      }
+    }
+
     const cacheKey = `${roundedLat},${roundedLng},${validRadius}`;
 
     const cached = overpassCache.get(cacheKey);
@@ -929,8 +995,15 @@ export class LocationService {
     const locationName = geo?.name || `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
     const address = geo?.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
-    // 2. Discover Real Businesses from OSM with area context
-    const businesses = await this.getNearbyBusinesses(lat, lng, validRadius, locationName);
+    // 2. Discover Real Businesses from Google Places API (New) with fallback
+    const businesses = await this.getNearbyBusinesses(
+      lat,
+      lng,
+      validRadius,
+      locationName,
+      targetBusiness?.category,
+      targetBusiness?.name
+    );
 
     // 3. Compute Spatial Density
     const radiusKm = validRadius / 1000;
@@ -1220,10 +1293,15 @@ export class LocationService {
         explanation:
           'The score is an analytical indicator based on available location and business data. It is not a guarantee of business success.',
       },
-      attribution: '© OpenStreetMap contributors',
-      dataSource: 'OpenStreetMap Nominatim & Overpass API',
-      disclaimer:
-        'Business information is sourced from OpenStreetMap and may not include every business in the area. Availability and accuracy depend on the underlying map data.',
+      attribution: googlePlacesService.isKeyConfigured()
+        ? 'Business locations and place information are provided through Google Maps Platform / Google Places.'
+        : '© OpenStreetMap contributors',
+      dataSource: googlePlacesService.isKeyConfigured()
+        ? 'Google Maps Platform / Google Places API (New)'
+        : 'OpenStreetMap Nominatim & Overpass API',
+      disclaimer: googlePlacesService.isKeyConfigured()
+        ? 'Business listings and location observations are retrieved live from Google Places API (New). Analysis metrics are analytical indicators and not guarantees of business success.'
+        : 'Business information is sourced from OpenStreetMap and may not include every business in the area. Availability and accuracy depend on the underlying map data.',
     };
   }
 }

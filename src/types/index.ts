@@ -514,6 +514,7 @@ export interface MarketCompetitor {
   id?: number | string;
   osm_id?: string;
   name: string;
+  business_name?: string;
   category: string;
   broadCategory?: string;
   latitude: number;

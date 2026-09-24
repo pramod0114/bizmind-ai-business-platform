@@ -40,8 +40,15 @@ export async function calculateMarketAnalysis(req: AuthRequest, res: Response): 
     const rKm = Math.min(Math.max(parseFloat(String(radiusKm)) || 2, 0.5), 10);
     const radiusMeters = Math.round(rKm * 1000);
 
-    // 1. Fetch real businesses from OpenStreetMap
-    const businesses = await locationService.getNearbyBusinesses(lat, lng, radiusMeters, locationName || 'Target Area');
+    // 1. Fetch real businesses via Google Places API (New) with fallback
+    const businesses = await locationService.getNearbyBusinesses(
+      lat,
+      lng,
+      radiusMeters,
+      locationName || 'Target Area',
+      businessCategory,
+      businessIdea
+    );
 
     // 2. Perform authoritative backend calculations
     const result = calculateMarketMetrics({
@@ -96,8 +103,15 @@ export async function createMarketAnalysis(req: AuthRequest, res: Response): Pro
     const rKm = Math.min(Math.max(parseFloat(String(radiusKm)) || 2, 0.5), 10);
     const radiusMeters = Math.round(rKm * 1000);
 
-    // 1. Retrieve businesses from OSM
-    const businesses = await locationService.getNearbyBusinesses(lat, lng, radiusMeters, locationName);
+    // 1. Retrieve businesses via Google Places API (New) with fallback
+    const businesses = await locationService.getNearbyBusinesses(
+      lat,
+      lng,
+      radiusMeters,
+      locationName,
+      businessCategory,
+      businessIdea
+    );
 
     // 2. Calculate authoritative metrics
     const calc = calculateMarketMetrics({

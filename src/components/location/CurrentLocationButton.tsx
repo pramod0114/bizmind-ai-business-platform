@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigation, Loader2, CheckCircle2 } from 'lucide-react';
+import { Navigation, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { GeoLocationResult } from '../../types';
 import { locationApiService } from '../../services/locationService';
 
@@ -15,38 +15,55 @@ export const CurrentLocationButton: React.FC<CurrentLocationButtonProps> = ({
   variant = 'button',
 }) => {
   const [loading, setLoading] = useState(false);
-  const [detectedText, setDetectedText] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isDenied, setIsDenied] = useState(false);
 
   const handleGetCurrentLocation = async () => {
     setLoading(true);
-    setDetectedText(null);
+    setStatusMessage(null);
+    setIsDenied(false);
 
-    // 1. Try Browser Geolocation API
+    // 1. Browser Geolocation API
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       try {
         const coords = await new Promise<{ latitude: number; longitude: number }>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
             (err) => reject(err),
-            { timeout: 4000, enableHighAccuracy: true, maximumAge: 60000 }
+            { timeout: 7000, enableHighAccuracy: true, maximumAge: 30000 }
           );
         });
 
-        // Reverse geocode to human-readable address
+        // Reverse geocode with Google
         const reverse = await locationApiService.reverseGeocode(coords.latitude, coords.longitude);
-        if (reverse) {
-          setDetectedText(reverse.name || 'Current Location');
-          onLocationFound(reverse);
+        const locationName = reverse?.name || `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
+        const result: GeoLocationResult = {
+          place_id: reverse?.place_id || `gps_${Date.now()}`,
+          name: locationName,
+          display_name: reverse?.display_name || `Current GPS Location: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          type: 'current_location',
+          address: reverse?.address,
+        };
+
+        setStatusMessage(locationName);
+        onLocationFound(result);
+        setLoading(false);
+        setTimeout(() => setStatusMessage(null), 4000);
+        return;
+      } catch (err: any) {
+        if (err?.code === 1 || err?.code === err?.PERMISSION_DENIED) {
+          setIsDenied(true);
+          setStatusMessage('Location permission was denied. Please search for a location manually.');
           setLoading(false);
-          setTimeout(() => setDetectedText(null), 3000);
           return;
         }
-      } catch {
-        // Geolocation blocked, timed out, or denied (very common in iframe)
+        // If not explicit permission denial, try IP fallback gracefully
       }
     }
 
-    // 2. Reliable IP Geolocation Fallback
+    // 2. Network IP Geolocation Fallback
     try {
       const ipResult = await locationApiService.ipLocate();
       const geoResult: GeoLocationResult = {
@@ -63,60 +80,70 @@ export const CurrentLocationButton: React.FC<CurrentLocationButtonProps> = ({
         },
       };
 
-      setDetectedText(ipResult.name);
+      setStatusMessage(ipResult.name);
       onLocationFound(geoResult);
-    } catch (err) {
-      console.error('Failed to locate current position:', err);
+    } catch {
+      setStatusMessage('Location permission was denied. Please search for a location manually.');
+      setIsDenied(true);
     } finally {
       setLoading(false);
-      setTimeout(() => setDetectedText(null), 3000);
+      setTimeout(() => {
+        if (!isDenied) setStatusMessage(null);
+      }, 4000);
     }
   };
 
-  if (variant === 'icon') {
-    return (
-      <button
-        type="button"
-        onClick={handleGetCurrentLocation}
-        disabled={loading}
-        title="Detect current location"
-        className={`p-2.5 rounded-lg bg-[#1A1A1D] hover:bg-[#27272A] border border-[#27272A] text-[#A1A1AA] hover:text-[#FFBF24] transition-all disabled:opacity-50 cursor-pointer ${className}`}
-      >
-        {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin text-[#FFBF24]" />
-        ) : detectedText ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-        ) : (
-          <Navigation className="w-4 h-4" />
-        )}
-      </button>
-    );
-  }
-
   return (
-    <button
-      id="current-location-btn"
-      type="button"
-      onClick={handleGetCurrentLocation}
-      disabled={loading}
-      className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold tracking-wide bg-[#1A1A1D] hover:bg-[#27272A] text-[#F8FAFC] hover:text-[#FFBF24] border border-[#27272A] hover:border-[#FFBF24]/40 transition-all shadow-sm disabled:opacity-50 cursor-pointer ${className}`}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFBF24]" />
-          <span>Locating...</span>
-        </>
-      ) : detectedText ? (
-        <>
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="truncate max-w-[140px]">{detectedText}</span>
-        </>
+    <div className="flex flex-col gap-1.5">
+      {variant === 'icon' ? (
+        <button
+          type="button"
+          onClick={handleGetCurrentLocation}
+          disabled={loading}
+          title="Use My Current Location"
+          className={`p-2.5 rounded-lg bg-[#1A1A1D] hover:bg-[#27272A] border border-[#27272A] text-[#A1A1AA] hover:text-[#FFBF24] transition-all disabled:opacity-50 cursor-pointer ${className}`}
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-[#FFBF24]" />
+          ) : statusMessage && !isDenied ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <Navigation className="w-4 h-4" />
+          )}
+        </button>
       ) : (
-        <>
-          <Navigation className="w-3.5 h-3.5 text-[#FFBF24]" />
-          <span>Use Current Location</span>
-        </>
+        <button
+          id="current-location-btn"
+          type="button"
+          onClick={handleGetCurrentLocation}
+          disabled={loading}
+          className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold tracking-wide bg-[#1A1A1D] hover:bg-[#27272A] text-[#F8FAFC] hover:text-[#FFBF24] border border-[#27272A] hover:border-[#FFBF24]/40 transition-all shadow-sm disabled:opacity-50 cursor-pointer ${className}`}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFBF24]" />
+              <span>Requesting Location...</span>
+            </>
+          ) : statusMessage && !isDenied ? (
+            <>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="truncate max-w-[140px]">{statusMessage}</span>
+            </>
+          ) : (
+            <>
+              <Navigation className="w-3.5 h-3.5 text-[#FFBF24]" />
+              <span>Use My Current Location</span>
+            </>
+          )}
+        </button>
       )}
-    </button>
+
+      {isDenied && (
+        <div className="flex items-center gap-1.5 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>Location permission was denied. Please search for a location manually.</span>
+        </div>
+      )}
+    </div>
   );
 };

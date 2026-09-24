@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
 import { MarketCompetitor } from '../../types';
-import { Layers, ZoomIn, ZoomOut, Maximize2, Minimize2, Flame, Building2, MapPin } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Flame, Building2, MapPin, Navigation, AlertCircle } from 'lucide-react';
+import { loadGoogleMaps, BIZMIND_DARK_MAP_STYLES } from '../../services/googleMapsService';
 
 interface CompetitorMapProps {
   center: [number, number];
@@ -29,266 +29,308 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
   height = '480px',
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
-  const circleRef = useRef<L.Circle | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const circleRef = useRef<google.maps.Circle | null>(null);
+  const centerMarkerRef = useRef<google.maps.Marker | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showOther, setShowOther] = useState(true);
 
-  // Initialize Map
+  // Initialize Google Maps
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    let isMounted = true;
 
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center,
-        zoom,
-        zoomControl: false,
-        attributionControl: false,
-      });
+    async function initMap() {
+      try {
+        setLoadError(null);
+        const google = await loadGoogleMaps();
+        if (!isMounted || !mapContainerRef.current) return;
 
-      // Dark styled tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        className: 'osm-dark-tiles',
-        maxZoom: 19,
-        subdomains: ['a', 'b', 'c'],
-      }).addTo(map);
+        const map = new google.maps.Map(mapContainerRef.current, {
+          center: { lat: center[0], lng: center[1] },
+          zoom,
+          styles: BIZMIND_DARK_MAP_STYLES,
+          disableDefaultUI: true,
+          clickableIcons: false,
+          gestureHandling: 'greedy',
+          backgroundColor: '#0B0B0C',
+        });
 
-      // Attribution
-      L.control
-        .attribution({ position: 'bottomright', prefix: false })
-        .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors')
-        .addTo(map);
-
-      mapInstanceRef.current = map;
-      markersLayerRef.current = L.layerGroup().addTo(map);
+        mapInstanceRef.current = map;
+        infoWindowRef.current = new google.maps.InfoWindow();
+        setMapLoaded(true);
+      } catch (err: any) {
+        if (!isMounted) return;
+        setLoadError(err?.message || 'Failed to load Google Maps.');
+      }
     }
 
+    initMap();
+
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      isMounted = false;
+      if (circleRef.current) circleRef.current.setMap(null);
+      if (centerMarkerRef.current) centerMarkerRef.current.setMap(null);
+      markersRef.current.forEach((m) => m.setMap(null));
+      markersRef.current = [];
+      mapInstanceRef.current = null;
     };
   }, []);
 
-  // Update center, circle, and markers
+  // Update center
   useEffect(() => {
     const map = mapInstanceRef.current;
-    const markersLayer = markersLayerRef.current;
-    if (!map || !markersLayer) return;
+    if (!map) return;
+    map.panTo({ lat: center[0], lng: center[1] });
+  }, [center[0], center[1]]);
 
-    markersLayer.clearLayers();
+  // Update Circle, Target Marker & Competitors
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !window.google?.maps) return;
 
-    // 1. Draw Analysis Radius Circle
+    const google = window.google;
+
+    // 1. Draw Radius Circle
     if (circleRef.current) {
-      map.removeLayer(circleRef.current);
+      circleRef.current.setMap(null);
     }
     const radiusMeters = radiusKm * 1000;
-    circleRef.current = L.circle(center, {
-      radius: radiusMeters,
-      color: '#FFBF24',
-      weight: 2,
-      dashArray: '6, 6',
+    circleRef.current = new google.maps.Circle({
+      strokeColor: '#FFBF24',
+      strokeOpacity: 0.9,
+      strokeWeight: 2,
       fillColor: '#FFBF24',
       fillOpacity: 0.07,
-    }).addTo(map);
-
-    // 2. Draw Center Target Location Marker
-    const targetIcon = L.divIcon({
-      className: 'target-pin-custom',
-      html: `
-        <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 191, 36, 0.25); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="width: 26px; height: 26px; border-radius: 50%; background: #FFBF24; border: 3px solid #0B0B0C; box-shadow: 0 0 14px rgba(255, 191, 36, 0.8); display: flex; align-items: center; justify-content: center; color: #0B0B0C;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-          </div>
-        </div>
-      `,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
+      map,
+      center: { lat: center[0], lng: center[1] },
+      radius: radiusMeters,
+      clickable: false,
     });
 
-    const targetMarker = L.marker(center, { icon: targetIcon, zIndexOffset: 1000 });
-    targetMarker.bindPopup(`
-      <div style="font-family: inherit; padding: 2px;">
-        <span style="font-size: 10px; color: #FFBF24; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Target Trade Center</span>
-        <h4 style="margin: 2px 0 4px 0; font-size: 13px; font-weight: 700; color: #F8FAFC;">${locationName}</h4>
-        <p style="margin: 0; font-size: 11px; color: #A1A1AA;">Radius: ${radiusKm} km</p>
-      </div>
-    `);
-    markersLayer.addLayer(targetMarker);
+    // 2. Draw Center Target Location Marker
+    if (centerMarkerRef.current) {
+      centerMarkerRef.current.setMap(null);
+    }
 
-    // 3. Draw Direct Competitors
-    competitors.forEach((c) => {
-      const isSelected = selectedCompetitorId === c.osm_id || selectedCompetitorId === c.id;
-      const compIcon = L.divIcon({
-        className: 'competitor-pin-custom',
-        html: `
-          <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: ${isSelected ? '#EF4444' : '#F59E0B'}; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: #0B0B0C; font-weight: bold; transform: ${isSelected ? 'scale(1.25)' : 'scale(1)'}; transition: transform 0.2s;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#0B0B0C" stroke="#0B0B0C" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-            </div>
+    const centerMarker = new google.maps.Marker({
+      position: { lat: center[0], lng: center[1] },
+      map,
+      title: locationName,
+      zIndex: 1000,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: '#FFBF24',
+        fillOpacity: 1,
+        strokeColor: '#0B0B0C',
+        strokeWeight: 3,
+      },
+    });
+
+    centerMarker.addListener('click', () => {
+      if (!infoWindowRef.current) return;
+      infoWindowRef.current.setContent(`
+        <div style="padding: 6px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 190px;">
+          <div style="font-size: 10px; color: #FFBF24; font-weight: 800; text-transform: uppercase;">Analyzed Target Center</div>
+          <div style="font-weight: 700; font-size: 13px; color: #F8FAFC; margin-top: 2px;">${locationName}</div>
+          <div style="font-size: 11px; color: #A1A1AA; font-family: monospace; margin-top: 2px;">
+            ${center[0].toFixed(5)}, ${center[1].toFixed(5)}
           </div>
-        `,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-      });
-
-      const marker = L.marker([c.latitude, c.longitude], { icon: compIcon, zIndexOffset: isSelected ? 900 : 500 });
-      marker.on('click', () => {
-        onSelectCompetitor?.(c);
-      });
-
-      marker.bindPopup(`
-        <div style="font-family: inherit; min-width: 180px; padding: 2px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-            <span style="font-size: 10px; color: #F59E0B; text-transform: uppercase; font-weight: 700;">Direct Competitor</span>
-            <span style="font-size: 10px; color: #A1A1AA; font-family: monospace;">${c.distance_formatted}</span>
-          </div>
-          <h4 style="margin: 4px 0 2px 0; font-size: 13px; font-weight: 700; color: #F8FAFC;">${c.name}</h4>
-          <span style="display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #27272A; color: #E4E4E7; margin-bottom: 6px;">${c.category}</span>
-          ${c.address ? `<p style="margin: 0 0 6px 0; font-size: 11px; color: #A1A1AA; line-height: 1.3;">${c.address}</p>` : ''}
-          <div style="border-top: 1px solid #27272A; padding-top: 6px; font-size: 10px; color: #71717A;">
-            Click card below for full profile
+          <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px; border-top: 1px solid #27272A; padding-top: 3px;">
+            Radius: <strong style="color: #FFBF24;">${radiusKm.toFixed(1)} km</strong>
           </div>
         </div>
       `);
-
-      markersLayer.addLayer(marker);
+      infoWindowRef.current.open(map, centerMarker);
     });
 
-    // 4. Draw Other Businesses (if toggled)
-    if (showOther) {
-      otherBusinesses.forEach((b) => {
-        const otherIcon = L.divIcon({
-          className: 'other-pin-custom',
-          html: `
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: #38BDF8; border: 2px solid #18181B; box-shadow: 0 2px 5px rgba(0,0,0,0.5); opacity: 0.75; cursor: pointer;"></div>
-          `,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-        });
+    centerMarkerRef.current = centerMarker;
 
-        const marker = L.marker([b.latitude, b.longitude], { icon: otherIcon, zIndexOffset: 100 });
-        marker.bindPopup(`
-          <div style="font-family: inherit; min-width: 160px; padding: 2px;">
-            <span style="font-size: 10px; color: #38BDF8; text-transform: uppercase; font-weight: 700;">Nearby Business</span>
-            <h4 style="margin: 2px 0; font-size: 12px; font-weight: 600; color: #F8FAFC;">${b.name}</h4>
-            <span style="font-size: 10px; color: #A1A1AA;">${b.category} • ${b.distance_formatted}</span>
-          </div>
-        `);
-        markersLayer.addLayer(marker);
+    // 3. Clear old markers
+    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current = [];
+
+    // Helper to add markers
+    const addMarker = (c: MarketCompetitor, isCompetitor: boolean) => {
+      const isSelected = selectedCompetitorId === c.id;
+      const displayName = c.name || c.business_name || 'Business';
+      const marker = new google.maps.Marker({
+        position: { lat: c.latitude, lng: c.longitude },
+        map,
+        title: displayName,
+        zIndex: isSelected ? 900 : isCompetitor ? 800 : 400,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: isSelected ? 8 : isCompetitor ? 6.5 : 5,
+          fillColor: isCompetitor ? '#EF4444' : '#3B82F6',
+          fillOpacity: 1,
+          strokeColor: isSelected ? '#FFFFFF' : '#0B0B0C',
+          strokeWeight: isSelected ? 2.5 : 1.5,
+        },
       });
+
+      marker.addListener('click', () => {
+        if (onSelectCompetitor) onSelectCompetitor(c);
+
+        if (infoWindowRef.current) {
+          const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`;
+          infoWindowRef.current.setContent(`
+            <div style="padding: 8px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 230px; max-width: 280px; border-radius: 8px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${isCompetitor ? '#EF4444' : '#38BDF8'};">
+                  ${isCompetitor ? '⚠️ Direct Competitor' : 'Trade Area Establishment'}
+                </span>
+                <span style="font-size: 10px; background: #27272A; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #F8FAFC;">
+                  ${c.distance_km < 1 ? `${Math.round(c.distance_km * 1000)} m` : `${c.distance_km.toFixed(1)} km`}
+                </span>
+              </div>
+
+              <div style="font-weight: 800; font-size: 14px; color: #F8FAFC; margin-top: 4px; line-height: 1.3;">
+                ${displayName}
+              </div>
+
+              <div style="font-size: 11px; color: #FFBF24; margin-top: 2px; font-weight: 600;">
+                ${c.category}
+              </div>
+
+              ${c.address ? `<div style="font-size: 11px; color: #A1A1AA; margin-top: 4px; border-top: 1px solid #27272A; padding-top: 4px;">📍 ${c.address}</div>` : ''}
+
+              <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #27272A; display: flex; align-items: center; justify-content: space-between;">
+                <a 
+                  href="${googleMapsLink}" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style="font-size: 11px; color: #38BDF8; font-weight: 700; text-decoration: none;"
+                >
+                  View on Google Maps ↗
+                </a>
+              </div>
+            </div>
+          `);
+          infoWindowRef.current.open(map, marker);
+        }
+      });
+
+      markersRef.current.push(marker);
+    };
+
+    // Render direct competitors
+    competitors.forEach((c) => addMarker(c, true));
+
+    // Render other businesses if toggled
+    if (showOther) {
+      otherBusinesses.forEach((c) => addMarker(c, false));
     }
+  }, [center[0], center[1], radiusKm, competitors, otherBusinesses, selectedCompetitorId, showOther, locationName]);
 
-    // Adjust view
-    map.setView(center, zoom);
-  }, [center, zoom, radiusKm, locationName, competitors, otherBusinesses, selectedCompetitorId, showOther]);
-
-  // Recenter map handler
   const handleRecenter = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setView(center, 14);
+    if (!mapInstanceRef.current) return;
+    mapInstanceRef.current.panTo({ lat: center[0], lng: center[1] });
+    mapInstanceRef.current.setZoom(14);
+  };
+
+  const handleFitAll = () => {
+    if (!mapInstanceRef.current || !window.google?.maps) return;
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend({ lat: center[0], lng: center[1] });
+    competitors.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
+    if (showOther) {
+      otherBusinesses.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
     }
-  };
-
-  const handleZoomIn = () => {
-    mapInstanceRef.current?.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    mapInstanceRef.current?.zoomOut();
-  };
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-    setTimeout(() => {
-      mapInstanceRef.current?.invalidateSize();
-    }, 200);
+    mapInstanceRef.current.fitBounds(bounds, 40);
   };
 
   return (
     <div
-      className={`relative rounded-xl overflow-hidden border border-[#27272A] bg-[#111113] ${
-        isFullscreen ? 'fixed inset-4 z-50 shadow-2xl h-[calc(100vh-2rem)]' : ''
-      } ${className}`}
-      style={{ height: isFullscreen ? undefined : height }}
+      className={`relative w-full rounded-xl overflow-hidden border border-[#27272A] bg-[#0B0B0C] ${className}`}
+      style={{ height }}
     >
-      <div ref={mapContainerRef} className="w-full h-full" />
+      <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Floating Controls Overlay */}
-      <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-1.5 bg-[#18181B]/90 backdrop-blur-md p-1.5 rounded-lg border border-[#27272A]">
-        <button
-          type="button"
-          onClick={handleZoomIn}
-          className="p-2 hover:bg-[#27272A] rounded text-[#F8FAFC] transition-colors"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={handleZoomOut}
-          className="p-2 hover:bg-[#27272A] rounded text-[#F8FAFC] transition-colors"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={handleRecenter}
-          className="p-2 hover:bg-[#27272A] rounded text-[#FFBF24] transition-colors"
-          title="Recenter Map"
-        >
-          <MapPin className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="p-2 hover:bg-[#27272A] rounded text-[#A1A1AA] hover:text-[#F8FAFC] transition-colors"
-          title="Toggle Fullscreen"
-        >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* Layer Toggle & Legend Overlay */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-[#18181B]/95 backdrop-blur-md p-3 rounded-lg border border-[#27272A] text-xs space-y-2 shadow-lg max-w-[260px]">
-        <div className="flex items-center justify-between gap-3 pb-1.5 border-b border-[#27272A]">
-          <span className="font-bold text-[#F8FAFC] text-[11px] uppercase tracking-wider">Map Legend</span>
-          <button
-            type="button"
-            onClick={() => setShowOther(!showOther)}
-            className="text-[10px] text-[#38BDF8] hover:underline cursor-pointer"
-          >
-            {showOther ? 'Hide Other' : 'Show Other'}
-          </button>
+      {loadError && (
+        <div className="absolute inset-0 bg-[#0B0B0C]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
+          <AlertCircle className="w-8 h-8 text-[#FFBF24] mb-2" />
+          <h4 className="text-sm font-bold text-white mb-1">Google Maps Platform</h4>
+          <p className="text-xs text-[#A1A1AA] max-w-sm">{loadError}</p>
         </div>
+      )}
 
-        <div className="space-y-1.5 text-[11px]">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#FFBF24] border border-black shrink-0" />
-            <span className="text-[#F8FAFC] font-medium">Selected Location</span>
+      {mapLoaded && (
+        <>
+          {/* Top-Right Controls */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+            <button
+              onClick={() => setShowOther(!showOther)}
+              className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold backdrop-blur-md transition-all cursor-pointer ${
+                showOther
+                  ? 'bg-[#111113]/90 border-[#27272A] text-[#F8FAFC]'
+                  : 'bg-[#111113]/60 border-[#27272A] text-[#71717A]'
+              }`}
+              title="Toggle other businesses in trade zone"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${showOther ? 'bg-blue-400' : 'bg-zinc-600'}`}></span>
+                Other ({otherBusinesses.length})
+              </span>
+            </button>
+
+            <button
+              onClick={handleFitAll}
+              className="p-2 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] backdrop-blur-md transition-colors cursor-pointer"
+              title="Fit all markers in view"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-[#FFBF24]" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[#F59E0B] border border-white shrink-0" />
-            <span className="text-[#F8FAFC] font-medium">
-              Direct Competitors ({competitors.length})
+          {/* Top-Left Zoom Controls */}
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+            <button
+              onClick={() => {
+                const z = mapInstanceRef.current?.getZoom();
+                if (z !== undefined) mapInstanceRef.current?.setZoom(z + 1);
+              }}
+              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+              title="Zoom in"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                const z = mapInstanceRef.current?.getZoom();
+                if (z !== undefined) mapInstanceRef.current?.setZoom(z - 1);
+              }}
+              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+              title="Zoom out"
+            >
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleRecenter}
+              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#FFBF24] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+              title="Recenter on target"
+            >
+              <Navigation className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Bottom Legend */}
+          <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs backdrop-blur-md">
+            <span className="flex items-center gap-1 text-red-400 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+              {competitors.length} Direct Competitors
+            </span>
+            <span className="text-[#27272A]">|</span>
+            <span className="text-[#A1A1AA] font-mono text-[11px]">
+              {center[0].toFixed(4)}, {center[1].toFixed(4)}
             </span>
           </div>
-
-          {showOther && (
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#38BDF8] shrink-0 opacity-75" />
-              <span className="text-[#A1A1AA]">
-                Other Commercial POIs ({otherBusinesses.length})
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

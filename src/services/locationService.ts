@@ -95,26 +95,111 @@ export const locationApiService = {
   },
 
   /**
-   * Discover real businesses within radius from OpenStreetMap Overpass
+   * Discover real businesses within radius from Google Places API (New) / fallback
    */
   getNearbyBusinesses: async (
     lat: number,
     lng: number,
     radius: number = 2000,
-    areaName?: string
+    areaName?: string,
+    category?: string,
+    businessIdea?: string
   ): Promise<{ total: number; radius: number; businesses: DiscoveredBusiness[]; attribution: string }> => {
     try {
-      const areaParam = areaName ? `&areaName=${encodeURIComponent(areaName)}` : '';
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lng: String(lng),
+        radius: String(radius),
+      });
+      if (areaName) params.append('areaName', areaName);
+      if (category) params.append('category', category);
+      if (businessIdea) params.append('businessIdea', businessIdea);
+
       const response = await api.get<{
         total: number;
         radius: number;
         businesses: DiscoveredBusiness[];
         attribution: string;
-      }>(`/location/nearby-businesses?lat=${lat}&lng=${lng}&radius=${radius}${areaParam}`);
-      return response.data || { total: 0, radius, businesses: [], attribution: '© OpenStreetMap contributors' };
+      }>(`/location/nearby-businesses?${params.toString()}`);
+      return response.data || { total: 0, radius, businesses: [], attribution: 'Google Maps Platform / Google Places' };
     } catch (err) {
       console.error('getNearbyBusinesses error:', err);
-      return { total: 0, radius, businesses: [], attribution: '© OpenStreetMap contributors' };
+      return { total: 0, radius, businesses: [], attribution: 'Google Maps Platform / Google Places' };
+    }
+  },
+
+  /**
+   * Direct Google Places API (New) Nearby Search
+   */
+  googleNearby: async (params: {
+    latitude: number;
+    longitude: number;
+    radius?: number;
+    category?: string;
+    businessType?: string;
+    businessIdea?: string;
+  }): Promise<{ total: number; radius: number; businesses: DiscoveredBusiness[]; attribution: string }> => {
+    const response = await api.post<{
+      total: number;
+      radius: number;
+      businesses: DiscoveredBusiness[];
+      attribution: string;
+    }>('/google/nearby', params);
+    return response.data;
+  },
+
+  /**
+   * Direct Google Places API (New) Text Search
+   */
+  googleTextSearch: async (params: {
+    textQuery: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+    category?: string;
+  }): Promise<{ total: number; radius: number; businesses: DiscoveredBusiness[]; attribution: string }> => {
+    const response = await api.post<{
+      total: number;
+      radius: number;
+      businesses: DiscoveredBusiness[];
+      attribution: string;
+    }>('/google/text-search', params);
+    return response.data;
+  },
+
+  /**
+   * Direct Google Geocode API
+   */
+  googleGeocode: async (address: string): Promise<GeoLocationResult[]> => {
+    const response = await api.get<GeoLocationResult[]>(`/google/geocode?address=${encodeURIComponent(address)}`);
+    return response.data || [];
+  },
+
+  /**
+   * Direct Google Places Autocomplete API
+   */
+  googleAutocomplete: async (params: {
+    input: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
+  }): Promise<{ placeId: string; description: string; mainText: string; secondaryText: string }[]> => {
+    const response = await api.post<{ placeId: string; description: string; mainText: string; secondaryText: string }[]>(
+      '/google/autocomplete',
+      params
+    );
+    return response.data || [];
+  },
+
+  /**
+   * Check if Google Maps Platform backend is active
+   */
+  getGoogleConfig: async (): Promise<{ configured: boolean; provider: string; features: string[] }> => {
+    try {
+      const response = await api.get<{ configured: boolean; provider: string; features: string[] }>('/google/config');
+      return response.data;
+    } catch {
+      return { configured: false, provider: 'Google Maps Platform', features: [] };
     }
   },
 

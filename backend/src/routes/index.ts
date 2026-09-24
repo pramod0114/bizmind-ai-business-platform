@@ -10,10 +10,12 @@ import planRoutes from './planRoutes.js';
 import predictionRoutes from './predictionRoutes.js';
 import reportRoutes from './reportRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import googleRoutes from './googleRoutes.js';
 
 const router = Router();
 
 router.use('/', healthRoutes);
+router.use('/google', googleRoutes);
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/businesses', businessRoutes);

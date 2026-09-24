@@ -111,19 +111,22 @@ export async function getNearbyBusinesses(req: Request, res: Response): Promise<
     }
 
     const areaName = (req.query.areaName as string) || (req.query.name as string) || (req.query.locationName as string) || undefined;
-    const businesses = await locationService.getNearbyBusinesses(lat, lng, radius, areaName);
+    const category = (req.query.category as string) || (req.query.businessCategory as string) || undefined;
+    const businessIdea = (req.query.businessIdea as string) || (req.query.idea as string) || undefined;
+
+    const businesses = await locationService.getNearbyBusinesses(lat, lng, radius, areaName, category, businessIdea);
     sendSuccess(
       res,
       {
         total: businesses.length,
         radius,
         businesses,
-        attribution: '© OpenStreetMap contributors',
+        attribution: 'Business locations and place information are provided through Google Maps Platform / Google Places.',
       },
-      `Discovered ${businesses.length} real businesses from OpenStreetMap`
+      `Discovered ${businesses.length} places within ${radius}m`
     );
   } catch (err: any) {
-    sendError(res, 'Failed to retrieve nearby businesses from OpenStreetMap', 500, err?.message);
+    sendError(res, 'Failed to retrieve nearby businesses', 500, err?.message);
   }
 }
 
