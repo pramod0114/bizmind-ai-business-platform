@@ -88,6 +88,64 @@ export const BIZMIND_DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
 
 let isConfigured = false;
 let loadPromise: Promise<typeof google> | null = null;
+let hasAuthFailed = false;
+let authErrorMessage: string | null = null;
+const authFailureListeners = new Set<(message: string) => void>();
+
+export type MapEngine = 'google' | 'osm';
+
+if (typeof window !== 'undefined') {
+  const originalAuthFailure = (window as any).gm_authFailure;
+  (window as any).gm_authFailure = () => {
+    hasAuthFailed = true;
+    authErrorMessage =
+      'Google Maps Platform: "Maps JavaScript API" is not activated on your Google Cloud Project or has website referrer restrictions. Please enable Maps JavaScript API in Google Cloud Console.';
+    console.warn('[BizMind Google Maps]', authErrorMessage);
+    if (typeof originalAuthFailure === 'function') {
+      try {
+        originalAuthFailure();
+      } catch {}
+    }
+    authFailureListeners.forEach((fn) => {
+      try {
+        fn(authErrorMessage!);
+      } catch {}
+    });
+  };
+}
+
+export function onGoogleMapsAuthFailure(cb: (message: string) => void): () => void {
+  authFailureListeners.add(cb);
+  if (hasAuthFailed && authErrorMessage) {
+    try {
+      cb(authErrorMessage);
+    } catch {}
+  }
+  return () => authFailureListeners.delete(cb);
+}
+
+export function isGoogleMapsAuthFailed(): boolean {
+  return hasAuthFailed;
+}
+
+export function resetGoogleMapsAuthFailure(): void {
+  hasAuthFailed = false;
+  authErrorMessage = null;
+}
+
+export function getPreferredMapEngine(): MapEngine {
+  if (typeof window === 'undefined') return 'osm';
+  if (hasAuthFailed) return 'osm';
+  const saved = localStorage.getItem('bizmind_map_engine');
+  if (saved === 'osm' || saved === 'google') return saved;
+  return 'google';
+}
+
+export function setPreferredMapEngine(engine: MapEngine): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('bizmind_map_engine', engine);
+  }
+}
 
 export function getGoogleMapsApiKey(): string {
   const env = (import.meta as any).env;

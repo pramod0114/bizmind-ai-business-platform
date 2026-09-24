@@ -72,7 +72,7 @@ export const BIZMIND_TO_GOOGLE_TYPES: Record<string, string[]> = {
   'Retail': ['clothing_store', 'convenience_store', 'department_store', 'electronics_store', 'supermarket'],
   'Fitness': ['fitness_center', 'gym'],
   'Services': ['beauty_salon', 'laundry', 'hair_care', 'car_repair', 'bank'],
-  'Other': ['store', 'point_of_interest'],
+  'Other': ['restaurant', 'cafe', 'grocery_store', 'supermarket', 'clothing_store', 'pharmacy', 'bakery', 'hotel', 'bank'],
 };
 
 export class GooglePlacesService {
@@ -99,6 +99,15 @@ export class GooglePlacesService {
     return key.trim();
   }
 
+  public getRefererHeader(): string {
+    return (
+      process.env.GOOGLE_MAPS_REFERER ||
+      process.env.APP_URL ||
+      process.env.FRONTEND_URL ||
+      'https://ais-dev-crjer53efpls76wjmvho7f-957983741381.asia-southeast1.run.app/'
+    );
+  }
+
   public isKeyConfigured(): boolean {
     const key = this.getApiKey();
     return key.length > 5 && !key.includes('YOUR_');
@@ -108,7 +117,8 @@ export class GooglePlacesService {
    * Map a BizMind category or keyword to primary Google Place types
    */
   public mapCategoryToGoogleTypes(category?: string): string[] {
-    if (!category) return ['store', 'point_of_interest'];
+    const defaultTypes = ['restaurant', 'cafe', 'grocery_store', 'supermarket', 'clothing_store', 'pharmacy', 'bakery', 'hotel', 'bank'];
+    if (!category) return defaultTypes;
     const trimmed = category.trim();
 
     // Direct dictionary match
@@ -133,7 +143,7 @@ export class GooglePlacesService {
     if (lower.includes('medicine') || lower.includes('drug') || lower.includes('clinic')) return ['pharmacy', 'drugstore'];
     if (lower.includes('beauty') || lower.includes('hair') || lower.includes('parlour') || lower.includes('barber')) return ['beauty_salon', 'hair_care'];
 
-    return ['store', 'point_of_interest'];
+    return defaultTypes;
   }
 
   /**
@@ -239,6 +249,8 @@ export class GooglePlacesService {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask': fieldMask,
+          'Referer': this.getRefererHeader(),
+          'Origin': this.getRefererHeader(),
         },
         timeout: 10000,
       });
@@ -307,6 +319,8 @@ export class GooglePlacesService {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
           'X-Goog-FieldMask': fieldMask,
+          'Referer': this.getRefererHeader(),
+          'Origin': this.getRefererHeader(),
         },
         timeout: 10000,
       });
@@ -482,6 +496,8 @@ export class GooglePlacesService {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
+          'Referer': this.getRefererHeader(),
+          'Origin': this.getRefererHeader(),
         },
         timeout: 6000,
       });

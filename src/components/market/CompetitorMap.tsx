@@ -1,7 +1,29 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import L from 'leaflet';
 import { MarketCompetitor } from '../../types';
-import { ZoomIn, ZoomOut, Maximize2, Flame, Building2, MapPin, Navigation, AlertCircle } from 'lucide-react';
-import { loadGoogleMaps, BIZMIND_DARK_MAP_STYLES } from '../../services/googleMapsService';
+import {
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  MapPin,
+  Navigation,
+  AlertTriangle,
+  Layers,
+  Settings,
+  X,
+  ExternalLink,
+} from 'lucide-react';
+import {
+  loadGoogleMaps,
+  BIZMIND_DARK_MAP_STYLES,
+  onGoogleMapsAuthFailure,
+  isGoogleMapsAuthFailed,
+  getPreferredMapEngine,
+  setPreferredMapEngine,
+  MapEngine,
+} from '../../services/googleMapsService';
+import { GoogleMapsGuideModal } from '../common/GoogleMapsGuideModal';
+import { CATEGORY_MARKER_COLORS } from '../location/LocationMarker';
 
 interface CompetitorMapProps {
   center: [number, number];
@@ -29,93 +51,159 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
   height = '480px',
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const circleRef = useRef<google.maps.Circle | null>(null);
-  const centerMarkerRef = useRef<google.maps.Marker | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // Engine state
+  const [engine, setEngine] = useState<MapEngine>(() => getPreferredMapEngine());
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [dismissBanner, setDismissBanner] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   const [showOther, setShowOther] = useState(true);
 
-  // Initialize Google Maps
+  // Google Maps references
+  const googleMapRef = useRef<google.maps.Map | null>(null);
+  const googleCircleRef = useRef<google.maps.Circle | null>(null);
+  const googleCenterMarkerRef = useRef<google.maps.Marker | null>(null);
+  const googleMarkersRef = useRef<google.maps.Marker[]>([]);
+  const googleInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+
+  // Leaflet references
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const leafletCircleRef = useRef<L.Circle | null>(null);
+  const leafletCenterMarkerRef = useRef<L.Marker | null>(null);
+  const leafletMarkersRef = useRef<L.Marker[]>([]);
+
+  // Track if Google Maps auth failure occurs
   useEffect(() => {
-    let isMounted = true;
+    const unsub = onGoogleMapsAuthFailure((errMsg) => {
+      setAuthError(errMsg);
+      // Automatically switch to OpenStreetMap
+      setEngine('osm');
+      setPreferredMapEngine('osm');
+    });
 
-    async function initMap() {
-      try {
-        setLoadError(null);
-        const google = await loadGoogleMaps();
-        if (!isMounted || !mapContainerRef.current) return;
-
-        const map = new google.maps.Map(mapContainerRef.current, {
-          center: { lat: center[0], lng: center[1] },
-          zoom,
-          styles: BIZMIND_DARK_MAP_STYLES,
-          disableDefaultUI: true,
-          clickableIcons: false,
-          gestureHandling: 'greedy',
-          backgroundColor: '#0B0B0C',
-        });
-
-        mapInstanceRef.current = map;
-        infoWindowRef.current = new google.maps.InfoWindow();
-        setMapLoaded(true);
-      } catch (err: any) {
-        if (!isMounted) return;
-        setLoadError(err?.message || 'Failed to load Google Maps.');
-      }
+    if (isGoogleMapsAuthFailed()) {
+      setAuthError(
+        'Google Maps Platform: Maps JavaScript API is not activated on your Google Cloud Project. Switched to OpenStreetMap.'
+      );
+      setEngine('osm');
     }
 
-    initMap();
-
-    return () => {
-      isMounted = false;
-      if (circleRef.current) circleRef.current.setMap(null);
-      if (centerMarkerRef.current) centerMarkerRef.current.setMap(null);
-      markersRef.current.forEach((m) => m.setMap(null));
-      markersRef.current = [];
-      mapInstanceRef.current = null;
-    };
+    return () => unsub();
   }, []);
 
-  // Update center
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    map.panTo({ lat: center[0], lng: center[1] });
-  }, [center[0], center[1]]);
-
-  // Update Circle, Target Marker & Competitors
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !window.google?.maps) return;
-
-    const google = window.google;
-
-    // 1. Draw Radius Circle
-    if (circleRef.current) {
-      circleRef.current.setMap(null);
+  // Teardown Google Maps
+  const destroyGoogleMap = useCallback(() => {
+    if (googleCircleRef.current) {
+      googleCircleRef.current.setMap(null);
+      googleCircleRef.current = null;
     }
+    if (googleCenterMarkerRef.current) {
+      googleCenterMarkerRef.current.setMap(null);
+      googleCenterMarkerRef.current = null;
+    }
+    googleMarkersRef.current.forEach((m) => m.setMap(null));
+    googleMarkersRef.current = [];
+    if (googleInfoWindowRef.current) {
+      googleInfoWindowRef.current.close();
+      googleInfoWindowRef.current = null;
+    }
+    googleMapRef.current = null;
+    if (mapContainerRef.current) {
+      mapContainerRef.current.innerHTML = '';
+    }
+  }, []);
+
+  // Teardown Leaflet
+  const destroyLeaflet = useCallback(() => {
+    if (leafletMapRef.current) {
+      leafletMapRef.current.remove();
+      leafletMapRef.current = null;
+    }
+    leafletCircleRef.current = null;
+    leafletCenterMarkerRef.current = null;
+    leafletMarkersRef.current = [];
+    if (mapContainerRef.current) {
+      mapContainerRef.current.innerHTML = '';
+    }
+  }, []);
+
+  // Render Google Map
+  const initGoogleMap = useCallback(async () => {
+    if (!mapContainerRef.current) return;
+    destroyLeaflet();
+    destroyGoogleMap();
+
+    try {
+      const google = await loadGoogleMaps();
+      if (!mapContainerRef.current) return;
+
+      const map = new google.maps.Map(mapContainerRef.current, {
+        center: { lat: center[0], lng: center[1] },
+        zoom,
+        styles: BIZMIND_DARK_MAP_STYLES,
+        disableDefaultUI: true,
+        clickableIcons: false,
+        gestureHandling: 'greedy',
+        backgroundColor: '#0B0B0C',
+      });
+      googleMapRef.current = map;
+      googleInfoWindowRef.current = new google.maps.InfoWindow();
+
+      // Render layers
+      renderGoogleLayers(map);
+    } catch (err: any) {
+      console.warn('Failed to initialize Google Maps, falling back to OSM:', err);
+      setAuthError(err?.message || 'Google Maps failed to load. Switched to OpenStreetMap.');
+      setEngine('osm');
+      setPreferredMapEngine('osm');
+    }
+  }, [center[0], center[1], zoom, destroyLeaflet, destroyGoogleMap]);
+
+  // Render Leaflet Map
+  const initLeafletMap = useCallback(() => {
+    if (!mapContainerRef.current) return;
+    destroyGoogleMap();
+    destroyLeaflet();
+
+    const container = mapContainerRef.current;
+    container.innerHTML = '';
+
+    const map = L.map(container, {
+      center: [center[0], center[1]],
+      zoom,
+      zoomControl: false,
+      attributionControl: false,
+    });
+
+    // Dark sleek CartoDB tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    leafletMapRef.current = map;
+    renderLeafletLayers(map);
+  }, [center[0], center[1], zoom, destroyGoogleMap, destroyLeaflet]);
+
+  // Google Maps Layer Rendering
+  const renderGoogleLayers = (map: google.maps.Map) => {
+    // 1. Circle
+    if (googleCircleRef.current) googleCircleRef.current.setMap(null);
     const radiusMeters = radiusKm * 1000;
-    circleRef.current = new google.maps.Circle({
+    googleCircleRef.current = new google.maps.Circle({
       strokeColor: '#FFBF24',
       strokeOpacity: 0.9,
       strokeWeight: 2,
       fillColor: '#FFBF24',
-      fillOpacity: 0.07,
+      fillOpacity: 0.08,
       map,
       center: { lat: center[0], lng: center[1] },
       radius: radiusMeters,
       clickable: false,
     });
 
-    // 2. Draw Center Target Location Marker
-    if (centerMarkerRef.current) {
-      centerMarkerRef.current.setMap(null);
-    }
-
+    // 2. Center Marker
+    if (googleCenterMarkerRef.current) googleCenterMarkerRef.current.setMap(null);
     const centerMarker = new google.maps.Marker({
       position: { lat: center[0], lng: center[1] },
       map,
@@ -130,32 +218,26 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
         strokeWeight: 3,
       },
     });
-
     centerMarker.addListener('click', () => {
-      if (!infoWindowRef.current) return;
-      infoWindowRef.current.setContent(`
-        <div style="padding: 6px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 190px;">
-          <div style="font-size: 10px; color: #FFBF24; font-weight: 800; text-transform: uppercase;">Analyzed Target Center</div>
+      if (!googleInfoWindowRef.current) return;
+      googleInfoWindowRef.current.setContent(`
+        <div style="padding: 6px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 180px;">
+          <div style="font-size: 10px; color: #FFBF24; font-weight: 800; text-transform: uppercase;">Analyzed Target Location</div>
           <div style="font-weight: 700; font-size: 13px; color: #F8FAFC; margin-top: 2px;">${locationName}</div>
           <div style="font-size: 11px; color: #A1A1AA; font-family: monospace; margin-top: 2px;">
             ${center[0].toFixed(5)}, ${center[1].toFixed(5)}
           </div>
-          <div style="font-size: 11px; color: #CBD5E1; margin-top: 4px; border-top: 1px solid #27272A; padding-top: 3px;">
-            Radius: <strong style="color: #FFBF24;">${radiusKm.toFixed(1)} km</strong>
-          </div>
         </div>
       `);
-      infoWindowRef.current.open(map, centerMarker);
+      googleInfoWindowRef.current.open(map, centerMarker);
     });
+    googleCenterMarkerRef.current = centerMarker;
 
-    centerMarkerRef.current = centerMarker;
+    // 3. Competitors & Other Businesses
+    googleMarkersRef.current.forEach((m) => m.setMap(null));
+    googleMarkersRef.current = [];
 
-    // 3. Clear old markers
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
-
-    // Helper to add markers
-    const addMarker = (c: MarketCompetitor, isCompetitor: boolean) => {
+    const addGoogleMarker = (c: MarketCompetitor, isCompetitor: boolean) => {
       const isSelected = selectedCompetitorId === c.id;
       const displayName = c.name || c.business_name || 'Business';
       const marker = new google.maps.Marker({
@@ -175,11 +257,10 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
 
       marker.addListener('click', () => {
         if (onSelectCompetitor) onSelectCompetitor(c);
-
-        if (infoWindowRef.current) {
+        if (googleInfoWindowRef.current) {
           const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`;
-          infoWindowRef.current.setContent(`
-            <div style="padding: 8px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 230px; max-width: 280px; border-radius: 8px;">
+          googleInfoWindowRef.current.setContent(`
+            <div style="padding: 8px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 220px; border-radius: 8px;">
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
                 <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${isCompetitor ? '#EF4444' : '#38BDF8'};">
                   ${isCompetitor ? '⚠️ Direct Competitor' : 'Trade Area Establishment'}
@@ -188,60 +269,238 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
                   ${c.distance_km < 1 ? `${Math.round(c.distance_km * 1000)} m` : `${c.distance_km.toFixed(1)} km`}
                 </span>
               </div>
-
-              <div style="font-weight: 800; font-size: 14px; color: #F8FAFC; margin-top: 4px; line-height: 1.3;">
+              <div style="font-weight: 800; font-size: 13px; color: #F8FAFC; margin-top: 4px;">
                 ${displayName}
               </div>
-
               <div style="font-size: 11px; color: #FFBF24; margin-top: 2px; font-weight: 600;">
                 ${c.category}
               </div>
-
               ${c.address ? `<div style="font-size: 11px; color: #A1A1AA; margin-top: 4px; border-top: 1px solid #27272A; padding-top: 4px;">📍 ${c.address}</div>` : ''}
-
-              <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #27272A; display: flex; align-items: center; justify-content: space-between;">
-                <a 
-                  href="${googleMapsLink}" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  style="font-size: 11px; color: #38BDF8; font-weight: 700; text-decoration: none;"
-                >
+              <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #27272A;">
+                <a href="${googleMapsLink}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #38BDF8; font-weight: 700; text-decoration: none;">
                   View on Google Maps ↗
                 </a>
               </div>
             </div>
           `);
-          infoWindowRef.current.open(map, marker);
+          googleInfoWindowRef.current.open(map, marker);
         }
       });
-
-      markersRef.current.push(marker);
+      googleMarkersRef.current.push(marker);
     };
 
-    // Render direct competitors
-    competitors.forEach((c) => addMarker(c, true));
-
-    // Render other businesses if toggled
+    competitors.forEach((c) => addGoogleMarker(c, true));
     if (showOther) {
-      otherBusinesses.forEach((c) => addMarker(c, false));
+      otherBusinesses.forEach((c) => addGoogleMarker(c, false));
+    }
+  };
+
+  // Leaflet Layer Rendering
+  const renderLeafletLayers = (map: L.Map) => {
+    // 1. Circle
+    if (leafletCircleRef.current) leafletCircleRef.current.remove();
+    const radiusMeters = radiusKm * 1000;
+    leafletCircleRef.current = L.circle([center[0], center[1]], {
+      radius: radiusMeters,
+      color: '#FFBF24',
+      weight: 2,
+      opacity: 0.9,
+      fillColor: '#FFBF24',
+      fillOpacity: 0.08,
+    }).addTo(map);
+
+    // 2. Center Marker (Pulsing Amber Star)
+    if (leafletCenterMarkerRef.current) leafletCenterMarkerRef.current.remove();
+    const centerIcon = L.divIcon({
+      className: 'custom-target-marker',
+      html: `
+        <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+          <span style="position: absolute; inset: 0; border-radius: 50%; background: #FFBF24; opacity: 0.4; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
+          <span style="position: absolute; width: 26px; height: 26px; border-radius: 50%; background: rgba(255, 191, 36, 0.25); border: 1.5px solid #FFBF24;"></span>
+          <div style="position: relative; z-index: 10; width: 20px; height: 20px; border-radius: 50%; background: #FFBF24; color: #0B0B0C; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #FFFFFF;">
+            ★
+          </div>
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+    const centerMarker = L.marker([center[0], center[1]], { icon: centerIcon, zIndexOffset: 1000 }).addTo(map);
+    centerMarker.bindPopup(`
+      <div style="padding: 6px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 180px; border-radius: 6px;">
+        <div style="font-size: 10px; color: #FFBF24; font-weight: 800; text-transform: uppercase;">Analyzed Target Location</div>
+        <div style="font-weight: 700; font-size: 13px; color: #F8FAFC; margin-top: 2px;">${locationName}</div>
+        <div style="font-size: 11px; color: #A1A1AA; font-family: monospace; margin-top: 2px;">
+          ${center[0].toFixed(5)}, ${center[1].toFixed(5)}
+        </div>
+      </div>
+    `);
+    leafletCenterMarkerRef.current = centerMarker;
+
+    // 3. Markers
+    leafletMarkersRef.current.forEach((m) => m.remove());
+    leafletMarkersRef.current = [];
+
+    const addLeafletMarker = (c: MarketCompetitor, isCompetitor: boolean) => {
+      const isSelected = selectedCompetitorId === c.id;
+      const displayName = c.name || c.business_name || 'Business';
+      const catKey = (c.category || '').toLowerCase();
+      const themeColor = isCompetitor
+        ? '#EF4444'
+        : CATEGORY_MARKER_COLORS[catKey]?.bg || '#3B82F6';
+
+      const size = isSelected ? 30 : isCompetitor ? 24 : 18;
+      const icon = L.divIcon({
+        className: 'custom-business-marker',
+        html: `
+          <div style="
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: 50%;
+            background-color: ${themeColor};
+            border: ${isSelected ? '2.5px solid #FFBF24' : '1.5px solid #0B0B0C'};
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            font-weight: 800;
+            font-size: ${size >= 24 ? '11px' : '9px'};
+            cursor: pointer;
+            transition: transform 0.15s ease;
+          ">
+            ${isCompetitor ? '⚠️' : (c.category || 'B').charAt(0).toUpperCase()}
+          </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+      const marker = L.marker([c.latitude, c.longitude], {
+        icon,
+        zIndexOffset: isSelected ? 900 : isCompetitor ? 800 : 400,
+      }).addTo(map);
+
+      const googleMapsLink = `https://www.google.com/maps/search/?api=1&query=${c.latitude},${c.longitude}`;
+      marker.bindPopup(`
+        <div style="padding: 8px; font-family: system-ui, sans-serif; color: #F8FAFC; background: #1A1A1D; min-width: 220px; border-radius: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${isCompetitor ? '#EF4444' : '#38BDF8'};">
+              ${isCompetitor ? '⚠️ Direct Competitor' : 'Trade Area Establishment'}
+            </span>
+            <span style="font-size: 10px; background: #27272A; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #F8FAFC;">
+              ${c.distance_km < 1 ? `${Math.round(c.distance_km * 1000)} m` : `${c.distance_km.toFixed(1)} km`}
+            </span>
+          </div>
+          <div style="font-weight: 800; font-size: 13px; color: #F8FAFC; margin-top: 4px;">
+            ${displayName}
+          </div>
+          <div style="font-size: 11px; color: #FFBF24; margin-top: 2px; font-weight: 600;">
+            ${c.category}
+          </div>
+          ${c.address ? `<div style="font-size: 11px; color: #A1A1AA; margin-top: 4px; border-top: 1px solid #27272A; padding-top: 4px;">📍 ${c.address}</div>` : ''}
+          <div style="margin-top: 6px; padding-top: 4px; border-top: 1px solid #27272A;">
+            <a href="${googleMapsLink}" target="_blank" rel="noopener noreferrer" style="font-size: 11px; color: #38BDF8; font-weight: 700; text-decoration: none;">
+              View on Google Maps ↗
+            </a>
+          </div>
+        </div>
+      `);
+
+      marker.on('click', () => {
+        if (onSelectCompetitor) onSelectCompetitor(c);
+      });
+
+      leafletMarkersRef.current.push(marker);
+    };
+
+    competitors.forEach((c) => addLeafletMarker(c, true));
+    if (showOther) {
+      otherBusinesses.forEach((c) => addLeafletMarker(c, false));
+    }
+  };
+
+  // Mount/Switch engine
+  useEffect(() => {
+    if (engine === 'google') {
+      initGoogleMap();
+    } else {
+      initLeafletMap();
+    }
+
+    return () => {
+      destroyGoogleMap();
+      destroyLeaflet();
+    };
+  }, [engine]);
+
+  // Update center when center prop changes
+  useEffect(() => {
+    if (engine === 'google' && googleMapRef.current) {
+      googleMapRef.current.panTo({ lat: center[0], lng: center[1] });
+      renderGoogleLayers(googleMapRef.current);
+    } else if (engine === 'osm' && leafletMapRef.current) {
+      leafletMapRef.current.panTo([center[0], center[1]]);
+      renderLeafletLayers(leafletMapRef.current);
     }
   }, [center[0], center[1], radiusKm, competitors, otherBusinesses, selectedCompetitorId, showOther, locationName]);
 
+  // Controls
+  const handleZoomIn = () => {
+    if (engine === 'google' && googleMapRef.current) {
+      const z = googleMapRef.current.getZoom();
+      if (z !== undefined) googleMapRef.current.setZoom(z + 1);
+    } else if (engine === 'osm' && leafletMapRef.current) {
+      leafletMapRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (engine === 'google' && googleMapRef.current) {
+      const z = googleMapRef.current.getZoom();
+      if (z !== undefined) googleMapRef.current.setZoom(z - 1);
+    } else if (engine === 'osm' && leafletMapRef.current) {
+      leafletMapRef.current.zoomOut();
+    }
+  };
+
   const handleRecenter = () => {
-    if (!mapInstanceRef.current) return;
-    mapInstanceRef.current.panTo({ lat: center[0], lng: center[1] });
-    mapInstanceRef.current.setZoom(14);
+    if (engine === 'google' && googleMapRef.current) {
+      googleMapRef.current.panTo({ lat: center[0], lng: center[1] });
+      googleMapRef.current.setZoom(14);
+    } else if (engine === 'osm' && leafletMapRef.current) {
+      leafletMapRef.current.setView([center[0], center[1]], 14);
+    }
   };
 
   const handleFitAll = () => {
-    if (!mapInstanceRef.current || !window.google?.maps) return;
-    const bounds = new window.google.maps.LatLngBounds();
-    bounds.extend({ lat: center[0], lng: center[1] });
-    competitors.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
-    if (showOther) {
-      otherBusinesses.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
+    if (engine === 'google' && googleMapRef.current && window.google?.maps) {
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend({ lat: center[0], lng: center[1] });
+      competitors.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
+      if (showOther) {
+        otherBusinesses.forEach((c) => bounds.extend({ lat: c.latitude, lng: c.longitude }));
+      }
+      googleMapRef.current.fitBounds(bounds, 40);
+    } else if (engine === 'osm' && leafletMapRef.current) {
+      const points: [number, number][] = [[center[0], center[1]]];
+      competitors.forEach((c) => points.push([c.latitude, c.longitude]));
+      if (showOther) {
+        otherBusinesses.forEach((c) => points.push([c.latitude, c.longitude]));
+      }
+      if (points.length > 1) {
+        leafletMapRef.current.fitBounds(points as any, { padding: [40, 40] });
+      }
     }
-    mapInstanceRef.current.fitBounds(bounds, 40);
+  };
+
+  const handleSwitchEngine = (newEngine: MapEngine) => {
+    if (newEngine === 'google' && isGoogleMapsAuthFailed()) {
+      setShowGuideModal(true);
+      return;
+    }
+    setEngine(newEngine);
+    setPreferredMapEngine(newEngine);
   };
 
   return (
@@ -249,88 +508,138 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
       className={`relative w-full rounded-xl overflow-hidden border border-[#27272A] bg-[#0B0B0C] ${className}`}
       style={{ height }}
     >
+      {/* Map Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {loadError && (
-        <div className="absolute inset-0 bg-[#0B0B0C]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30">
-          <AlertCircle className="w-8 h-8 text-[#FFBF24] mb-2" />
-          <h4 className="text-sm font-bold text-white mb-1">Google Maps Platform</h4>
-          <p className="text-xs text-[#A1A1AA] max-w-sm">{loadError}</p>
+      {/* Top Banner if Google Maps auth failure occurred */}
+      {authError && !dismissBanner && (
+        <div className="absolute top-3 left-14 right-14 z-20 flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-[#18181B]/95 border border-amber-500/40 text-xs backdrop-blur-md shadow-xl animate-in slide-in-from-top duration-200">
+          <div className="flex items-center gap-2 text-amber-300 min-w-0">
+            <AlertTriangle className="w-4 h-4 text-[#FFBF24] shrink-0" />
+            <span className="truncate">
+              <strong>Maps API Not Activated:</strong> Google Maps JS API is disabled in your Cloud project. Switched to OpenStreetMap.
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="px-2.5 py-1 rounded-md bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-[11px] font-bold transition-colors cursor-pointer"
+            >
+              How to Enable
+            </button>
+            <button
+              onClick={() => setDismissBanner(true)}
+              className="w-5 h-5 rounded flex items-center justify-center text-[#71717A] hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
 
-      {mapLoaded && (
-        <>
-          {/* Top-Right Controls */}
-          <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-            <button
-              onClick={() => setShowOther(!showOther)}
-              className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold backdrop-blur-md transition-all cursor-pointer ${
-                showOther
-                  ? 'bg-[#111113]/90 border-[#27272A] text-[#F8FAFC]'
-                  : 'bg-[#111113]/60 border-[#27272A] text-[#71717A]'
-              }`}
-              title="Toggle other businesses in trade zone"
-            >
-              <span className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${showOther ? 'bg-blue-400' : 'bg-zinc-600'}`}></span>
-                Other ({otherBusinesses.length})
-              </span>
-            </button>
+      {/* Top-Right Controls */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+        {/* Engine Switcher */}
+        <div className="flex items-center bg-[#111113]/90 border border-[#27272A] p-0.5 rounded-lg backdrop-blur-md shadow-lg">
+          <button
+            onClick={() => handleSwitchEngine('google')}
+            className={`px-2 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+              engine === 'google'
+                ? 'bg-[#FFBF24] text-[#0B0B0C]'
+                : 'text-[#A1A1AA] hover:text-white'
+            }`}
+            title="Google Maps Platform"
+          >
+            Google
+          </button>
+          <button
+            onClick={() => handleSwitchEngine('osm')}
+            className={`px-2 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+              engine === 'osm'
+                ? 'bg-[#FFBF24] text-[#0B0B0C]'
+                : 'text-[#A1A1AA] hover:text-white'
+            }`}
+            title="OpenStreetMap / Leaflet Engine"
+          >
+            OSM
+          </button>
+        </div>
 
-            <button
-              onClick={handleFitAll}
-              className="p-2 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] backdrop-blur-md transition-colors cursor-pointer"
-              title="Fit all markers in view"
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-[#FFBF24]" />
-            </button>
-          </div>
+        {/* Toggle Other Businesses */}
+        <button
+          onClick={() => setShowOther(!showOther)}
+          className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold backdrop-blur-md transition-all cursor-pointer ${
+            showOther
+              ? 'bg-[#111113]/90 border-[#27272A] text-[#F8FAFC]'
+              : 'bg-[#111113]/60 border-[#27272A] text-[#71717A]'
+          }`}
+          title="Toggle other businesses in trade zone"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className={`w-2 h-2 rounded-full ${showOther ? 'bg-blue-400' : 'bg-zinc-600'}`}></span>
+            Other ({otherBusinesses.length})
+          </span>
+        </button>
 
-          {/* Top-Left Zoom Controls */}
-          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-            <button
-              onClick={() => {
-                const z = mapInstanceRef.current?.getZoom();
-                if (z !== undefined) mapInstanceRef.current?.setZoom(z + 1);
-              }}
-              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
-              title="Zoom in"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => {
-                const z = mapInstanceRef.current?.getZoom();
-                if (z !== undefined) mapInstanceRef.current?.setZoom(z - 1);
-              }}
-              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
-              title="Zoom out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleRecenter}
-              className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#FFBF24] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
-              title="Recenter on target"
-            >
-              <Navigation className="w-4 h-4" />
-            </button>
-          </div>
+        {/* Fit Bounds */}
+        <button
+          onClick={handleFitAll}
+          className="p-2 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] backdrop-blur-md transition-colors cursor-pointer"
+          title="Fit all markers in view"
+        >
+          <Maximize2 className="w-3.5 h-3.5 text-[#FFBF24]" />
+        </button>
+      </div>
 
-          {/* Bottom Legend */}
-          <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs backdrop-blur-md">
-            <span className="flex items-center gap-1 text-red-400 font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-              {competitors.length} Direct Competitors
-            </span>
-            <span className="text-[#27272A]">|</span>
-            <span className="text-[#A1A1AA] font-mono text-[11px]">
-              {center[0].toFixed(4)}, {center[1].toFixed(4)}
-            </span>
-          </div>
-        </>
-      )}
+      {/* Top-Left Zoom Controls */}
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+        <button
+          onClick={handleZoomIn}
+          className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+          title="Zoom in"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#F8FAFC] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+          title="Zoom out"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleRecenter}
+          className="w-8 h-8 rounded-lg bg-[#111113]/90 hover:bg-[#1A1A1D] border border-[#27272A] text-[#FFBF24] flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+          title="Recenter on target"
+        >
+          <Navigation className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Bottom Legend */}
+      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs backdrop-blur-md">
+        <span className="flex items-center gap-1 text-red-400 font-bold">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+          {competitors.length} Direct Competitors
+        </span>
+        <span className="text-[#27272A]">|</span>
+        <span className="text-[#A1A1AA] font-mono text-[11px]">
+          {center[0].toFixed(4)}, {center[1].toFixed(4)}
+        </span>
+        <span className="text-[#71717A] text-[10px] pl-1 border-l border-[#27272A]">
+          {engine === 'google' ? 'Google Maps' : 'OpenStreetMap'}
+        </span>
+      </div>
+
+      {/* Guide Modal */}
+      <GoogleMapsGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        onRetryGoogle={() => {
+          setEngine('google');
+          setPreferredMapEngine('google');
+        }}
+      />
     </div>
   );
 };
