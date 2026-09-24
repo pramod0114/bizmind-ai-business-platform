@@ -20,6 +20,7 @@ const RADIUS_OPTIONS: RadiusOption[] = [
   { label: '1.0 km', meters: 1000, km: 1.0, areaKm2: '3.14' },
   { label: '2.0 km', meters: 2000, km: 2.0, areaKm2: '12.57' },
   { label: '5.0 km', meters: 5000, km: 5.0, areaKm2: '78.54' },
+  { label: '10.0 km', meters: 10000, km: 10.0, areaKm2: '314.16' },
 ];
 
 export const RadiusSelector: React.FC<RadiusSelectorProps> = ({

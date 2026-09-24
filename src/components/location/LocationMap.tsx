@@ -531,32 +531,6 @@ export const LocationMap: React.FC<LocationMapProps> = ({
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Top Banner if Google Maps auth failure occurred */}
-      {authError && !dismissBanner && (
-        <div className="absolute top-3 left-14 right-14 z-20 flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-[#18181B]/95 border border-amber-500/40 text-xs backdrop-blur-md shadow-xl animate-in slide-in-from-top duration-200">
-          <div className="flex items-center gap-2 text-amber-300 min-w-0">
-            <AlertTriangle className="w-4 h-4 text-[#FFBF24] shrink-0" />
-            <span className="truncate">
-              <strong>Maps API Not Activated:</strong> Google Maps JS API is disabled in your Cloud project. Switched to OpenStreetMap.
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setShowGuideModal(true)}
-              className="px-2.5 py-1 rounded-md bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-[11px] font-bold transition-colors cursor-pointer"
-            >
-              How to Enable
-            </button>
-            <button
-              onClick={() => setDismissBanner(true)}
-              className="w-5 h-5 rounded flex items-center justify-center text-[#71717A] hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Top-Right: Controls Bar */}
       <div className="absolute top-3 right-3 z-10 flex flex-wrap items-center gap-2">
         {/* Engine Switcher */}

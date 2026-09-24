@@ -13,10 +13,6 @@ import {
   Layers,
   CheckCircle2,
   AlertCircle,
-  BarChart3,
-  Server,
-  Database,
-  Code2,
   FileSpreadsheet,
   LayoutDashboard,
   ShieldCheck,
@@ -62,48 +58,56 @@ export const HomePage: React.FC = () => {
       desc: 'Structured canvas for formulating capital allocation, market positioning, and operational parameters.',
       icon: FileSpreadsheet,
       badge: 'Core Planning',
+      link: '/business-planner',
     },
     {
-      title: 'Market Analysis',
-      desc: 'Macroeconomic market size estimates, annual CAGR projections, and category demand indices.',
+      title: 'Market & Competition Intelligence',
+      desc: 'Discover competitors, commercial establishment directory, radial dispersion, and territory density.',
       icon: TrendingUp,
       badge: 'Market Intel',
+      link: '/market-analysis',
     },
     {
       title: 'Location Intelligence',
-      desc: 'OpenStreetMap and Leaflet spatial analysis for commercial footfall and radius zoning.',
+      desc: 'Interactive geospatial competitor mapping, radius zoning, and commercial footfall intelligence.',
       icon: MapPin,
       badge: 'Geospatial',
+      link: '/market-analysis',
     },
     {
       title: 'Competition Analysis',
-      desc: 'Cluster mapping, price-tier categorization, and saturation index calculations.',
+      desc: 'Cluster mapping, establishment directory, and saturation index calculations.',
       icon: GitCompare,
       badge: 'Competitive',
+      link: '/market-analysis',
     },
     {
       title: 'Financial Planning',
       desc: 'Automated break-even analysis, runway projections, fixed vs. variable cost modeling.',
       icon: Calculator,
       badge: 'Feasibility',
+      link: '/financial-model',
     },
     {
       title: 'Success Prediction',
       desc: 'Machine learning classification assessing historical viability and venture survival probability.',
       icon: Cpu,
       badge: 'ML Engine',
+      link: '/predictions',
     },
     {
       title: 'Risk Analysis',
       desc: 'Multi-factor risk scoring across capital adequacy, saturation, and margin vulnerability.',
       icon: ShieldAlert,
       badge: 'Diagnostics',
+      link: '/risk-analysis',
     },
     {
       title: 'Business Comparison',
       desc: 'Side-by-side comparative evaluations between different business types and target locations.',
       icon: Layers,
       badge: 'Decision Matrix',
+      link: '/comparison',
     },
   ];
 
@@ -138,15 +142,6 @@ export const HomePage: React.FC = () => {
       desc: 'Generate comprehensive feasibility dossiers with tailored risk mitigation and location recommendations.',
       icon: Sparkles,
     },
-  ];
-
-  const techStack = [
-    { name: 'React 19 & Vite', role: 'Frontend Architecture', icon: Code2 },
-    { name: 'Node.js & Express', role: 'REST API & Orchestration', icon: Server },
-    { name: 'MySQL 8.0', role: 'Relational 3NF Database', icon: Database },
-    { name: 'Python & FastAPI', role: 'ML Microservice & Scikit-Learn', icon: Cpu },
-    { name: 'Leaflet & OpenStreetMap', role: 'Open-Source Spatial Maps', icon: MapPin },
-    { name: 'Recharts & Tailwind', role: 'Data Visualization & Design', icon: BarChart3 },
   ];
 
   return (
@@ -333,21 +328,30 @@ export const HomePage: React.FC = () => {
           {features.map((f, idx) => {
             const Icon = f.icon;
             return (
-              <Card key={idx} hoverEffect className="bg-[#1A1A1D] border-[#27272A] flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-[#111113] border border-[#27272A] flex items-center justify-center text-[#FFBF24]">
-                      <Icon className="w-4 h-4" />
+              <Link
+                key={idx}
+                to={f.link}
+                className="group focus:outline-none flex"
+              >
+                <Card
+                  hoverEffect
+                  className="bg-[#1A1A1D] border-[#27272A] group-hover:border-[#FFBF24]/50 transition-all flex flex-col justify-between w-full cursor-pointer"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-[#111113] border border-[#27272A] flex items-center justify-center text-[#FFBF24] group-hover:bg-[#FFBF24] group-hover:text-[#0B0B0C] transition-colors">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <Badge variant="neutral" size="sm">{f.badge}</Badge>
                     </div>
-                    <Badge variant="neutral" size="sm">{f.badge}</Badge>
+                    <CardTitle className="text-sm md:text-base group-hover:text-[#FFBF24] transition-colors">{f.title}</CardTitle>
+                    <CardDescription className="mt-1.5 leading-relaxed">{f.desc}</CardDescription>
                   </div>
-                  <CardTitle className="text-sm md:text-base">{f.title}</CardTitle>
-                  <CardDescription className="mt-1.5">{f.desc}</CardDescription>
-                </div>
-                <div className="mt-4 pt-3 border-t border-[#27272A] text-[11px] text-[#FFBF24] font-semibold flex items-center gap-1">
-                  <span>Explore Module</span> <ArrowRight className="w-3 h-3" />
-                </div>
-              </Card>
+                  <div className="mt-4 pt-3 border-t border-[#27272A] text-[11px] text-[#FFBF24] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span>Explore Module</span> <ArrowRight className="w-3 h-3" />
+                  </div>
+                </Card>
+              </Link>
             );
           })}
         </div>
@@ -391,35 +395,7 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 6. TECHNOLOGY SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <Badge variant="outline" size="sm" className="mb-2">Tech Stack</Badge>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] tracking-tight">
-            Engineered on Modern Open Architecture
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {techStack.map((t, idx) => {
-            const Icon = t.icon;
-            return (
-              <div
-                key={idx}
-                className="p-4 rounded-xl bg-[#1A1A1D] border border-[#27272A] flex flex-col items-center text-center hover:border-[#3F3F46] transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#111113] border border-[#27272A] flex items-center justify-center text-[#FFBF24] mb-2.5">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-semibold text-[#F8FAFC]">{t.name}</span>
-                <span className="text-[10px] text-[#71717A] mt-0.5">{t.role}</span>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 7. STATISTICS / IMPACT SECTION (CLEARLY MARKED AS DEMO PLACEHOLDERS) */}
+      {/* 6. STATISTICS / IMPACT SECTION (CLEARLY MARKED AS DEMO PLACEHOLDERS) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="p-6 md:p-8 rounded-2xl bg-[#111113] border border-[#27272A]">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#27272A]">

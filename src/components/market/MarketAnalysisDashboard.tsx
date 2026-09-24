@@ -628,8 +628,8 @@ export const MarketAnalysisDashboard: React.FC = () => {
                 <label className="text-[11px] font-semibold text-[#A1A1AA] uppercase tracking-wider block font-mono">
                   Analysis Radius
                 </label>
-                <span className="text-[10px] text-[#71717A] font-mono">
-                  {radiusKm === 0.5 ? '~0.79 km²' : radiusKm === 1 ? '~3.14 km²' : radiusKm === 2 ? '~12.57 km²' : '~78.54 km²'}
+                <span className="text-[10px] text-[#FFBF24] font-mono font-semibold">
+                  ~{(Math.PI * radiusKm * radiusKm).toFixed(2)} km²
                 </span>
               </div>
               <div className="flex items-center bg-[#111113] p-1 rounded-lg border border-[#27272A] text-xs">
@@ -638,6 +638,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
                   { r: 1.0, label: '1 km' },
                   { r: 2.0, label: '2 km' },
                   { r: 5.0, label: '5 km' },
+                  { r: 10.0, label: '10 km' },
                 ].map(({ r, label }) => (
                   <button
                     key={r}
@@ -645,7 +646,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
                     onClick={() => handleRadiusChange(r)}
                     className={`flex-1 py-1 rounded text-center text-xs font-semibold transition-all cursor-pointer ${
                       radiusKm === r
-                        ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm'
+                        ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm font-bold'
                         : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
                     }`}
                   >

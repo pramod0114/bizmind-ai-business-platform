@@ -75,7 +75,12 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to="/market-analysis" className="hover:text-[#FFBF24] transition-colors">
-                  Market & Location Intelligence
+                  Market & Competition Intelligence
+                </Link>
+              </li>
+              <li>
+                <Link to="/market-analysis" className="hover:text-[#FFBF24] transition-colors">
+                  Location Intelligence
                 </Link>
               </li>
               <li>
@@ -91,34 +96,33 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Tech Stack & Academic Info */}
+          {/* Platform Capabilities Col */}
           <div>
             <h4 className="text-xs font-semibold text-[#F8FAFC] uppercase tracking-wider mb-3">
-              Architecture & Stack
+              Platform & Features
             </h4>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                React 19 + Vite
-              </span>
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                TypeScript
-              </span>
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                Node / Express
-              </span>
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                MySQL 8.0
-              </span>
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                Python Scikit-Learn
-              </span>
-              <span className="px-2 py-0.5 rounded bg-[#111113] border border-[#27272A] text-[10px] text-[#FFBF24] font-mono">
-                Leaflet / OSM
-              </span>
-            </div>
-            <p className="text-[11px] text-[#71717A]">
-              Final-Year BCA Capstone Project Architecture. Clean separation between frontend, REST API, MySQL database, and ML microservice.
-            </p>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/market-analysis" className="hover:text-[#FFBF24] transition-colors">
+                  Geospatial Market Analytics
+                </Link>
+              </li>
+              <li>
+                <Link to="/market-analysis" className="hover:text-[#FFBF24] transition-colors">
+                  OpenStreetMap & Google Places
+                </Link>
+              </li>
+              <li>
+                <Link to="/predictions" className="hover:text-[#FFBF24] transition-colors">
+                  Predictive Risk Diagnostics
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-[#FFBF24] transition-colors">
+                  Decision Intelligence Suite
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
@@ -127,10 +131,10 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1 text-[#A1A1AA]">
               <Shield className="w-3 h-3 text-[#FFBF24]" />
-              Academic Capstone Edition
+              Enterprise Decision Intelligence
             </span>
             <span>•</span>
-            <span className="text-[#71717A] font-mono">Part 1 Foundation v1.0.0</span>
+            <span className="text-[#71717A] font-mono">BizMind AI Platform</span>
           </div>
         </div>
       </div>

@@ -86,6 +86,10 @@ export const CompetitorList: React.FC<CompetitorListProps> = ({
       result = result.filter((b) => b.distance_meters <= 1000);
     } else if (distanceFilter === '2km') {
       result = result.filter((b) => b.distance_meters <= 2000);
+    } else if (distanceFilter === '5km') {
+      result = result.filter((b) => b.distance_meters <= 5000);
+    } else if (distanceFilter === '10km') {
+      result = result.filter((b) => b.distance_meters <= 10000);
     }
 
     // Sorting
@@ -176,6 +180,8 @@ export const CompetitorList: React.FC<CompetitorListProps> = ({
               { value: '500m', label: 'Within 500 m' },
               { value: '1km', label: 'Within 1 km' },
               { value: '2km', label: 'Within 2 km' },
+              { value: '5km', label: 'Within 5 km' },
+              { value: '10km', label: 'Within 10 km' },
             ]}
             className="text-xs"
           />
