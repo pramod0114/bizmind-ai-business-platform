@@ -108,7 +108,7 @@ export const CompetitorList: React.FC<CompetitorListProps> = ({
             <CardTitle>Competitor & Commercial Establishment Directory</CardTitle>
           </div>
           <CardDescription>
-            Interactive directory of actual establishments discovered from OpenStreetMap.
+            Interactive directory of actual establishments discovered from Google Places & OpenStreetMap.
           </CardDescription>
         </div>
 

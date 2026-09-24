@@ -67,9 +67,9 @@ export const SavedPage: React.FC = () => {
         description="Repository of bookmarked business ventures, candidate locations, and customized analysis dossiers."
         badge={`${locations.length} Locations • ${businesses.length} POIs`}
         actions={
-          <Link to="/location-analysis">
+          <Link to="/market-analysis">
             <Button size="sm" leftIcon={<MapPin className="w-3.5 h-3.5" />}>
-              Explore Spatial Map
+              Explore Market Map
             </Button>
           </Link>
         }

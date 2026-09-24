@@ -23,6 +23,7 @@ import {
   Navigation,
   Compass,
   Store,
+  GitCompare,
 } from 'lucide-react';
 
 export const OverviewPage: React.FC = () => {
@@ -54,9 +55,9 @@ export const OverviewPage: React.FC = () => {
         badge={user?.role ? `${user.role} Workspace` : 'Active Session'}
         actions={
           <div className="flex items-center gap-2">
-            <Link to="/location-analysis">
+            <Link to="/market-analysis">
               <Button variant="outline" size="sm" leftIcon={<MapPin className="w-3.5 h-3.5 text-[#FFBF24]" />}>
-                Explore Map
+                Explore Market Map
               </Button>
             </Link>
             <Link to="/business-planner">
@@ -104,16 +105,16 @@ export const OverviewPage: React.FC = () => {
               <Compass className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#F8FAFC]">Live Location Intelligence</h3>
+              <h3 className="text-base font-bold text-[#F8FAFC]">Live Location & Market Intelligence</h3>
               <p className="text-xs text-[#A1A1AA]">
-                Discover competitors, local density, and calculate rule-based opportunity scores using OpenStreetMap
+                Discover competitors, commercial density, and trade opportunities powered by Google Places & OpenStreetMap
               </p>
             </div>
           </div>
 
-          <Link to="/location-analysis">
+          <Link to="/market-analysis">
             <Button size="sm" variant="primary" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-              Open Spatial Analysis
+              Open Market Intelligence
             </Button>
           </Link>
         </div>
@@ -174,15 +175,15 @@ export const OverviewPage: React.FC = () => {
             </Link>
 
             <Link
-              to="/location-analysis"
+              to="/comparison"
               className="p-3 rounded-lg bg-[#111113] border border-[#27272A] hover:border-[#FFBF24]/50 hover:bg-[#1A1A1D] transition-all flex items-center gap-3 group"
             >
               <div className="w-8 h-8 rounded-lg bg-[#1A1A1D] border border-[#27272A] flex items-center justify-center text-[#FFBF24] group-hover:scale-105 transition-transform">
-                <MapPin className="w-4 h-4" />
+                <GitCompare className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[#F8FAFC] truncate">Location Analysis</p>
-                <p className="text-[10px] text-[#71717A]">Leaflet & OSM map</p>
+                <p className="text-xs font-semibold text-[#F8FAFC] truncate">Market Comparison</p>
+                <p className="text-[10px] text-[#71717A]">Multi-site evaluation</p>
               </div>
             </Link>
 

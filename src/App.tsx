@@ -2,7 +2,7 @@
  * BizMind – Root Application & Routing Hierarchy
  */
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -91,9 +91,9 @@ export default function App() {
             <Route path="/business-plans/:id/edit" element={<BusinessPlanFormPage />} />
             <Route path="/business-plans/:id/financial-analysis" element={<FinancialAnalysisPage />} />
             <Route path="/market-analysis" element={<MarketAnalysisPage />} />
-            <Route path="/location" element={<LocationAnalysisPage />} />
-            <Route path="/location-intelligence" element={<LocationAnalysisPage />} />
-            <Route path="/location-analysis" element={<LocationAnalysisPage />} />
+            <Route path="/location" element={<Navigate to="/market-analysis" replace />} />
+            <Route path="/location-intelligence" element={<Navigate to="/market-analysis" replace />} />
+            <Route path="/location-analysis" element={<Navigate to="/market-analysis" replace />} />
             <Route path="/comparison" element={<ComparisonPage />} />
             <Route path="/predictions" element={<PredictionsPage />} />
             <Route path="/recommendations" element={<RecommendationsPage />} />

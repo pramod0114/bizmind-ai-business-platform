@@ -21,6 +21,7 @@ import {
   BIZMIND_DARK_MAP_STYLES,
   onGoogleMapsAuthFailure,
   isGoogleMapsAuthFailed,
+  resetGoogleMapsAuthFailure,
   getPreferredMapEngine,
   setPreferredMapEngine,
   MapEngine,
@@ -197,9 +198,10 @@ export const LocationMap: React.FC<LocationMapProps> = ({
       attributionControl: false,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
     map.on('click', (e: L.LeafletMouseEvent) => {
@@ -512,9 +514,9 @@ export const LocationMap: React.FC<LocationMapProps> = ({
   };
 
   const handleSwitchEngine = (newEngine: MapEngine) => {
-    if (newEngine === 'google' && isGoogleMapsAuthFailed()) {
-      setShowGuideModal(true);
-      return;
+    if (newEngine === 'google') {
+      resetGoogleMapsAuthFailure();
+      setAuthError(null);
     }
     setEngine(newEngine);
     setPreferredMapEngine(newEngine);

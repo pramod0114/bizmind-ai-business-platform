@@ -6,7 +6,7 @@ import { errorHandler } from './backend/src/middleware/errorHandler.js';
 
 async function startServer() {
   const app = createApp();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || '3000', 10);
 
   // Vite middleware for development or static file serving for production
   if (process.env.NODE_ENV !== 'production') {

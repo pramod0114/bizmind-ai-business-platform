@@ -75,12 +75,12 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to="/market-analysis" className="hover:text-[#FFBF24] transition-colors">
-                  Market Trends
+                  Market & Location Intelligence
                 </Link>
               </li>
               <li>
-                <Link to="/location-analysis" className="hover:text-[#FFBF24] transition-colors">
-                  Leaflet / OSM Intelligence
+                <Link to="/comparison" className="hover:text-[#FFBF24] transition-colors">
+                  Site & Market Comparison
                 </Link>
               </li>
               <li>

@@ -18,6 +18,7 @@ import {
   BIZMIND_DARK_MAP_STYLES,
   onGoogleMapsAuthFailure,
   isGoogleMapsAuthFailed,
+  resetGoogleMapsAuthFailure,
   getPreferredMapEngine,
   setPreferredMapEngine,
   MapEngine,
@@ -34,6 +35,7 @@ interface CompetitorMapProps {
   otherBusinesses: MarketCompetitor[];
   selectedCompetitorId?: string | number | null;
   onSelectCompetitor?: (competitor: MarketCompetitor) => void;
+  onLocationSelect?: (lat: number, lng: number) => void;
   className?: string;
   height?: string;
 }
@@ -47,6 +49,7 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
   otherBusinesses = [],
   selectedCompetitorId,
   onSelectCompetitor,
+  onLocationSelect,
   className = '',
   height = '480px',
 }) => {
@@ -149,6 +152,12 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
       googleMapRef.current = map;
       googleInfoWindowRef.current = new google.maps.InfoWindow();
 
+      map.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (e.latLng && onLocationSelect) {
+          onLocationSelect(e.latLng.lat(), e.latLng.lng());
+        }
+      });
+
       // Render layers
       renderGoogleLayers(map);
     } catch (err: any) {
@@ -157,7 +166,7 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
       setEngine('osm');
       setPreferredMapEngine('osm');
     }
-  }, [center[0], center[1], zoom, destroyLeaflet, destroyGoogleMap]);
+  }, [center[0], center[1], zoom, onLocationSelect, destroyLeaflet, destroyGoogleMap]);
 
   // Render Leaflet Map
   const initLeafletMap = useCallback(() => {
@@ -175,15 +184,22 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
       attributionControl: false,
     });
 
-    // Dark sleek CartoDB tile layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // Free, official OpenStreetMap tile layer (no watermark)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      subdomains: ['a', 'b', 'c'],
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
+
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      if (onLocationSelect) {
+        onLocationSelect(e.latlng.lat, e.latlng.lng);
+      }
+    });
 
     leafletMapRef.current = map;
     renderLeafletLayers(map);
-  }, [center[0], center[1], zoom, destroyGoogleMap, destroyLeaflet]);
+  }, [center[0], center[1], zoom, onLocationSelect, destroyGoogleMap, destroyLeaflet]);
 
   // Google Maps Layer Rendering
   const renderGoogleLayers = (map: google.maps.Map) => {
@@ -495,9 +511,9 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
   };
 
   const handleSwitchEngine = (newEngine: MapEngine) => {
-    if (newEngine === 'google' && isGoogleMapsAuthFailed()) {
-      setShowGuideModal(true);
-      return;
+    if (newEngine === 'google') {
+      resetGoogleMapsAuthFailure();
+      setAuthError(null);
     }
     setEngine(newEngine);
     setPreferredMapEngine(newEngine);
@@ -617,15 +633,20 @@ export const CompetitorMap: React.FC<CompetitorMapProps> = ({
       </div>
 
       {/* Bottom Legend */}
-      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs backdrop-blur-md">
+      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111113]/90 border border-[#27272A] text-xs backdrop-blur-md shadow-lg">
         <span className="flex items-center gap-1 text-red-400 font-bold">
           <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
           {competitors.length} Direct Competitors
         </span>
         <span className="text-[#27272A]">|</span>
-        <span className="text-[#A1A1AA] font-mono text-[11px]">
+        <span className="text-[#FFBF24] font-mono text-[11px]">
           {center[0].toFixed(4)}, {center[1].toFixed(4)}
         </span>
+        {onLocationSelect && (
+          <span className="hidden sm:inline text-[#A1A1AA] text-[10px] pl-1 border-l border-[#27272A]">
+            Click anywhere on map to reposition target
+          </span>
+        )}
         <span className="text-[#71717A] text-[10px] pl-1 border-l border-[#27272A]">
           {engine === 'google' ? 'Google Maps' : 'OpenStreetMap'}
         </span>

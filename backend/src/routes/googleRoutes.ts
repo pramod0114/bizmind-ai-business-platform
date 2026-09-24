@@ -15,8 +15,10 @@ const router = Router();
  */
 router.get('/config', (_req: Request, res: Response) => {
   const isConfigured = googlePlacesService.isKeyConfigured();
+  const apiKey = googlePlacesService.getApiKey();
   sendSuccess(res, {
     configured: isConfigured,
+    apiKey: isConfigured ? apiKey : null,
     provider: 'Google Maps Platform / Google Places API (New)',
     features: ['searchNearby', 'searchText', 'geocode', 'autocomplete', 'AdvancedMarker'],
   });

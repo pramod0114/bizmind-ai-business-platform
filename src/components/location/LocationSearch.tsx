@@ -31,9 +31,12 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync external location name if provided
+  const lastPropLocationRef = useRef(currentLocationName);
+
+  // Sync external location name only if the prop genuinely changed
   useEffect(() => {
-    if (currentLocationName && !query) {
+    if (currentLocationName && currentLocationName !== lastPropLocationRef.current) {
+      lastPropLocationRef.current = currentLocationName;
       setQuery(currentLocationName);
     }
   }, [currentLocationName]);

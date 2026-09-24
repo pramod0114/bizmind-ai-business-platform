@@ -131,6 +131,15 @@ export function isGoogleMapsAuthFailed(): boolean {
 export function resetGoogleMapsAuthFailure(): void {
   hasAuthFailed = false;
   authErrorMessage = null;
+  loadPromise = null;
+  isConfigured = false;
+  if (typeof document !== 'undefined') {
+    const scripts = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+    scripts.forEach((s) => s.remove());
+  }
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('bizmind_map_engine');
+  }
 }
 
 export function getPreferredMapEngine(): MapEngine {
@@ -147,12 +156,22 @@ export function setPreferredMapEngine(engine: MapEngine): void {
   }
 }
 
+let cachedServerKey: string | null = null;
+
+export function setRuntimeGoogleMapsApiKey(key: string): void {
+  if (typeof window !== 'undefined') {
+    (window as any).__BIZMIND_GOOGLE_MAPS_KEY = key;
+  }
+  resetGoogleMapsAuthFailure();
+}
+
 export function getGoogleMapsApiKey(): string {
   const env = (import.meta as any).env;
   return (
     env?.VITE_GOOGLE_MAPS_API_KEY ||
     env?.VITE_GOOGLE_MAPS_KEY ||
-    (window as any).__BIZMIND_GOOGLE_MAPS_KEY ||
+    (typeof window !== 'undefined' ? (window as any).__BIZMIND_GOOGLE_MAPS_KEY : '') ||
+    cachedServerKey ||
     'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo'
   ).trim();
 }
@@ -169,7 +188,20 @@ export async function loadGoogleMaps(): Promise<typeof google> {
     return loadPromise;
   }
 
-  const apiKey = getGoogleMapsApiKey();
+  let apiKey = getGoogleMapsApiKey();
+  if (!apiKey || apiKey === 'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo') {
+    try {
+      const res = await fetch('/api/google/config');
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data?.apiKey) {
+          apiKey = json.data.apiKey;
+          cachedServerKey = apiKey;
+          setRuntimeGoogleMapsApiKey(apiKey);
+        }
+      }
+    } catch {}
+  }
   if (!apiKey) {
     throw new Error(
       'Google Maps API key is missing in frontend environment. Please configure VITE_GOOGLE_MAPS_API_KEY.'
