@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin,
   Target,
@@ -14,6 +15,7 @@ import {
   Sparkles,
   ShieldCheck,
   Layers,
+  Compass,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { locationApiService } from '../../services/locationService';
@@ -57,10 +59,17 @@ const CATEGORY_PRESETS = [
 ];
 
 export const LocationAnalysisPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const paramLat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : 16.8524;
+  const paramLng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : 74.5815;
+  const paramName = searchParams.get('name') || 'Sangli, Maharashtra';
+
   // Target location state (defaults to Sangli, Maharashtra as requested in context)
-  const [selectedCoords, setSelectedCoords] = useState<[number, number]>([16.8524, 74.5815]);
-  const [locationName, setLocationName] = useState<string>('Sangli, Maharashtra');
-  const [locationAddress, setLocationAddress] = useState<string>('Sangli, Miraj, Sangli District, Maharashtra, 416416, India');
+  const [selectedCoords, setSelectedCoords] = useState<[number, number]>([paramLat, paramLng]);
+  const [locationName, setLocationName] = useState<string>(paramName);
+  const [locationAddress, setLocationAddress] = useState<string>(paramName);
   const [radiusMeters, setRadiusMeters] = useState<number>(2000); // 2 km default
 
   // Target business profile state
@@ -388,11 +397,24 @@ export const LocationAnalysisPage: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
+            onClick={() => {
+              navigate(
+                `/market-analysis?idea=${encodeURIComponent(businessIdea)}&category=${encodeURIComponent(businessCategory)}&location=${encodeURIComponent(locationName)}&lat=${selectedCoords[0]}&lng=${selectedCoords[1]}&radius=${radiusMeters / 1000}`
+              );
+            }}
+            className="px-3.5 py-2 rounded-lg bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Market Analysis (Part 6)</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleSaveCurrentAnalysis}
             disabled={!analysis || isSaving}
-            className="px-3.5 py-2 rounded-lg bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+            className="px-3.5 py-2 rounded-lg bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <Bookmark className="w-3.5 h-3.5" />
+            <Bookmark className="w-3.5 h-3.5 text-[#FFBF24]" />
             <span>{isSaving ? 'Saving...' : 'Save Analysis'}</span>
           </button>
 

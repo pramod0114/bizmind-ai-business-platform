@@ -237,3 +237,57 @@ CREATE TABLE IF NOT EXISTS `admin_logs` (
   KEY `fk_admin_log_user` (`admin_user_id`),
   CONSTRAINT `fk_admin_log_user` FOREIGN KEY (`admin_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 15. MARKET ANALYSES (Part 6: Market & Competition Analysis)
+CREATE TABLE IF NOT EXISTS `market_analyses` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `business_plan_id` BIGINT UNSIGNED DEFAULT NULL,
+  `location_analysis_id` BIGINT UNSIGNED DEFAULT NULL,
+  `business_idea` VARCHAR(255) NOT NULL,
+  `business_category` VARCHAR(100) NOT NULL,
+  `location_name` VARCHAR(255) DEFAULT NULL,
+  `address` TEXT DEFAULT NULL,
+  `latitude` DECIMAL(10, 7) NOT NULL,
+  `longitude` DECIMAL(10, 7) NOT NULL,
+  `city` VARCHAR(100) DEFAULT NULL,
+  `radius_km` DECIMAL(5,2) NOT NULL DEFAULT 2.00,
+  `total_businesses` INT UNSIGNED NOT NULL DEFAULT 0,
+  `relevant_businesses` INT UNSIGNED NOT NULL DEFAULT 0,
+  `competitor_density` DECIMAL(8,4) NOT NULL DEFAULT 0.0000,
+  `average_competitor_distance` VARCHAR(50) DEFAULT NULL,
+  `nearest_competitor_distance` VARCHAR(50) DEFAULT NULL,
+  `farthest_competitor_distance` VARCHAR(50) DEFAULT NULL,
+  `concentration_level` ENUM('Low Concentration', 'Moderate Concentration', 'High Concentration') NOT NULL DEFAULT 'Low Concentration',
+  `competition_risk` ENUM('Low', 'Moderate', 'High') NOT NULL DEFAULT 'Low',
+  `market_opportunity` ENUM('Potential Opportunity', 'Moderate Opportunity', 'Limited Observed Opportunity', 'Needs Further Investigation') NOT NULL DEFAULT 'Needs Further Investigation',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_market_analysis_user` (`user_id`),
+  KEY `fk_market_analysis_plan` (`business_plan_id`),
+  CONSTRAINT `fk_market_analysis_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 16. MARKET COMPETITORS (Part 6: Stored Competitor Records)
+CREATE TABLE IF NOT EXISTS `market_competitors` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `market_analysis_id` BIGINT UNSIGNED NOT NULL,
+  `business_name` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(100) NOT NULL,
+  `latitude` DECIMAL(10, 7) NOT NULL,
+  `longitude` DECIMAL(10, 7) NOT NULL,
+  `address` TEXT DEFAULT NULL,
+  `distance_km` DECIMAL(6,3) NOT NULL,
+  `distance_meters` INT UNSIGNED DEFAULT NULL,
+  `website` VARCHAR(500) DEFAULT NULL,
+  `phone` VARCHAR(100) DEFAULT NULL,
+  `opening_hours` VARCHAR(255) DEFAULT NULL,
+  `source` VARCHAR(100) NOT NULL DEFAULT 'OpenStreetMap',
+  `source_timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_competitors_analysis` (`market_analysis_id`),
+  CONSTRAINT `fk_competitors_analysis` FOREIGN KEY (`market_analysis_id`) REFERENCES `market_analyses` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

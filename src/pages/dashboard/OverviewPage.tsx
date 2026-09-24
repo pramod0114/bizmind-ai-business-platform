@@ -4,10 +4,9 @@ import { StatCard } from '../../components/common/StatCard';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
-import { healthService } from '../../services/healthService';
 import { planService } from '../../services/planService';
 import { locationApiService } from '../../services/locationService';
-import { SystemHealth, BusinessPlan, SavedLocationAnalysis, SavedBusiness } from '../../types';
+import { BusinessPlan, SavedLocationAnalysis, SavedBusiness } from '../../types';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -18,9 +17,6 @@ import {
   MapPin,
   Cpu,
   ArrowRight,
-  Server,
-  Database,
-  Activity,
   CheckCircle2,
   AlertTriangle,
   Info,
@@ -31,7 +27,6 @@ import {
 
 export const OverviewPage: React.FC = () => {
   const { user } = useAuth();
-  const [health, setHealth] = useState<SystemHealth | null>(null);
   const [plans, setPlans] = useState<BusinessPlan[]>([]);
   const [locationAnalyses, setLocationAnalyses] = useState<SavedLocationAnalysis[]>([]);
   const [savedBusinesses, setSavedBusinesses] = useState<SavedBusiness[]>([]);
@@ -39,12 +34,10 @@ export const OverviewPage: React.FC = () => {
 
   useEffect(() => {
     Promise.all([
-      healthService.getSystemHealth().catch(() => null),
       planService.getPlans().catch(() => []),
       locationApiService.listLocationAnalyses().catch(() => []),
       locationApiService.listSavedBusinesses().catch(() => []),
-    ]).then(([healthData, plansData, analysesData, businessesData]) => {
-      if (healthData) setHealth(healthData);
+    ]).then(([plansData, analysesData, businessesData]) => {
       if (plansData) setPlans(plansData);
       if (analysesData) setLocationAnalyses(analysesData);
       if (businessesData) setSavedBusinesses(businessesData);
@@ -155,84 +148,6 @@ export const OverviewPage: React.FC = () => {
             </div>
           )}
         </div>
-      </Card>
-
-      {/* Real-time System & Architecture Status Panel */}
-      <Card className="border-[#27272A] bg-[#1A1A1D]">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#FFBF24]" />
-              <CardTitle>Architecture & Subsystem Connectivity</CardTitle>
-            </div>
-            <CardDescription>
-              Live operational health status verified across full-stack layers.
-            </CardDescription>
-          </div>
-          <Badge variant="primary" size="sm">
-            {loading ? 'Checking...' : health?.status === 'healthy' ? 'All Services Registered' : 'Active'}
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Express API Layer */}
-            <div className="p-4 rounded-lg bg-[#111113] border border-[#27272A] flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-[#F8FAFC] flex items-center gap-1.5">
-                    <Server className="w-3.5 h-3.5 text-[#FFBF24]" />
-                    Express REST API
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-                </div>
-                <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                  Port {health?.services?.api?.port || 3000} • Full-Stack Vite integration • CORS & JWT ready
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-[#27272A] text-[10px] font-mono text-[#22C55E]">
-                Status: Operational
-              </div>
-            </div>
-
-            {/* MySQL Database Layer */}
-            <div className="p-4 rounded-lg bg-[#111113] border border-[#27272A] flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-[#F8FAFC] flex items-center gap-1.5">
-                    <Database className="w-3.5 h-3.5 text-[#FFBF24]" />
-                    MySQL Database Engine
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
-                </div>
-                <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                  14 Relational 3NF tables + Location Intelligence & Saved Business tables
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-[#27272A] text-[10px] font-mono text-[#38BDF8]">
-                Architecture Established
-              </div>
-            </div>
-
-            {/* Python FastAPI ML Service */}
-            <div className="p-4 rounded-lg bg-[#111113] border border-[#27272A] flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-[#F8FAFC] flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-[#FFBF24]" />
-                    Python FastAPI ML
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-[#FACC15]" />
-                </div>
-                <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                  Scikit-learn pipeline bridge • Spatial features integrated for Part 5
-                </p>
-              </div>
-              <div className="mt-3 pt-2 border-t border-[#27272A] text-[10px] font-mono text-[#FACC15]">
-                Service Pipeline Configured
-              </div>
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Quick Launchpad */}

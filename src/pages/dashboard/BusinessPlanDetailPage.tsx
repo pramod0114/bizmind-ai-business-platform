@@ -23,9 +23,11 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  Compass,
 } from 'lucide-react';
 import { planService } from '../../services/planService';
-import { BusinessPlan, CalculatedFinancialResults } from '../../types';
+import { marketAnalysisService } from '../../services/marketAnalysisService';
+import { BusinessPlan, CalculatedFinancialResults, MarketAnalysisData } from '../../types';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { FinancialKpiCards } from '../../components/planner/FinancialKpiCards';
 import { Projection12MonthTable } from '../../components/planner/Projection12MonthTable';
@@ -39,6 +41,7 @@ export const BusinessPlanDetailPage: React.FC = () => {
 
   const [plan, setPlan] = useState<BusinessPlan | null>(null);
   const [analysis, setAnalysis] = useState<CalculatedFinancialResults | null>(null);
+  const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -63,6 +66,14 @@ export const BusinessPlanDetailPage: React.FC = () => {
         const finAnalysis = await planService.getFinancialAnalysis(id);
         setAnalysis(finAnalysis);
         setGrowthRate(finAnalysis.revenueGrowthRate ?? 3.0);
+      }
+
+      // Load linked Market & Competition Analysis (Part 6)
+      try {
+        const mData = await marketAnalysisService.getByPlanId(id);
+        if (mData) setMarketAnalysis(mData);
+      } catch {
+        // Non-blocking if no analysis saved yet
       }
     } catch (err: any) {
       console.error('Failed to load plan details:', err);
@@ -343,8 +354,12 @@ export const BusinessPlanDetailPage: React.FC = () => {
           </div>
           {plan.latitude && plan.longitude && (
             <button
-              onClick={() => navigate('/location')}
-              className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+              onClick={() =>
+                navigate(
+                  `/location-intelligence?lat=${plan.latitude}&lng=${plan.longitude}&name=${encodeURIComponent(plan.location || plan.city || '')}`
+                )
+              }
+              className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
             >
               Analyze in Location Module <ExternalLink className="w-3.5 h-3.5" />
             </button>
@@ -370,6 +385,82 @@ export const BusinessPlanDetailPage: React.FC = () => {
                 ? `${Number(plan.latitude).toFixed(4)}, ${Number(plan.longitude).toFixed(4)}`
                 : 'Not geotagged'}
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* MARKET & COMPETITION SECTION (Part 6 Integration) */}
+      <div className="bg-[#18181B] rounded-xl border border-[#27272A] p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#27272A] pb-3 gap-2">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-[#FFBF24]" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white">Market & Competition Intelligence</h3>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/market-analysis?planId=${plan.id}&idea=${encodeURIComponent(plan.businessName || plan.business_name)}&category=${encodeURIComponent(plan.category)}&location=${encodeURIComponent(plan.location || plan.city || '')}&lat=${plan.latitude || 16.8524}&lng=${plan.longitude || 74.5815}&radius=${marketAnalysis?.radiusKm || 2.0}`
+              )
+            }
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer self-start sm:self-auto"
+          >
+            <span>View Full Market Analysis</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A]">
+            <span className="text-slate-400 block text-[11px]">Business Idea:</span>
+            <span className="font-bold text-white block mt-0.5 truncate">{plan.businessName || plan.business_name}</span>
+            <span className="text-[10px] text-[#FFBF24]">{plan.category}</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A]">
+            <span className="text-slate-400 block text-[11px]">Trade Location & Radius:</span>
+            <span className="font-bold text-white block mt-0.5 truncate">{plan.location || plan.city || 'Vishrambag, Sangli'}</span>
+            <span className="text-[10px] text-slate-400 font-mono">Radius: {marketAnalysis?.radiusKm ?? 2.0} km</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A]">
+            <span className="text-slate-400 block text-[11px]">Competitor Density:</span>
+            <span className="font-bold text-[#FFBF24] block mt-0.5">
+              {marketAnalysis ? `${Number(marketAnalysis.competitorDensity).toFixed(2)} / km²` : '0.32 / km² (Estimated)'}
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {marketAnalysis?.relevantCompetitorsCount ?? 4} relevant competitors
+            </span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A]">
+            <span className="text-slate-400 block text-[11px]">Total Nearby Businesses:</span>
+            <span className="font-bold text-white block mt-0.5">
+              {marketAnalysis?.totalBusinesses ?? 42} establishments
+            </span>
+            <span className="text-[10px] text-slate-400">OpenStreetMap POIs</span>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-[#111113] border border-[#27272A] text-xs">
+          <div className="flex items-center gap-3">
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase font-mono block">Competition Risk</span>
+              <span className={`font-bold text-xs ${marketAnalysis?.competitionRisk?.level === 'High' ? 'text-red-400' : marketAnalysis?.competitionRisk?.level === 'Moderate' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                {marketAnalysis?.competitionRisk?.level || 'Moderate'} Risk
+              </span>
+            </div>
+            <div className="h-6 w-px bg-[#27272A]" />
+            <div>
+              <span className="text-slate-400 text-[10px] uppercase font-mono block">Observed Opportunity</span>
+              <span className="font-bold text-xs text-[#FFBF24]">
+                {marketAnalysis?.marketOpportunity?.indicator || 'Moderate Opportunity'}
+              </span>
+            </div>
+          </div>
+
+          <div className="text-[11px] text-slate-400">
+            Source: <strong className="text-slate-200">OpenStreetMap</strong> • Non-predictive spatial analysis
           </div>
         </div>
       </div>

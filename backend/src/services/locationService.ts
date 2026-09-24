@@ -739,79 +739,13 @@ export class LocationService {
   }
 
   /**
-   * Deterministic resilient business synthesizer for fallback when Overpass is slow/offline
-   */
-  private generateLocalizedBusinesses(
-    lat: number,
-    lng: number,
-    radiusMeters: number,
-    areaName?: string
-  ): DiscoveredBusiness[] {
-    const businesses: DiscoveredBusiness[] = [];
-    const seed = Math.abs(Math.sin(lat * 1000 + lng * 1000));
-    const baseName = (areaName || '').split(',')[0].trim() || 'Local Area';
-
-    const templates = [
-      { name: `${baseName} Corner Cafe & Bakery`, category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.12, angle: 45, hours: '07:00-20:00' },
-      { name: `${baseName} Supermarket & Fresh Mart`, category: 'Supermarket', broadCategory: 'Retail' as const, distRatio: 0.22, angle: 120, hours: '08:00-22:00' },
-      { name: `${baseName} Family Restaurant`, category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.28, angle: 210, hours: '11:00-23:00' },
-      { name: `${baseName} Meds & Healthcare Pharmacy`, category: 'Pharmacy / Chemist', broadCategory: 'Healthcare' as const, distRatio: 0.35, angle: 300, hours: '08:00-21:00' },
-      { name: `${baseName} Fitness Club & Gym`, category: 'Gym & Fitness Center', broadCategory: 'Fitness' as const, distRatio: 0.42, angle: 80, hours: '06:00-22:00' },
-      { name: `${baseName} Quick Bites Fast Food`, category: 'Fast Food', broadCategory: 'Food & Beverage' as const, distRatio: 0.48, angle: 160, hours: '10:00-23:00' },
-      { name: `${baseName} Commercial Bank Branch & ATM`, category: 'Bank Branch', broadCategory: 'Finance' as const, distRatio: 0.52, angle: 250, hours: '09:00-17:00' },
-      { name: `${baseName} Beauty Salon & Spa`, category: 'Salon & Spa Services', broadCategory: 'Services' as const, distRatio: 0.58, angle: 340, hours: '09:00-19:00' },
-      { name: `${baseName} Digital & Mobile Store`, category: 'Electronics Store', broadCategory: 'Retail' as const, distRatio: 0.64, angle: 15, hours: '10:00-20:00' },
-      { name: `${baseName} Guest House & Hotel`, category: 'Hotel', broadCategory: 'Accommodation' as const, distRatio: 0.68, angle: 110, hours: '24/7' },
-      { name: `${baseName} Community Healthcare Clinic`, category: 'Medical Clinic', broadCategory: 'Healthcare' as const, distRatio: 0.72, angle: 190, hours: '08:30-18:00' },
-      { name: `${baseName} Pizzeria & Oven Bistro`, category: 'Restaurant', broadCategory: 'Food & Beverage' as const, distRatio: 0.76, angle: 280, hours: '12:00-22:30' },
-      { name: `${baseName} Daily Provisions Grocery`, category: 'Grocery / Convenience Store', broadCategory: 'Retail' as const, distRatio: 0.81, angle: 65, hours: '07:30-22:00' },
-      { name: `${baseName} High School & Academy`, category: 'School', broadCategory: 'Education' as const, distRatio: 0.85, angle: 145, hours: '08:00-16:00' },
-      { name: `${baseName} Automobile Care & Works`, category: 'Automotive Repair & Services', broadCategory: 'Automotive' as const, distRatio: 0.89, angle: 225, hours: '08:00-18:00' },
-      { name: `${baseName} Coffee Roastery`, category: 'Cafe', broadCategory: 'Food & Beverage' as const, distRatio: 0.93, angle: 315, hours: '06:30-18:00' },
-      { name: `${baseName} Fashion & Clothing Boutique`, category: 'Clothing & Apparel', broadCategory: 'Retail' as const, distRatio: 0.96, angle: 35, hours: '10:00-20:00' },
-    ];
-
-    templates.forEach((tmpl, idx) => {
-      const dist = Math.round(tmpl.distRatio * radiusMeters * 0.9 + 50);
-      const radAngle = (tmpl.angle + seed * 45) * (Math.PI / 180);
-      const dLat = (dist * Math.cos(radAngle)) / 111000;
-      const dLng = (dist * Math.sin(radAngle)) / (111000 * Math.cos((lat * Math.PI) / 180));
-      const bLat = parseFloat((lat + dLat).toFixed(5));
-      const bLng = parseFloat((lng + dLng).toFixed(5));
-      const realDist = calculateHaversineDistance(lat, lng, bLat, bLng);
-
-      businesses.push({
-        osm_id: `poi-local/${idx + 101}`,
-        name: tmpl.name,
-        category: tmpl.category,
-        broadCategory: tmpl.broadCategory,
-        latitude: bLat,
-        longitude: bLng,
-        distance_meters: realDist,
-        distance_formatted: formatDistance(realDist),
-        address: `${baseName}, Sector ${idx + 1}`,
-        phone: null,
-        website: null,
-        opening_hours: tmpl.hours,
-        brand: null,
-        cuisine: tmpl.broadCategory === 'Food & Beverage' ? tmpl.category : null,
-        operator: null,
-        email: null,
-      });
-    });
-
-    businesses.sort((a, b) => a.distance_meters - b.distance_meters);
-    return businesses;
-  }
-
-  /**
-   * Fetch real POIs & businesses from Overpass API within radius with resilient fallback
+   * Fetch real POIs & businesses from Overpass API within radius
    */
   public async getNearbyBusinesses(
     lat: number,
     lng: number,
     radiusMeters = 2000,
-    areaName?: string
+    _areaName?: string
   ): Promise<DiscoveredBusiness[]> {
     const validRadius = Math.min(Math.max(radiusMeters, 500), 10000);
     const roundedLat = parseFloat(lat.toFixed(4));
@@ -909,11 +843,6 @@ export class LocationService {
       }
 
       businesses.sort((a, b) => a.distance_meters - b.distance_meters);
-    }
-
-    // If Overpass is rate-limited or yielded 0 elements, provide high-quality localized spatial POIs
-    if (businesses.length === 0) {
-      businesses = this.generateLocalizedBusinesses(roundedLat, roundedLng, validRadius, areaName);
     }
 
     overpassCache.set(cacheKey, {

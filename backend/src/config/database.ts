@@ -74,6 +74,55 @@ export interface SavedBusinessRow {
   saved_at: string;
 }
 
+export interface MarketAnalysisRow {
+  id: number;
+  user_id: number;
+  business_plan_id: number | null;
+  location_analysis_id: number | null;
+  business_idea: string;
+  business_category: string;
+  location_name: string;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  city: string | null;
+  radius_km: number;
+  total_businesses: number;
+  relevant_businesses: number;
+  competitor_density: number;
+  average_competitor_distance: string;
+  nearest_competitor_distance: string;
+  farthest_competitor_distance: string;
+  concentration_level: 'Low Concentration' | 'Moderate Concentration' | 'High Concentration';
+  competition_risk: 'Low' | 'Moderate' | 'High';
+  market_opportunity: 'Potential Opportunity' | 'Moderate Opportunity' | 'Limited Observed Opportunity' | 'Needs Further Investigation';
+  category_distribution?: any;
+  distance_distribution?: any;
+  market_gap_observations?: string[];
+  insights?: string[];
+  competitors?: MarketCompetitorRow[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MarketCompetitorRow {
+  id: number;
+  market_analysis_id: number;
+  business_name: string;
+  category: string;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  distance_km: number;
+  distance_meters?: number;
+  website: string | null;
+  phone: string | null;
+  opening_hours: string | null;
+  source: string;
+  source_timestamp: string;
+  created_at: string;
+}
+
 export class DatabaseService {
   private static instance: DatabaseService;
   private pool: mysql.Pool | null = null;
@@ -89,6 +138,12 @@ export class DatabaseService {
   private savedBusinesses: Map<number, SavedBusinessRow> = new Map();
   private nextSavedBusinessId = 1;
   private savedBusinessesSeeded = false;
+
+  private marketAnalyses: Map<number, MarketAnalysisRow> = new Map();
+  private nextMarketAnalysisId = 1;
+  private marketCompetitors: Map<number, MarketCompetitorRow> = new Map();
+  private nextMarketCompetitorId = 1;
+  private marketAnalysesSeeded = false;
 
   private constructor() {
     this.seedFallbackUsersSync();
@@ -1620,6 +1675,365 @@ export class DatabaseService {
     };
     this.auditLogs.unshift(newLog);
     return newLog;
+  }
+
+  // --- MARKET & COMPETITION ANALYSIS (Part 6) ---
+  private seedInitialMarketAnalyses(): void {
+    if (this.marketAnalysesSeeded) return;
+    this.marketAnalysesSeeded = true;
+    const now = new Date(Date.now() - 86400000).toISOString();
+
+    const sampleAnalysis: MarketAnalysisRow = {
+      id: this.nextMarketAnalysisId++,
+      user_id: 2,
+      business_plan_id: 1,
+      location_analysis_id: 1,
+      business_idea: 'Specialty Coffee Shop & Artisanal Bakery',
+      business_category: 'Cafe',
+      location_name: 'Vishrambag, Sangli',
+      address: 'Vishrambag, Sangli, Maharashtra, India',
+      latitude: 16.8524,
+      longitude: 74.5815,
+      city: 'Sangli',
+      radius_km: 2.0,
+      total_businesses: 42,
+      relevant_businesses: 4,
+      competitor_density: 0.3183,
+      average_competitor_distance: '820 m',
+      nearest_competitor_distance: '340 m',
+      farthest_competitor_distance: '1.6 km',
+      concentration_level: 'Moderate Concentration',
+      competition_risk: 'Moderate',
+      market_opportunity: 'Moderate Opportunity',
+      category_distribution: { Cafe: 4, Restaurant: 12, Bakery: 3, Supermarket: 5, Pharmacy: 6, Bank: 4, Hotel: 3, Gym: 2, Other: 3 },
+      distance_distribution: [
+        { range: '0 - 500 m', count: 1 },
+        { range: '500 m - 1 km', count: 2 },
+        { range: '1 km - 2 km', count: 1 },
+      ],
+      market_gap_observations: [
+        'Moderate cafe density observed with 4 direct establishments within 2.0 km.',
+        'High general commercial activity (42 businesses) provides strong anchor footfall.',
+        'Lower specialty roastery concentration compared with general restaurants.',
+      ],
+      insights: [
+        '4 potentially relevant businesses were identified within 2.0 km.',
+        'Estimated relevant competitor density is 0.32 competitors / km² across a 12.57 km² zone.',
+        'Nearest relevant competitor is located approximately 340 m away.',
+        'Rule-based market opportunity is evaluated as Moderate Opportunity based on observed trade zone mix.',
+      ],
+      created_at: now,
+      updated_at: now,
+    };
+
+    this.marketAnalyses.set(sampleAnalysis.id, sampleAnalysis);
+
+    const sampleCompetitors: Omit<MarketCompetitorRow, 'id'>[] = [
+      {
+        market_analysis_id: sampleAnalysis.id,
+        business_name: 'Cafe Coffee Day',
+        category: 'Cafe',
+        latitude: 16.8535,
+        longitude: 74.5830,
+        address: 'Opposite Walchand College, Vishrambag, Sangli',
+        distance_km: 0.34,
+        distance_meters: 340,
+        website: 'https://www.cafecoffeeday.com',
+        phone: null,
+        opening_hours: '09:00-22:30',
+        source: 'OpenStreetMap',
+        source_timestamp: now,
+        created_at: now,
+      },
+      {
+        market_analysis_id: sampleAnalysis.id,
+        business_name: 'The Bean Roastery & Cafe',
+        category: 'Cafe',
+        latitude: 16.8560,
+        longitude: 74.5845,
+        address: 'College Road, Vishrambag, Sangli',
+        distance_km: 0.65,
+        distance_meters: 650,
+        website: null,
+        phone: '+91 233 260 1122',
+        opening_hours: '08:30-22:00',
+        source: 'OpenStreetMap',
+        source_timestamp: now,
+        created_at: now,
+      },
+      {
+        market_analysis_id: sampleAnalysis.id,
+        business_name: 'Amrutulya Tea & Coffee Corner',
+        category: 'Cafe',
+        latitude: 16.8485,
+        longitude: 74.5780,
+        address: 'Near Vishrambag Railway Crossing, Sangli',
+        distance_km: 0.89,
+        distance_meters: 890,
+        website: null,
+        phone: null,
+        opening_hours: '06:00-21:00',
+        source: 'OpenStreetMap',
+        source_timestamp: now,
+        created_at: now,
+      },
+      {
+        market_analysis_id: sampleAnalysis.id,
+        business_name: 'Urban Brew Coffee Hub',
+        category: 'Cafe',
+        latitude: 16.8610,
+        longitude: 74.5890,
+        address: 'High Street Commercial Plaza, Sangli',
+        distance_km: 1.60,
+        distance_meters: 1600,
+        website: null,
+        phone: null,
+        opening_hours: '10:00-23:00',
+        source: 'OpenStreetMap',
+        source_timestamp: now,
+        created_at: now,
+      },
+    ];
+
+    sampleCompetitors.forEach((c) => {
+      const compId = this.nextMarketCompetitorId++;
+      this.marketCompetitors.set(compId, { id: compId, ...c });
+    });
+  }
+
+  public async createMarketAnalysis(
+    data: Omit<MarketAnalysisRow, 'id' | 'created_at' | 'updated_at'>,
+    competitors: Array<Omit<MarketCompetitorRow, 'id' | 'market_analysis_id' | 'created_at'>> = []
+  ): Promise<MarketAnalysisRow> {
+    this.seedInitialMarketAnalyses();
+    const now = new Date().toISOString();
+    const recordId = this.nextMarketAnalysisId++;
+
+    const newRecord: MarketAnalysisRow = {
+      id: recordId,
+      user_id: data.user_id,
+      business_plan_id: data.business_plan_id || null,
+      location_analysis_id: data.location_analysis_id || null,
+      business_idea: data.business_idea,
+      business_category: data.business_category,
+      location_name: data.location_name,
+      address: data.address || null,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      city: data.city || null,
+      radius_km: data.radius_km,
+      total_businesses: data.total_businesses,
+      relevant_businesses: data.relevant_businesses,
+      competitor_density: data.competitor_density,
+      average_competitor_distance: data.average_competitor_distance,
+      nearest_competitor_distance: data.nearest_competitor_distance,
+      farthest_competitor_distance: data.farthest_competitor_distance,
+      concentration_level: data.concentration_level,
+      competition_risk: data.competition_risk,
+      market_opportunity: data.market_opportunity,
+      category_distribution: data.category_distribution || {},
+      distance_distribution: data.distance_distribution || [],
+      market_gap_observations: data.market_gap_observations || [],
+      insights: data.insights || [],
+      created_at: now,
+      updated_at: now,
+    };
+
+    if (this.isConnected && this.pool) {
+      try {
+        const [result] = await this.pool.query<mysql.ResultSetHeader>(
+          `INSERT INTO market_analyses 
+            (user_id, business_plan_id, location_analysis_id, business_idea, business_category, location_name, address, latitude, longitude, city, radius_km, total_businesses, relevant_businesses, competitor_density, average_competitor_distance, nearest_competitor_distance, farthest_competitor_distance, concentration_level, competition_risk, market_opportunity, created_at, updated_at) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+          [
+            newRecord.user_id,
+            newRecord.business_plan_id,
+            newRecord.location_analysis_id,
+            newRecord.business_idea,
+            newRecord.business_category,
+            newRecord.location_name,
+            newRecord.address,
+            newRecord.latitude,
+            newRecord.longitude,
+            newRecord.city,
+            newRecord.radius_km,
+            newRecord.total_businesses,
+            newRecord.relevant_businesses,
+            newRecord.competitor_density,
+            newRecord.average_competitor_distance,
+            newRecord.nearest_competitor_distance,
+            newRecord.farthest_competitor_distance,
+            newRecord.concentration_level,
+            newRecord.competition_risk,
+            newRecord.market_opportunity,
+          ]
+        );
+        newRecord.id = result.insertId;
+      } catch (err) {
+        logger.warn('MySQL createMarketAnalysis fallback:', err);
+      }
+    }
+
+    this.marketAnalyses.set(newRecord.id, newRecord);
+
+    // Save competitors
+    const savedCompetitors: MarketCompetitorRow[] = [];
+    for (const comp of competitors) {
+      const compId = this.nextMarketCompetitorId++;
+      const compRow: MarketCompetitorRow = {
+        id: compId,
+        market_analysis_id: newRecord.id,
+        business_name: comp.business_name,
+        category: comp.category,
+        latitude: comp.latitude,
+        longitude: comp.longitude,
+        address: comp.address || null,
+        distance_km: comp.distance_km,
+        distance_meters: comp.distance_meters,
+        website: comp.website || null,
+        phone: comp.phone || null,
+        opening_hours: comp.opening_hours || null,
+        source: comp.source || 'OpenStreetMap',
+        source_timestamp: comp.source_timestamp || now,
+        created_at: now,
+      };
+
+      if (this.isConnected && this.pool) {
+        try {
+          await this.pool.query(
+            `INSERT INTO market_competitors 
+              (market_analysis_id, business_name, category, latitude, longitude, address, distance_km, distance_meters, website, phone, opening_hours, source, source_timestamp, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+            [
+              compRow.market_analysis_id,
+              compRow.business_name,
+              compRow.category,
+              compRow.latitude,
+              compRow.longitude,
+              compRow.address,
+              compRow.distance_km,
+              compRow.distance_meters || null,
+              compRow.website,
+              compRow.phone,
+              compRow.opening_hours,
+              compRow.source,
+              compRow.source_timestamp,
+            ]
+          );
+        } catch (err) {
+          logger.warn('MySQL insert market_competitor fallback:', err);
+        }
+      }
+
+      this.marketCompetitors.set(compId, compRow);
+      savedCompetitors.push(compRow);
+    }
+
+    newRecord.competitors = savedCompetitors;
+    return { ...newRecord };
+  }
+
+  public async getMarketAnalysisById(id: number | string, userId?: number | string): Promise<MarketAnalysisRow | null> {
+    this.seedInitialMarketAnalyses();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    let item = this.marketAnalyses.get(numericId);
+    if (!item) return null;
+
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return null;
+    }
+
+    const competitors = await this.getMarketCompetitors(numericId);
+    return { ...item, competitors };
+  }
+
+  public async getMarketAnalysisByPlanId(planId: number | string, userId?: number | string): Promise<MarketAnalysisRow | null> {
+    this.seedInitialMarketAnalyses();
+    const numericPlanId = typeof planId === 'string' ? parseInt(planId, 10) : planId;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    const analyses = Array.from(this.marketAnalyses.values())
+      .filter((a) => a.business_plan_id === numericPlanId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    if (analyses.length === 0) return null;
+    const item = analyses[0];
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return null;
+    }
+
+    const competitors = await this.getMarketCompetitors(item.id);
+    return { ...item, competitors };
+  }
+
+  public async listMarketAnalyses(userId?: number | string): Promise<MarketAnalysisRow[]> {
+    this.seedInitialMarketAnalyses();
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    let list = Array.from(this.marketAnalyses.values());
+    if (numericUserId !== undefined) {
+      list = list.filter((a) => a.user_id === numericUserId);
+    }
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  public async deleteMarketAnalysis(id: number | string, userId?: number | string): Promise<boolean> {
+    this.seedInitialMarketAnalyses();
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    const item = this.marketAnalyses.get(numericId);
+    if (!item) return false;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return false;
+    }
+
+    if (this.isConnected && this.pool) {
+      try {
+        await this.pool.query('DELETE FROM market_competitors WHERE market_analysis_id = ?', [numericId]);
+        await this.pool.query('DELETE FROM market_analyses WHERE id = ?', [numericId]);
+      } catch (err) {
+        logger.warn('MySQL deleteMarketAnalysis fallback:', err);
+      }
+    }
+
+    // Remove from in-memory maps
+    this.marketAnalyses.delete(numericId);
+    for (const [compId, comp] of this.marketCompetitors.entries()) {
+      if (comp.market_analysis_id === numericId) {
+        this.marketCompetitors.delete(compId);
+      }
+    }
+    return true;
+  }
+
+  public async getMarketCompetitors(marketAnalysisId: number | string): Promise<MarketCompetitorRow[]> {
+    this.seedInitialMarketAnalyses();
+    const numId = typeof marketAnalysisId === 'string' ? parseInt(marketAnalysisId, 10) : marketAnalysisId;
+
+    if (this.isConnected && this.pool) {
+      try {
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(
+          'SELECT * FROM market_competitors WHERE market_analysis_id = ? ORDER BY distance_km ASC',
+          [numId]
+        );
+        if (rows.length > 0) {
+          return rows as unknown as MarketCompetitorRow[];
+        }
+      } catch (err) {
+        logger.warn('MySQL getMarketCompetitors fallback:', err);
+      }
+    }
+
+    const list: MarketCompetitorRow[] = [];
+    for (const comp of this.marketCompetitors.values()) {
+      if (comp.market_analysis_id === numId) {
+        list.push({ ...comp });
+      }
+    }
+    return list.sort((a, b) => a.distance_km - b.distance_km);
   }
 
   // --- PLATFORM CONFIGURATION & SYSTEM SETTINGS ---

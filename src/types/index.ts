@@ -506,6 +506,117 @@ export interface LocationAdminStats {
   radiusDistribution: { radius: string; count: number }[];
 }
 
+// ==========================================
+// Part 6: Market & Competition Analysis Types
+// ==========================================
+
+export interface MarketCompetitor {
+  id?: number | string;
+  osm_id?: string;
+  name: string;
+  category: string;
+  broadCategory?: string;
+  latitude: number;
+  longitude: number;
+  distance_meters: number;
+  distance_km: number;
+  distance_formatted: string;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  opening_hours: string | null;
+  isDirectCompetitor?: boolean;
+  relevanceReason?: string;
+  source: string;
+  source_timestamp: string;
+}
+
+export interface CategorySummaryItem {
+  category: string;
+  count: number;
+  percentage: number;
+  isDirectCategory: boolean;
+}
+
+export interface MarketAnalysisData {
+  id?: number | string;
+  businessIdea: string;
+  businessCategory: string;
+  location: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  radiusKm: number;
+  areaKm2: number;
+  totalBusinesses: number;
+  relevantCompetitorsCount: number;
+  otherBusinessesCount: number;
+  competitorDensity: number;
+  competitorDensityFormatted: string;
+  distanceMetrics: {
+    nearestDistanceKm: number | null;
+    nearestDistanceFormatted: string;
+    farthestDistanceKm: number | null;
+    farthestDistanceFormatted: string;
+    averageDistanceKm: number | null;
+    averageDistanceFormatted: string;
+    medianDistanceKm: number | null;
+    medianDistanceFormatted: string;
+  };
+  concentration: {
+    level: 'Low Concentration' | 'Moderate Concentration' | 'High Concentration';
+    explanation: string;
+    benchmarkNote: string;
+  };
+  competitionRisk: {
+    level: 'Low' | 'Moderate' | 'High';
+    reason: string;
+  };
+  marketOpportunity: {
+    indicator: 'Potential Opportunity' | 'Moderate Opportunity' | 'Limited Observed Opportunity' | 'Needs Further Investigation';
+    explanation: string;
+  };
+  categoryDistribution: CategorySummaryItem[];
+  competitorDistanceBuckets: { range: string; count: number }[];
+  marketGapObservations: string[];
+  insights: string[];
+  competitors: MarketCompetitor[];
+  otherBusinesses: MarketCompetitor[];
+  dataSource: {
+    name: string;
+    attribution: string;
+    retrievedAt: string;
+    priceInfoAvailable: boolean;
+    priceInfoNote: string;
+    historicalTrendNote: string;
+    limitations: string[];
+  };
+  savedAt?: string;
+}
+
+export interface LocationComparisonItem {
+  locationName: string;
+  address: string;
+  totalBusinesses: number;
+  relevantBusinesses: number;
+  competitorDensity: number;
+  averageDistance: string;
+  nearestCompetitor: string;
+  concentrationLevel: string;
+  competitionRisk: string;
+  marketOpportunity: string;
+}
+
+export interface LocationComparisonResponse {
+  businessIdea: string;
+  businessCategory: string;
+  radiusKm: number;
+  comparisons: LocationComparisonItem[];
+  note: string;
+}
+
 export type {
   CalculatedFinancialResults,
   ScenarioResult,

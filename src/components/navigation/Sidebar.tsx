@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
     { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Business Plans', path: '/business-plans', icon: FileText },
     { name: 'Planner Wizard', path: '/business-planner', icon: FileSpreadsheet },
-    { name: 'Market Analysis', path: '/market-analysis', icon: TrendingUp },
+    { name: 'Market & Competition', path: '/market-analysis', icon: TrendingUp, badge: 'Part 6' },
     { name: 'Location Intelligence', path: '/location-intelligence', icon: MapPin, badge: 'OSM Map' },
     { name: 'Comparison', path: '/comparison', icon: GitCompare },
     { name: 'Predictions', path: '/predictions', icon: Cpu, badge: 'ML' },
