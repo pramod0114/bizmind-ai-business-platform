@@ -337,3 +337,27 @@ CREATE TABLE IF NOT EXISTS `market_competitors` (
   KEY `fk_competitors_analysis` (`market_analysis_id`),
   CONSTRAINT `fk_competitors_analysis` FOREIGN KEY (`market_analysis_id`) REFERENCES `market_analyses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 18. LOCATION PREDICTIONS (Location-Based Business Success Prediction)
+CREATE TABLE IF NOT EXISTS `location_predictions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `business_idea` VARCHAR(255) NOT NULL,
+  `business_category` VARCHAR(100) NOT NULL,
+  `location_name` VARCHAR(255) DEFAULT NULL,
+  `formatted_address` TEXT DEFAULT NULL,
+  `latitude` DECIMAL(10, 7) NOT NULL,
+  `longitude` DECIMAL(10, 7) NOT NULL,
+  `radius_meters` INT UNSIGNED NOT NULL DEFAULT 2000,
+  `financial_inputs_json` JSON DEFAULT NULL,
+  `competitor_metrics_json` JSON DEFAULT NULL,
+  `market_analysis_json` JSON DEFAULT NULL,
+  `financial_feasibility_json` JSON DEFAULT NULL,
+  `prediction_assessment_json` JSON DEFAULT NULL,
+  `recommendations_json` JSON DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_loc_pred_user` (`user_id`),
+  CONSTRAINT `fk_loc_pred_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

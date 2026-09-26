@@ -123,6 +123,26 @@ export interface MarketCompetitorRow {
   created_at: string;
 }
 
+export interface LocationPredictionRecord {
+  id: number;
+  user_id: number;
+  business_idea: string;
+  business_category: string;
+  location_name: string;
+  formatted_address: string;
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  financial_inputs?: any;
+  competitor_metrics: any;
+  market_analysis: any;
+  financial_feasibility?: any;
+  prediction_assessment: any;
+  recommendations: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 export class DatabaseService {
   private static instance: DatabaseService;
   private pool: mysql.Pool | null = null;
@@ -144,6 +164,9 @@ export class DatabaseService {
   private marketCompetitors: Map<number, MarketCompetitorRow> = new Map();
   private nextMarketCompetitorId = 1;
   private marketAnalysesSeeded = false;
+
+  private locationPredictions: Map<number, LocationPredictionRecord> = new Map();
+  private nextLocationPredictionId = 1;
 
   private constructor() {
     this.seedFallbackUsersSync();
@@ -357,6 +380,32 @@ export class DatabaseService {
           PRIMARY KEY (id),
           KEY fk_competitors_analysis (market_analysis_id),
           CONSTRAINT fk_competitors_analysis FOREIGN KEY (market_analysis_id) REFERENCES market_analyses (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Ensure location_predictions table exists in MySQL
+      await this.pool.query(`
+        CREATE TABLE IF NOT EXISTS location_predictions (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          user_id BIGINT UNSIGNED NOT NULL,
+          business_idea VARCHAR(255) NOT NULL,
+          business_category VARCHAR(100) NOT NULL,
+          location_name VARCHAR(255) DEFAULT NULL,
+          formatted_address TEXT DEFAULT NULL,
+          latitude DECIMAL(10, 7) NOT NULL,
+          longitude DECIMAL(10, 7) NOT NULL,
+          radius_meters INT UNSIGNED NOT NULL DEFAULT 2000,
+          financial_inputs_json JSON DEFAULT NULL,
+          competitor_metrics_json JSON DEFAULT NULL,
+          market_analysis_json JSON DEFAULT NULL,
+          financial_feasibility_json JSON DEFAULT NULL,
+          prediction_assessment_json JSON DEFAULT NULL,
+          recommendations_json JSON DEFAULT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          KEY fk_loc_pred_user (user_id),
+          CONSTRAINT fk_loc_pred_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
     } catch (err) {
@@ -2096,6 +2145,186 @@ export class DatabaseService {
       }
     }
     return list.sort((a, b) => a.distance_km - b.distance_km);
+  }
+
+  // --- LOCATION PREDICTIONS & FEASIBILITY PERSISTENCE ---
+  public async saveLocationPrediction(
+    data: Omit<LocationPredictionRecord, 'id' | 'created_at' | 'updated_at'> & { id?: number }
+  ): Promise<LocationPredictionRecord> {
+    const numericUserId = typeof data.user_id === 'string' ? parseInt(data.user_id, 10) : data.user_id;
+    const now = new Date().toISOString();
+
+    if (this.isConnected && this.pool) {
+      try {
+        const [res] = await this.pool.query<mysql.ResultSetHeader>(
+          `INSERT INTO location_predictions (
+            user_id, business_idea, business_category, location_name, formatted_address,
+            latitude, longitude, radius_meters, financial_inputs_json, competitor_metrics_json,
+            market_analysis_json, financial_feasibility_json, prediction_assessment_json,
+            recommendations_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+          [
+            numericUserId,
+            data.business_idea,
+            data.business_category,
+            data.location_name || '',
+            data.formatted_address || '',
+            data.latitude,
+            data.longitude,
+            data.radius_meters || 2000,
+            data.financial_inputs ? JSON.stringify(data.financial_inputs) : null,
+            data.competitor_metrics ? JSON.stringify(data.competitor_metrics) : null,
+            data.market_analysis ? JSON.stringify(data.market_analysis) : null,
+            data.financial_feasibility ? JSON.stringify(data.financial_feasibility) : null,
+            data.prediction_assessment ? JSON.stringify(data.prediction_assessment) : null,
+            data.recommendations ? JSON.stringify(data.recommendations) : null,
+          ]
+        );
+
+        const newId = res.insertId;
+        const record: LocationPredictionRecord = {
+          ...data,
+          id: newId,
+          user_id: numericUserId,
+          created_at: now,
+          updated_at: now,
+        };
+        this.locationPredictions.set(newId, record);
+        return record;
+      } catch (err) {
+        logger.warn('MySQL saveLocationPrediction fallback:', err);
+      }
+    }
+
+    const newId = this.nextLocationPredictionId++;
+    const record: LocationPredictionRecord = {
+      ...data,
+      id: newId,
+      user_id: numericUserId,
+      created_at: now,
+      updated_at: now,
+    };
+    this.locationPredictions.set(newId, record);
+    return record;
+  }
+
+  public async getLocationPredictionById(
+    id: number | string,
+    userId?: number | string
+  ): Promise<LocationPredictionRecord | null> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'SELECT * FROM location_predictions WHERE id = ?';
+        const params: any[] = [numericId];
+        if (numericUserId !== undefined) {
+          query += ' AND user_id = ?';
+          params.push(numericUserId);
+        }
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(query, params);
+        if (rows.length > 0) {
+          const r = rows[0] as any;
+          return {
+            id: r.id,
+            user_id: r.user_id,
+            business_idea: r.business_idea,
+            business_category: r.business_category,
+            location_name: r.location_name,
+            formatted_address: r.formatted_address,
+            latitude: Number(r.latitude),
+            longitude: Number(r.longitude),
+            radius_meters: Number(r.radius_meters),
+            financial_inputs: typeof r.financial_inputs_json === 'string' ? JSON.parse(r.financial_inputs_json) : r.financial_inputs_json,
+            competitor_metrics: typeof r.competitor_metrics_json === 'string' ? JSON.parse(r.competitor_metrics_json) : r.competitor_metrics_json,
+            market_analysis: typeof r.market_analysis_json === 'string' ? JSON.parse(r.market_analysis_json) : r.market_analysis_json,
+            financial_feasibility: typeof r.financial_feasibility_json === 'string' ? JSON.parse(r.financial_feasibility_json) : r.financial_feasibility_json,
+            prediction_assessment: typeof r.prediction_assessment_json === 'string' ? JSON.parse(r.prediction_assessment_json) : r.prediction_assessment_json,
+            recommendations: typeof r.recommendations_json === 'string' ? JSON.parse(r.recommendations_json) : (r.recommendations_json || []),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+          };
+        }
+      } catch (err) {
+        logger.warn('MySQL getLocationPredictionById fallback:', err);
+      }
+    }
+
+    const item = this.locationPredictions.get(numericId);
+    if (!item) return null;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return null;
+    }
+    return { ...item };
+  }
+
+  public async listLocationPredictions(userId?: number | string): Promise<LocationPredictionRecord[]> {
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    if (this.isConnected && this.pool) {
+      try {
+        let query = 'SELECT * FROM location_predictions';
+        const params: any[] = [];
+        if (numericUserId !== undefined) {
+          query += ' WHERE user_id = ?';
+          params.push(numericUserId);
+        }
+        query += ' ORDER BY id DESC';
+        const [rows] = await this.pool.query<mysql.RowDataPacket[]>(query, params);
+        if (rows.length > 0) {
+          return rows.map((r: any) => ({
+            id: r.id,
+            user_id: r.user_id,
+            business_idea: r.business_idea,
+            business_category: r.business_category,
+            location_name: r.location_name,
+            formatted_address: r.formatted_address,
+            latitude: Number(r.latitude),
+            longitude: Number(r.longitude),
+            radius_meters: Number(r.radius_meters),
+            financial_inputs: typeof r.financial_inputs_json === 'string' ? JSON.parse(r.financial_inputs_json) : r.financial_inputs_json,
+            competitor_metrics: typeof r.competitor_metrics_json === 'string' ? JSON.parse(r.competitor_metrics_json) : r.competitor_metrics_json,
+            market_analysis: typeof r.market_analysis_json === 'string' ? JSON.parse(r.market_analysis_json) : r.market_analysis_json,
+            financial_feasibility: typeof r.financial_feasibility_json === 'string' ? JSON.parse(r.financial_feasibility_json) : r.financial_feasibility_json,
+            prediction_assessment: typeof r.prediction_assessment_json === 'string' ? JSON.parse(r.prediction_assessment_json) : r.prediction_assessment_json,
+            recommendations: typeof r.recommendations_json === 'string' ? JSON.parse(r.recommendations_json) : (r.recommendations_json || []),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+          }));
+        }
+      } catch (err) {
+        logger.warn('MySQL listLocationPredictions fallback:', err);
+      }
+    }
+
+    let list = Array.from(this.locationPredictions.values());
+    if (numericUserId !== undefined) {
+      list = list.filter((p) => p.user_id === numericUserId);
+    }
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  public async deleteLocationPrediction(id: number | string, userId?: number | string): Promise<boolean> {
+    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericUserId = userId !== undefined && userId !== null ? (typeof userId === 'string' ? parseInt(userId, 10) : userId) : undefined;
+
+    const item = this.locationPredictions.get(numericId);
+    if (!item) return false;
+    if (numericUserId !== undefined && item.user_id !== numericUserId) {
+      return false;
+    }
+
+    if (this.isConnected && this.pool) {
+      try {
+        await this.pool.query('DELETE FROM location_predictions WHERE id = ?', [numericId]);
+      } catch (err) {
+        logger.warn('MySQL deleteLocationPrediction fallback:', err);
+      }
+    }
+
+    this.locationPredictions.delete(numericId);
+    return true;
   }
 
   // --- PLATFORM CONFIGURATION & SYSTEM SETTINGS ---

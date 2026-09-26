@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
-import { sendSuccess } from '../utils/apiResponse.js';
+import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { locationPredictionService } from '../services/locationPredictionService.js';
+import { db } from '../config/database.js';
+import { logger } from '../utils/logger.js';
+import { AuthRequest } from '../middleware/authMiddleware.js';
 
 export interface MLPredictionOutput {
   successProbability: number; // 0 - 100
@@ -107,3 +111,195 @@ export async function getModelStatus(_req: Request, res: Response): Promise<void
     trainedOn: 'SME Empirical Feasibility & Location Datasets',
   }, 'ML Model metadata retrieved');
 }
+
+/**
+ * POST /api/predictions/location-based
+ * Run Location-Based Business Success Prediction & Opportunity Evaluation
+ */
+export async function predictLocationBased(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const {
+      businessIdea,
+      latitude,
+      longitude,
+      radiusMeters = 2000,
+      locationName,
+      formattedAddress,
+      financialInputs,
+    } = req.body;
+
+    if (!businessIdea || !businessIdea.trim()) {
+      sendError(res, 'A business idea (e.g. Coffee Shop, Restaurant, Salon) is required.', 400);
+      return;
+    }
+
+    const lat = parseFloat(String(latitude));
+    const lng = parseFloat(String(longitude));
+
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      sendError(res, 'Valid coordinates (latitude -90 to 90, longitude -180 to 180) are required.', 400);
+      return;
+    }
+
+    const radius = Math.min(Math.max(parseInt(String(radiusMeters), 10) || 2000, 500), 10000);
+    const userId = req.user?.id;
+
+    const result = await locationPredictionService.analyzeLocationOpportunity({
+      businessIdea: businessIdea.trim(),
+      latitude: lat,
+      longitude: lng,
+      radiusMeters: radius,
+      locationName,
+      formattedAddress,
+      financialInputs,
+      userId,
+    });
+
+    sendSuccess(res, result, 'Location-based business opportunity analysis completed successfully.');
+  } catch (err: any) {
+    logger.error('predictLocationBased error:', err);
+    sendError(res, err?.message || 'Failed to complete location-based prediction analysis.', 500, err?.message);
+  }
+}
+
+/**
+ * POST /api/predictions/compare-locations
+ * Compare up to 3 target locations side-by-side
+ */
+export async function compareLocations(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { businessIdea, locations, radiusMeters = 2000, financialInputs } = req.body;
+
+    if (!businessIdea || !businessIdea.trim()) {
+      sendError(res, 'A business idea is required for location comparison.', 400);
+      return;
+    }
+
+    if (!Array.isArray(locations) || locations.length === 0) {
+      sendError(res, 'At least one location is required for comparison (up to 3).', 400);
+      return;
+    }
+
+    const validLocations = locations.slice(0, 3).map((loc: any, idx: number) => ({
+      label: loc.label || `Location ${String.fromCharCode(65 + idx)}`,
+      name: loc.name || `Site ${idx + 1}`,
+      latitude: parseFloat(String(loc.latitude)),
+      longitude: parseFloat(String(loc.longitude)),
+      formattedAddress: loc.formattedAddress || loc.name,
+    }));
+
+    for (const loc of validLocations) {
+      if (isNaN(loc.latitude) || isNaN(loc.longitude)) {
+        sendError(res, `Invalid coordinates for location ${loc.label}.`, 400);
+        return;
+      }
+    }
+
+    const radius = Math.min(Math.max(parseInt(String(radiusMeters), 10) || 2000, 500), 10000);
+
+    const comparison = await locationPredictionService.compareLocations({
+      businessIdea: businessIdea.trim(),
+      locations: validLocations,
+      radiusMeters: radius,
+      financialInputs,
+      userId: req.user?.id,
+    });
+
+    sendSuccess(res, comparison, 'Location comparison completed successfully.');
+  } catch (err: any) {
+    logger.error('compareLocations error:', err);
+    sendError(res, err?.message || 'Failed to compare locations.', 500, err?.message);
+  }
+}
+
+/**
+ * POST /api/predictions/save
+ * Save a generated location prediction to the user account
+ */
+export async function saveLocationPrediction(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    if (!req.user) {
+      sendError(res, 'Authentication required to save location predictions.', 401);
+      return;
+    }
+
+    const { result, financialInputs } = req.body;
+    if (!result || !result.businessIdea || !result.coordinates) {
+      sendError(res, 'Valid prediction result payload is required to save.', 400);
+      return;
+    }
+
+    const saved = await locationPredictionService.savePrediction(req.user.id, result, financialInputs);
+    sendSuccess(res, saved, 'Location prediction analysis saved successfully.');
+  } catch (err: any) {
+    logger.error('saveLocationPrediction error:', err);
+    sendError(res, err?.message || 'Failed to save location prediction.', 500, err?.message);
+  }
+}
+
+/**
+ * GET /api/predictions/location-based
+ * List saved location predictions for the authenticated user
+ */
+export async function listLocationPredictions(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    if (!req.user) {
+      sendError(res, 'Authentication required to list saved predictions.', 401);
+      return;
+    }
+
+    const list = await db.listLocationPredictions(req.user.id);
+    sendSuccess(res, list, `Retrieved ${list.length} saved location predictions.`);
+  } catch (err: any) {
+    logger.error('listLocationPredictions error:', err);
+    sendError(res, err?.message || 'Failed to list saved predictions.', 500, err?.message);
+  }
+}
+
+/**
+ * GET /api/predictions/location-based/:id
+ * Retrieve a specific saved location prediction by ID
+ */
+export async function getLocationPredictionById(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    const record = await db.getLocationPredictionById(id, userId);
+    if (!record) {
+      sendError(res, 'Saved location prediction not found or access denied.', 404);
+      return;
+    }
+
+    sendSuccess(res, record, 'Saved location prediction retrieved.');
+  } catch (err: any) {
+    logger.error('getLocationPredictionById error:', err);
+    sendError(res, err?.message || 'Failed to retrieve location prediction.', 500, err?.message);
+  }
+}
+
+/**
+ * DELETE /api/predictions/location-based/:id
+ * Delete a saved location prediction
+ */
+export async function deleteLocationPrediction(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    if (!req.user) {
+      sendError(res, 'Authentication required.', 401);
+      return;
+    }
+
+    const { id } = req.params;
+    const deleted = await db.deleteLocationPrediction(id, req.user.id);
+    if (!deleted) {
+      sendError(res, 'Analysis not found or could not be removed.', 404);
+      return;
+    }
+
+    sendSuccess(res, { id }, 'Saved location prediction deleted successfully.');
+  } catch (err: any) {
+    logger.error('deleteLocationPrediction error:', err);
+    sendError(res, err?.message || 'Failed to delete location prediction.', 500, err?.message);
+  }
+}
+
