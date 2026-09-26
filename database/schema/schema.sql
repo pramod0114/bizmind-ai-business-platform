@@ -115,10 +115,13 @@ CREATE TABLE IF NOT EXISTS `competitors` (
 CREATE TABLE IF NOT EXISTS `business_plans` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL,
-  `business_id` BIGINT UNSIGNED NOT NULL,
+  `business_id` BIGINT UNSIGNED DEFAULT NULL,
   `plan_title` VARCHAR(255) NOT NULL,
+  `business_name` VARCHAR(255) DEFAULT NULL,
+  `category` VARCHAR(150) DEFAULT NULL,
+  `location` VARCHAR(255) DEFAULT NULL,
   `executive_summary` TEXT DEFAULT NULL,
-  `initial_capital` DECIMAL(14,2) NOT NULL,
+  `initial_capital` DECIMAL(14,2) NOT NULL DEFAULT 0.00,
   `planned_timeline_months` INT UNSIGNED NOT NULL DEFAULT 12,
   `plan_status` ENUM('draft', 'analyzed', 'archived') NOT NULL DEFAULT 'draft',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -127,16 +130,16 @@ CREATE TABLE IF NOT EXISTS `business_plans` (
   KEY `fk_plans_user` (`user_id`),
   KEY `fk_plans_biz` (`business_id`),
   CONSTRAINT `fk_plans_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_plans_biz` FOREIGN KEY (`business_id`) REFERENCES `businesses` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_plans_biz` FOREIGN KEY (`business_id`) REFERENCES `businesses` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. FINANCIAL PROJECTIONS
 CREATE TABLE IF NOT EXISTS `financial_projections` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `plan_id` BIGINT UNSIGNED NOT NULL,
-  `monthly_fixed_costs` DECIMAL(14,2) NOT NULL,
-  `variable_cost_percentage` DECIMAL(5,2) NOT NULL,
-  `projected_monthly_revenue` DECIMAL(14,2) NOT NULL,
+  `monthly_fixed_costs` DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  `variable_cost_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `projected_monthly_revenue` DECIMAL(14,2) NOT NULL DEFAULT 0.00,
   `break_even_period_months` INT UNSIGNED DEFAULT NULL,
   `projected_roi_1yr` DECIMAL(6,2) DEFAULT NULL,
   `projected_roi_3yr` DECIMAL(6,2) DEFAULT NULL,
@@ -180,17 +183,32 @@ CREATE TABLE IF NOT EXISTS `recommendations` (
   CONSTRAINT `fk_rec_prediction` FOREIGN KEY (`prediction_id`) REFERENCES `predictions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 11. SAVED BUSINESSES
+-- 11. SAVED BUSINESSES (Bookmarked Venues, POIs & Competitor Profiles)
 CREATE TABLE IF NOT EXISTS `saved_businesses` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL,
-  `business_id` BIGINT UNSIGNED NOT NULL,
+  `osm_id` VARCHAR(100) NOT NULL,
+  `business_name` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(150) NOT NULL,
+  `latitude` DECIMAL(10, 7) NOT NULL,
+  `longitude` DECIMAL(10, 7) NOT NULL,
+  `address` TEXT DEFAULT NULL,
+  `phone` VARCHAR(100) DEFAULT NULL,
+  `website` VARCHAR(500) DEFAULT NULL,
+  `opening_hours` VARCHAR(255) DEFAULT NULL,
+  `brand` VARCHAR(150) DEFAULT NULL,
+  `cuisine` VARCHAR(150) DEFAULT NULL,
+  `distance_meters` INT DEFAULT NULL,
   `notes` TEXT DEFAULT NULL,
+  `business_id` BIGINT UNSIGNED DEFAULT NULL,
+  `saved_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_saved_biz` (`user_id`, `business_id`),
+  UNIQUE KEY `uk_user_osm` (`user_id`, `osm_id`),
+  KEY `idx_saved_user_id` (`user_id`),
+  KEY `fk_saved_biz` (`business_id`),
   CONSTRAINT `fk_saved_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_saved_biz` FOREIGN KEY (`business_id`) REFERENCES `businesses` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_saved_biz` FOREIGN KEY (`business_id`) REFERENCES `businesses` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 12. REVIEWS & FEEDBACK
@@ -238,7 +256,29 @@ CREATE TABLE IF NOT EXISTS `admin_logs` (
   CONSTRAINT `fk_admin_log_user` FOREIGN KEY (`admin_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 15. MARKET ANALYSES (Part 6: Market & Competition Analysis)
+-- 15. LOCATION ANALYSES (Part 4: Location Intelligence & Spatial Demographics)
+CREATE TABLE IF NOT EXISTS `location_analyses` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `location_name` VARCHAR(255) NOT NULL,
+  `address` TEXT NOT NULL,
+  `latitude` DECIMAL(10, 7) NOT NULL,
+  `longitude` DECIMAL(10, 7) NOT NULL,
+  `radius` INT UNSIGNED NOT NULL DEFAULT 2000,
+  `business_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `category_summary` JSON DEFAULT NULL,
+  `competition_level` ENUM('LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'MEDIUM',
+  `opportunity_score` INT UNSIGNED NOT NULL DEFAULT 70,
+  `business_name` VARCHAR(255) DEFAULT NULL,
+  `business_category` VARCHAR(150) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_loc_user_id` (`user_id`),
+  CONSTRAINT `fk_loc_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 16. MARKET ANALYSES (Part 6: Hyperlocal Market & Competition Analysis)
 CREATE TABLE IF NOT EXISTS `market_analyses` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL,
@@ -261,15 +301,22 @@ CREATE TABLE IF NOT EXISTS `market_analyses` (
   `concentration_level` ENUM('Low Concentration', 'Moderate Concentration', 'High Concentration') NOT NULL DEFAULT 'Low Concentration',
   `competition_risk` ENUM('Low', 'Moderate', 'High') NOT NULL DEFAULT 'Low',
   `market_opportunity` ENUM('Potential Opportunity', 'Moderate Opportunity', 'Limited Observed Opportunity', 'Needs Further Investigation') NOT NULL DEFAULT 'Needs Further Investigation',
+  `category_distribution_json` JSON DEFAULT NULL,
+  `distance_distribution_json` JSON DEFAULT NULL,
+  `market_gap_observations_json` JSON DEFAULT NULL,
+  `insights_json` JSON DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_market_analysis_user` (`user_id`),
   KEY `fk_market_analysis_plan` (`business_plan_id`),
-  CONSTRAINT `fk_market_analysis_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  KEY `fk_market_analysis_loc` (`location_analysis_id`),
+  CONSTRAINT `fk_market_analysis_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_market_analysis_plan` FOREIGN KEY (`business_plan_id`) REFERENCES `business_plans` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_market_analysis_loc` FOREIGN KEY (`location_analysis_id`) REFERENCES `location_analyses` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 16. MARKET COMPETITORS (Part 6: Stored Competitor Records)
+-- 17. MARKET COMPETITORS (Part 6: Stored Competitor Records)
 CREATE TABLE IF NOT EXISTS `market_competitors` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `market_analysis_id` BIGINT UNSIGNED NOT NULL,
@@ -290,4 +337,3 @@ CREATE TABLE IF NOT EXISTS `market_competitors` (
   KEY `fk_competitors_analysis` (`market_analysis_id`),
   CONSTRAINT `fk_competitors_analysis` FOREIGN KEY (`market_analysis_id`) REFERENCES `market_analyses` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
