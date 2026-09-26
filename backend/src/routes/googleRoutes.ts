@@ -4,6 +4,7 @@
  */
 import { Router, Request, Response } from 'express';
 import { googlePlacesService } from '../services/googlePlacesService.js';
+import { locationService } from '../services/locationService.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import { logger } from '../utils/logger.js';
 
@@ -198,12 +199,23 @@ router.get('/geocode/reverse', async (req: Request, res: Response): Promise<void
       return;
     }
 
-    if (!googlePlacesService.isKeyConfigured()) {
-      sendError(res, 'Google Maps Platform API key is not configured.', 503);
-      return;
+    let result = null;
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        result = await googlePlacesService.reverseGeocode(lat, lng);
+      } catch (err: any) {
+        logger.warn('Google reverseGeocode error, falling back to spatial engine:', err?.message || err);
+      }
     }
 
-    const result = await googlePlacesService.reverseGeocode(lat, lng);
+    if (!result) {
+      try {
+        result = await locationService.reverseGeocode(lat, lng);
+      } catch (err: any) {
+        logger.warn('Spatial engine reverseGeocode error:', err?.message || err);
+      }
+    }
+
     if (!result) {
       sendSuccess(
         res,

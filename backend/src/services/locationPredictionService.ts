@@ -176,23 +176,24 @@ export class LocationPredictionService {
     const radiusKm = radius / 1000;
     const areaSqKm = Math.PI * Math.pow(radiusKm, 2);
 
-    // 1. Resolve Location Details if missing
+    // 1. Resolve Location Details if missing or if coordinates are passed as name
     let resolvedName = locationName;
     let resolvedAddress = formattedAddress;
+    const isCoordString = (s?: string) => s && /^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(s.trim());
 
-    if (!resolvedName || !resolvedAddress) {
+    if (!resolvedName || !resolvedAddress || isCoordString(resolvedName)) {
       try {
         const rev = await googlePlacesService.reverseGeocode(latitude, longitude);
         if (rev) {
-          resolvedName = resolvedName || rev.name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-          resolvedAddress = resolvedAddress || rev.display_name;
+          resolvedName = rev.name || rev.display_name || resolvedName;
+          resolvedAddress = rev.display_name || resolvedAddress;
         }
       } catch (err) {
         logger.warn('Reverse geocode fallback:', err);
       }
     }
 
-    resolvedName = resolvedName || `Target Site (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+    resolvedName = (!resolvedName || isCoordString(resolvedName)) ? `Target Site (${latitude.toFixed(4)}, ${longitude.toFixed(4)})` : resolvedName;
     resolvedAddress = resolvedAddress || resolvedName;
 
     // 2. Fetch Places via Google Places API (New)

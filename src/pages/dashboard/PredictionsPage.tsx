@@ -176,10 +176,35 @@ export const PredictionsPage: React.FC = () => {
     return selectedIdeaOption;
   };
 
-  // Google Places Autocomplete search
+  // Google Places Autocomplete search & Coordinate detection
   const handleLocationInputChange = (value: string) => {
     setTargetLocationQuery(value);
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    // If coordinates like "17.0179, 74.9585" were typed or pasted
+    const coordMatch = value.match(/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[3]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        setTargetCoords({ latitude: lat, longitude: lng });
+        setSuggestions([]);
+        setShowSuggestions(false);
+
+        // Reverse geocode to resolve human-friendly name
+        searchTimeoutRef.current = setTimeout(async () => {
+          try {
+            const res = await api.get<any>(`/google/geocode/reverse?lat=${lat}&lng=${lng}`);
+            if (res.data && (res.data.name || res.data.display_name)) {
+              setTargetLocationQuery(res.data.name || res.data.display_name);
+            }
+          } catch {
+            // keep raw coords if resolution offline
+          }
+        }, 600);
+        return;
+      }
+    }
 
     if (value.trim().length < 2) {
       setSuggestions([]);
@@ -300,6 +325,11 @@ export const PredictionsPage: React.FC = () => {
       });
 
       setLocationResult(result);
+      if (result.locationName && !/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(result.locationName.trim())) {
+        setTargetLocationQuery(result.locationName);
+      } else if (result.formattedAddress && !/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(result.formattedAddress.trim())) {
+        setTargetLocationQuery(result.formattedAddress.split(',')[0]);
+      }
     } catch (err: any) {
       console.error('Location analysis error:', err);
       setAnalysisError(
