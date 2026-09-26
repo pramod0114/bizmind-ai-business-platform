@@ -17,6 +17,12 @@ export const config = {
     connectionLimit: 10,
     waitForConnections: true,
     queueLimit: 0,
+    connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT || '10000', 10),
+    ssl:
+      process.env.DB_SSL === 'true' ||
+      (process.env.DB_HOST && process.env.DB_HOST.includes('tidbcloud.com'))
+        ? { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+        : undefined,
   },
   jwt: {
     secret: process.env.JWT_SECRET || 'bizmind_jwt_default_secret_for_development',

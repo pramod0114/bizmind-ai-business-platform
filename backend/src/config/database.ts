@@ -242,7 +242,8 @@ export class DatabaseService {
         waitForConnections: config.database.waitForConnections,
         connectionLimit: config.database.connectionLimit,
         queueLimit: config.database.queueLimit,
-        connectTimeout: 2000,
+        connectTimeout: config.database.connectTimeout,
+        ssl: config.database.ssl,
       });
 
       // Test connection
