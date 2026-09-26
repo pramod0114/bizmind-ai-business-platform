@@ -1,13 +1,14 @@
 /**
  * BizMind – Dashboard Sidebar Navigation
  */
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileSpreadsheet,
   TrendingUp,
   MapPin,
+  Building2,
   GitCompare,
   Cpu,
   Sparkles,
@@ -17,6 +18,7 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -28,13 +30,31 @@ export interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse }) => {
   const { user, isAdmin } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const mainNavItems = [
+  // Collapsed by default - user must click to show down the sub-options
+  const [isMarketOpen, setIsMarketOpen] = useState(false);
+
+  const isMarketPath = location.pathname === '/market-analysis' || location.pathname.startsWith('/location');
+  const currentView = new URLSearchParams(location.search).get('view');
+  const isLocationActive = isMarketPath && currentView !== 'directory';
+  const isDirectoryActive = isMarketPath && currentView === 'directory';
+
+  const handleMarketToggle = () => {
+    setIsMarketOpen((prev) => !prev);
+    if (location.pathname !== '/market-analysis') {
+      navigate('/market-analysis');
+    }
+  };
+
+  const topNavItems = [
     { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Business Plans', path: '/business-plans', icon: FileText },
     { name: 'Planner Wizard', path: '/business-planner', icon: FileSpreadsheet },
-    { name: 'Market & Competition', path: '/market-analysis', icon: TrendingUp, badge: 'Part 6' },
-    { name: 'Location Intelligence', path: '/market-analysis', icon: MapPin },
+  ];
+
+  const bottomNavItems = [
     { name: 'Comparison', path: '/comparison', icon: GitCompare },
     { name: 'Predictions', path: '/predictions', icon: Cpu, badge: 'ML' },
     { name: 'Recommendations', path: '/recommendations', icon: Sparkles },
@@ -84,7 +104,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
             </p>
           )}
           <nav className="space-y-1">
-            {mainNavItems.map((item) => {
+            {/* Top Navigation Items */}
+            {topNavItems.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink
@@ -101,9 +122,103 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                   title={collapsed ? item.name : undefined}
                 >
                   <Icon className="w-4 h-4 shrink-0 text-current" />
-                  {!collapsed && (
-                    <span className="flex-1 truncate">{item.name}</span>
-                  )}
+                  {!collapsed && <span className="flex-1 truncate">{item.name}</span>}
+                </NavLink>
+              );
+            })}
+
+            {/* Market & Competition Intelligence with Dropdown (Collapsed by default) */}
+            {collapsed ? (
+              <NavLink
+                to="/market-analysis"
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                    isActive || isMarketPath
+                      ? 'bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/30'
+                      : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
+                  }`
+                }
+                title="Market & Competition Intelligence"
+              >
+                <TrendingUp className="w-4 h-4 shrink-0 text-current" />
+              </NavLink>
+            ) : (
+              <div>
+                <button
+                  type="button"
+                  onClick={handleMarketToggle}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${
+                    isMarketPath || isMarketOpen
+                      ? 'bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/30 shadow-sm'
+                      : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
+                  }`}
+                  title="Market & Competition Intelligence"
+                >
+                  <TrendingUp className="w-4 h-4 shrink-0 text-[#FFBF24]" />
+                  <span className="flex-1 text-left truncate font-semibold">Market & ...</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1A1A1D] text-[#FFBF24] font-semibold border border-[#27272A] shrink-0">
+                    Part 6
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                      isMarketOpen ? 'rotate-180 text-[#FFBF24]' : 'text-[#71717A]'
+                    }`}
+                  />
+                </button>
+
+                {/* Submenu Dropdown (Only shown when user clicks Market & Competition Intelligence) */}
+                {isMarketOpen && (
+                  <div className="relative ml-4 pl-3.5 mt-1.5 space-y-1 border-l border-[#27272A] animate-fadeIn">
+                    {/* Location Intelligence */}
+                    <NavLink
+                      to="/market-analysis?view=location"
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        isLocationActive
+                          ? 'bg-[#FFBF24]/15 text-[#FFBF24] border border-[#FFBF24]/40 font-semibold shadow-sm'
+                          : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
+                      }`}
+                      title="Location Intelligence"
+                    >
+                      <MapPin className="w-3.5 h-3.5 shrink-0 text-[#FFBF24]" />
+                      <span className="truncate">Location Intelligence</span>
+                    </NavLink>
+
+                    {/* Competitor Directory */}
+                    <NavLink
+                      to="/market-analysis?view=directory"
+                      className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        isDirectoryActive
+                          ? 'bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/40 font-semibold shadow-sm'
+                          : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
+                      }`}
+                      title="Competitor Directory"
+                    >
+                      <Building2 className="w-3.5 h-3.5 shrink-0 text-[#38BDF8]" />
+                      <span className="truncate">Competitor Directory</span>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bottom Navigation Items */}
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/30'
+                        : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
+                    }`
+                  }
+                  title={collapsed ? item.name : undefined}
+                >
+                  <Icon className="w-4 h-4 shrink-0 text-current" />
+                  {!collapsed && <span className="flex-1 truncate">{item.name}</span>}
                   {!collapsed && item.badge && (
                     <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1A1A1D] text-[#FFBF24] font-semibold border border-[#27272A]">
                       {item.badge}

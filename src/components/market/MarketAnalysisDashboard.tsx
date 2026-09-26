@@ -122,6 +122,28 @@ export const MarketAnalysisDashboard: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [activeCompetitorId, setActiveCompetitorId] = useState<string | number | null>(null);
 
+  // Auto-scroll when directed via sidebar view parameter
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view === 'directory') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById('competitor-directory-section');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    } else if (view === 'location') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById('location-map-section');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, analysisData]);
+
   // Location search suggestions state
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
@@ -571,11 +593,27 @@ export const MarketAnalysisDashboard: React.FC = () => {
                 <label className="text-[11px] font-semibold text-[#A1A1AA] uppercase tracking-wider block font-mono">
                   Target Location (Area / City / PIN)
                 </label>
-                {locationStatus && (
-                  <span className="text-[10px] text-[#FFBF24] font-mono animate-pulse">
-                    {locationStatus}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={isDetectingLocation}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#FFBF24]/15 hover:bg-[#FFBF24]/30 text-[#FFBF24] border border-[#FFBF24]/40 text-[11px] font-bold transition-all cursor-pointer shadow-xs"
+                    title="Click to detect current location via device GPS"
+                  >
+                    {isDetectingLocation ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Crosshair className="w-3 h-3" />
+                    )}
+                    <span>{isDetectingLocation ? 'Locating...' : 'Use My Location'}</span>
+                  </button>
+                  {locationStatus && (
+                    <span className="text-[10px] text-[#FFBF24] font-mono animate-pulse">
+                      {locationStatus}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="relative flex items-center">
                 <Input
@@ -583,9 +621,23 @@ export const MarketAnalysisDashboard: React.FC = () => {
                   value={locationInput}
                   onChange={(e) => handleSearchLocations(e.target.value)}
                   leftIcon={<MapPin className="w-4 h-4 text-[#FFBF24]" />}
-                  className="text-xs pr-10"
+                  className="text-xs pr-20"
                 />
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={isDetectingLocation}
+                    title="Detect live GPS location"
+                    className="flex items-center gap-1 px-2 py-1 rounded bg-[#FFBF24]/20 hover:bg-[#FFBF24]/35 text-[#FFBF24] border border-[#FFBF24]/40 text-[10px] font-bold transition-all cursor-pointer shadow-xs"
+                  >
+                    {isDetectingLocation ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Crosshair className="w-3 h-3" />
+                    )}
+                    <span className="hidden sm:inline">GPS</span>
+                  </button>
                   {isSearchingLocation && (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-[#A1A1AA]" />
                   )}
@@ -670,32 +722,54 @@ export const MarketAnalysisDashboard: React.FC = () => {
           </form>
 
           {/* Current Location + Quick Picks Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-[#27272A]/70 text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-3 border-t border-[#27272A]/80">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* High-Visibility Use My Current Location Button */}
               <button
                 type="button"
                 onClick={handleUseCurrentLocation}
                 disabled={isDetectingLocation}
-                className="px-2.5 py-1 rounded-lg bg-[#111113] hover:bg-[#202024] border border-[#FFBF24]/40 text-[#FFBF24] font-bold text-[11px] flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                className="group relative px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl bg-gradient-to-r from-[#FFBF24] via-[#F59E0B] to-[#D97706] text-[#0B0B0C] font-extrabold text-xs sm:text-sm flex items-center gap-2.5 shadow-lg shadow-[#FFBF24]/20 hover:shadow-xl hover:shadow-[#FFBF24]/30 hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 border border-[#FFBF24]"
+                title="Automatically detect and use your live GPS location"
               >
-                {isDetectingLocation ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Crosshair className="w-3.5 h-3.5" />
-                )}
-                <span>{isDetectingLocation ? 'Locating GPS...' : 'Use My Current Location'}</span>
+                <div className="relative flex items-center justify-center">
+                  {isDetectingLocation ? (
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-[#0B0B0C]" />
+                  ) : (
+                    <>
+                      <Crosshair className="w-4 h-4 sm:w-5 sm:h-5 text-[#0B0B0C] stroke-[2.5] group-hover:rotate-45 transition-transform" />
+                      <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-900 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-950"></span>
+                      </span>
+                    </>
+                  )}
+                </div>
+                <span className="tracking-tight">
+                  {isDetectingLocation ? 'Locating Device GPS...' : 'Use My Current Location'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-black/20 text-[#0B0B0C] text-[10px] font-black uppercase tracking-wider font-mono shrink-0">
+                  Live GPS
+                </span>
               </button>
 
-              <div className="flex items-center gap-1 text-[10px] text-[#71717A] pl-2 border-l border-[#27272A] flex-wrap">
-                <span className="flex items-center gap-1 text-[#A1A1AA]">
-                  <Compass className="w-3 h-3 text-[#FFBF24]" /> Quick picks:
+              {locationStatus && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold animate-fadeIn">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{locationStatus}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 text-[11px] text-[#71717A] pl-1 sm:pl-2 sm:border-l border-[#27272A] flex-wrap">
+                <span className="flex items-center gap-1 text-[#A1A1AA] font-medium">
+                  <Compass className="w-3.5 h-3.5 text-[#FFBF24]" /> Quick picks:
                 </span>
                 {QUICK_SEARCH_PICKS.map((pick) => (
                   <button
                     key={pick}
                     type="button"
                     onClick={() => handleQuickPick(pick)}
-                    className="px-2 py-0.5 rounded bg-[#111113] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFBF24] border border-[#27272A] transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-[#111113] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#FFBF24] border border-[#27272A] transition-colors cursor-pointer text-xs"
                   >
                     {pick.split(',')[0]}
                   </button>
@@ -756,7 +830,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
           <MarketSummary data={analysisData} />
 
           {/* INTERACTIVE COMPETITOR MAP */}
-          <div className="space-y-2">
+          <div id="location-map-section" className="space-y-2 scroll-mt-20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider font-mono flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#FFBF24]" />
@@ -797,12 +871,14 @@ export const MarketAnalysisDashboard: React.FC = () => {
           </div>
 
           {/* DIRECTORY & DETAILED COMPETITOR LIST (ACCESSED IMMEDIATELY BELOW CATEGORY MIX & RADIAL DISPERSION) */}
-          <CompetitorList
-            competitors={analysisData.competitors}
-            otherBusinesses={analysisData.otherBusinesses}
-            onSelectCompetitor={openCompetitorProfile}
-            onFocusOnMap={focusCompetitorOnMap}
-          />
+          <div id="competitor-directory-section" className="scroll-mt-20">
+            <CompetitorList
+              competitors={analysisData.competitors}
+              otherBusinesses={analysisData.otherBusinesses}
+              onSelectCompetitor={openCompetitorProfile}
+              onFocusOnMap={focusCompetitorOnMap}
+            />
+          </div>
 
           {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

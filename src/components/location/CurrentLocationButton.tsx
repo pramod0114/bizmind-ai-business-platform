@@ -117,21 +117,21 @@ export const CurrentLocationButton: React.FC<CurrentLocationButtonProps> = ({
           type="button"
           onClick={handleGetCurrentLocation}
           disabled={loading}
-          className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold tracking-wide bg-[#1A1A1D] hover:bg-[#27272A] text-[#F8FAFC] hover:text-[#FFBF24] border border-[#27272A] hover:border-[#FFBF24]/40 transition-all shadow-sm disabled:opacity-50 cursor-pointer ${className}`}
+          className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide bg-gradient-to-r from-[#FFBF24] to-[#F59E0B] text-[#0B0B0C] hover:brightness-105 active:scale-95 shadow-md shadow-[#FFBF24]/20 border border-[#FFBF24] transition-all disabled:opacity-50 cursor-pointer ${className}`}
         >
           {loading ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFBF24]" />
-              <span>Requesting Location...</span>
+              <Loader2 className="w-4 h-4 animate-spin text-[#0B0B0C]" />
+              <span>Locating GPS...</span>
             </>
           ) : statusMessage && !isDenied ? (
             <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="truncate max-w-[140px]">{statusMessage}</span>
+              <CheckCircle2 className="w-4 h-4 text-[#0B0B0C]" />
+              <span className="truncate max-w-[160px] font-extrabold">{statusMessage}</span>
             </>
           ) : (
             <>
-              <Navigation className="w-3.5 h-3.5 text-[#FFBF24]" />
+              <Navigation className="w-4 h-4 text-[#0B0B0C] fill-current" />
               <span>Use My Current Location</span>
             </>
           )}
