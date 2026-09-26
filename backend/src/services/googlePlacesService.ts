@@ -80,6 +80,8 @@ export class GooglePlacesService {
 
   private constructor() {}
 
+  private currentReferer: string | null = null;
+
   public static getInstance(): GooglePlacesService {
     if (!GooglePlacesService.instance) {
       GooglePlacesService.instance = new GooglePlacesService();
@@ -87,25 +89,77 @@ export class GooglePlacesService {
     return GooglePlacesService.instance;
   }
 
+  public setRequestContext(referer?: string): void {
+    if (referer && referer.trim()) {
+      try {
+        const u = new URL(referer);
+        this.currentReferer = `${u.origin}/`;
+      } catch {
+        const clean = referer.trim();
+        this.currentReferer = clean.endsWith('/') ? clean : `${clean}/`;
+      }
+    }
+  }
+
   /**
    * Resolve configured API Key (server key or browser key)
    */
   public getApiKey(): string {
-    const key =
+    const rawKey =
       process.env.GOOGLE_MAPS_SERVER_API_KEY ||
       process.env.VITE_GOOGLE_MAPS_API_KEY ||
       process.env.GOOGLE_MAPS_API_KEY ||
       'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo';
-    return key.trim();
+    return rawKey.trim().replace(/^["']|["']$/g, '');
   }
 
-  public getRefererHeader(): string {
-    return (
-      process.env.GOOGLE_MAPS_REFERER ||
-      process.env.APP_URL ||
-      process.env.FRONTEND_URL ||
-      'https://ais-dev-crjer53efpls76wjmvho7f-957983741381.asia-southeast1.run.app/'
-    );
+  public getRefererHeader(customReferer?: string): string {
+    if (customReferer && customReferer.trim()) {
+      try {
+        const u = new URL(customReferer);
+        return `${u.origin}/`;
+      } catch {
+        const clean = customReferer.trim();
+        return clean.endsWith('/') ? clean : `${clean}/`;
+      }
+    }
+    if (process.env.GOOGLE_MAPS_REFERER && process.env.GOOGLE_MAPS_REFERER.trim()) {
+      const r = process.env.GOOGLE_MAPS_REFERER.trim();
+      return r.endsWith('/') ? r : `${r}/`;
+    }
+    if (process.env.RENDER_EXTERNAL_URL && process.env.RENDER_EXTERNAL_URL.trim()) {
+      const r = process.env.RENDER_EXTERNAL_URL.trim();
+      return r.endsWith('/') ? r : `${r}/`;
+    }
+    if (this.currentReferer) {
+      return this.currentReferer;
+    }
+    if (process.env.FRONTEND_URL && process.env.FRONTEND_URL.trim() && !process.env.FRONTEND_URL.includes('localhost')) {
+      const r = process.env.FRONTEND_URL.trim();
+      return r.endsWith('/') ? r : `${r}/`;
+    }
+    if (process.env.APP_URL && process.env.APP_URL.trim()) {
+      const r = process.env.APP_URL.trim();
+      return r.endsWith('/') ? r : `${r}/`;
+    }
+    return 'https://bizmind-ai-business-platform.onrender.com/';
+  }
+
+  public getHeaders(fieldMask?: string, customReferer?: string): Record<string, string> {
+    const apiKey = this.getApiKey();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+    };
+    if (fieldMask) {
+      headers['X-Goog-FieldMask'] = fieldMask;
+    }
+    const referer = this.getRefererHeader(customReferer);
+    if (referer) {
+      headers['Referer'] = referer;
+      headers['Origin'] = referer.endsWith('/') ? referer.slice(0, -1) : referer;
+    }
+    return headers;
   }
 
   public isKeyConfigured(): boolean {
@@ -245,13 +299,7 @@ export class GooglePlacesService {
 
     try {
       const response = await axios.post<GoogleNearbySearchResponse>(endpoint, requestBody, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': fieldMask,
-          'Referer': this.getRefererHeader(),
-          'Origin': this.getRefererHeader(),
-        },
+        headers: this.getHeaders(fieldMask),
         timeout: 10000,
       });
 
@@ -315,13 +363,7 @@ export class GooglePlacesService {
 
     try {
       const response = await axios.post<GoogleTextSearchResponse>(endpoint, requestBody, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': fieldMask,
-          'Referer': this.getRefererHeader(),
-          'Origin': this.getRefererHeader(),
-        },
+        headers: this.getHeaders(fieldMask),
         timeout: 10000,
       });
 
@@ -348,7 +390,7 @@ export class GooglePlacesService {
 
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query.trim())}&key=${apiKey}`;
-      const res = await axios.get(url, { timeout: 8000 });
+      const res = await axios.get(url, { headers: this.getHeaders(), timeout: 8000 });
 
       if (res.data.status === 'ZERO_RESULTS') {
         return [];
@@ -414,7 +456,7 @@ export class GooglePlacesService {
 
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
-      const res = await axios.get(url, { timeout: 8000 });
+      const res = await axios.get(url, { headers: this.getHeaders(), timeout: 8000 });
 
       if (res.data.status !== 'OK' || !res.data.results || res.data.results.length === 0) {
         return null;
@@ -493,12 +535,7 @@ export class GooglePlacesService {
 
     try {
       const res = await axios.post(endpoint, requestBody, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'Referer': this.getRefererHeader(),
-          'Origin': this.getRefererHeader(),
-        },
+        headers: this.getHeaders(),
         timeout: 6000,
       });
 

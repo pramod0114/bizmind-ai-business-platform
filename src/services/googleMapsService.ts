@@ -167,13 +167,13 @@ export function setRuntimeGoogleMapsApiKey(key: string): void {
 
 export function getGoogleMapsApiKey(): string {
   const env = (import.meta as any).env;
-  return (
+  const raw =
     env?.VITE_GOOGLE_MAPS_API_KEY ||
     env?.VITE_GOOGLE_MAPS_KEY ||
     (typeof window !== 'undefined' ? (window as any).__BIZMIND_GOOGLE_MAPS_KEY : '') ||
     cachedServerKey ||
-    'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo'
-  ).trim();
+    'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo';
+  return String(raw).trim().replace(/^["']|["']$/g, '');
 }
 
 /**
