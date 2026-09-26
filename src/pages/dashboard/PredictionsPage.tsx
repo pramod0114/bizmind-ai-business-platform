@@ -364,7 +364,7 @@ export const PredictionsPage: React.FC = () => {
   };
 
   // Trigger Primary Location-Based Analysis
-  const handleAnalyzeLocationOpportunity = async (financialsOverride?: LocationPredictionFinancialInputs) => {
+  const handleAnalyzeLocationOpportunity = async (financialsOverride?: LocationPredictionFinancialInputs | unknown) => {
     const businessIdea = getEffectiveBusinessIdea();
     if (!businessIdea) {
       setAnalysisError('Please enter or select a business idea.');
@@ -377,8 +377,15 @@ export const PredictionsPage: React.FC = () => {
       setSaveSuccessNotice(null);
       setSelectedCompetitor(null);
 
-      const payloadFinancials = financialsOverride !== undefined
-        ? financialsOverride
+      const isValidFinancials =
+        financialsOverride &&
+        typeof financialsOverride === 'object' &&
+        !('nativeEvent' in (financialsOverride as any)) &&
+        !('target' in (financialsOverride as any)) &&
+        !('preventDefault' in (financialsOverride as any));
+
+      const payloadFinancials = isValidFinancials
+        ? (financialsOverride as LocationPredictionFinancialInputs)
         : (showFinancialInputs ? financialInputs : undefined);
 
       const result = await locationPredictionClient.analyzeOpportunity({
@@ -872,7 +879,7 @@ export const PredictionsPage: React.FC = () => {
                   boundary: {(radiusMeters / 1000).toFixed(1)} km
                 </span>
                 <Button
-                  onClick={handleAnalyzeLocationOpportunity}
+                  onClick={() => handleAnalyzeLocationOpportunity()}
                   disabled={analyzingLocation}
                   leftIcon={
                     analyzingLocation ? (
