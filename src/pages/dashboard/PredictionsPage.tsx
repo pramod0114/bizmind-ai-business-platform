@@ -55,6 +55,7 @@ import {
   Layers,
   HelpCircle,
   GitCompare,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 const PRESET_BUSINESS_IDEAS = [
@@ -87,6 +88,68 @@ const POPULAR_LOCATION_PICKS = [
   { name: 'Connaught Place, New Delhi', lat: 28.6315, lng: 77.2167 },
 ];
 
+export const getCategoryFinancialBenchmarks = (categoryName: string): LocationPredictionFinancialInputs => {
+  const lower = categoryName.toLowerCase();
+  if (lower.includes('coffee') || lower.includes('cafe')) {
+    return {
+      initialInvestment: 850000,
+      monthlyFixedExpenses: 155000,
+      expectedMonthlyRevenue: 320000,
+      estimatedVariableExpenses: 80000,
+      expectedAverageSellingPrice: 220,
+      expectedCustomersPerDay: 50,
+    };
+  }
+  if (lower.includes('bakery') || lower.includes('pastry') || lower.includes('cake')) {
+    return {
+      initialInvestment: 650000,
+      monthlyFixedExpenses: 125000,
+      expectedMonthlyRevenue: 280000,
+      estimatedVariableExpenses: 70000,
+      expectedAverageSellingPrice: 180,
+      expectedCustomersPerDay: 60,
+    };
+  }
+  if (lower.includes('restaurant') || lower.includes('dine') || lower.includes('food')) {
+    return {
+      initialInvestment: 1600000,
+      monthlyFixedExpenses: 250000,
+      expectedMonthlyRevenue: 580000,
+      estimatedVariableExpenses: 175000,
+      expectedAverageSellingPrice: 450,
+      expectedCustomersPerDay: 45,
+    };
+  }
+  if (lower.includes('gym') || lower.includes('fitness') || lower.includes('yoga')) {
+    return {
+      initialInvestment: 1350000,
+      monthlyFixedExpenses: 190000,
+      expectedMonthlyRevenue: 410000,
+      estimatedVariableExpenses: 40000,
+      expectedAverageSellingPrice: 2500,
+      expectedCustomersPerDay: 15,
+    };
+  }
+  if (lower.includes('pharmacy') || lower.includes('medical') || lower.includes('health')) {
+    return {
+      initialInvestment: 950000,
+      monthlyFixedExpenses: 110000,
+      expectedMonthlyRevenue: 390000,
+      estimatedVariableExpenses: 220000,
+      expectedAverageSellingPrice: 350,
+      expectedCustomersPerDay: 40,
+    };
+  }
+  return {
+    initialInvestment: 800000,
+    monthlyFixedExpenses: 140000,
+    expectedMonthlyRevenue: 310000,
+    estimatedVariableExpenses: 85000,
+    expectedAverageSellingPrice: 320,
+    expectedCustomersPerDay: 35,
+  };
+};
+
 export const PredictionsPage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -108,6 +171,7 @@ export const PredictionsPage: React.FC = () => {
   const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const financialInputsRef = useRef<HTMLDivElement | null>(null);
 
   // Geolocation state
   const [detectingGps, setDetectingGps] = useState(false);
@@ -300,7 +364,7 @@ export const PredictionsPage: React.FC = () => {
   };
 
   // Trigger Primary Location-Based Analysis
-  const handleAnalyzeLocationOpportunity = async () => {
+  const handleAnalyzeLocationOpportunity = async (financialsOverride?: LocationPredictionFinancialInputs) => {
     const businessIdea = getEffectiveBusinessIdea();
     if (!businessIdea) {
       setAnalysisError('Please enter or select a business idea.');
@@ -313,7 +377,9 @@ export const PredictionsPage: React.FC = () => {
       setSaveSuccessNotice(null);
       setSelectedCompetitor(null);
 
-      const payloadFinancials = showFinancialInputs ? financialInputs : undefined;
+      const payloadFinancials = financialsOverride !== undefined
+        ? financialsOverride
+        : (showFinancialInputs ? financialInputs : undefined);
 
       const result = await locationPredictionClient.analyzeOpportunity({
         businessIdea,
@@ -338,6 +404,21 @@ export const PredictionsPage: React.FC = () => {
     } finally {
       setAnalyzingLocation(false);
     }
+  };
+
+  const handleApplyBenchmarksAndAnalyze = (customBenchmarks?: LocationPredictionFinancialInputs) => {
+    const currentIdea = getEffectiveBusinessIdea();
+    const benchmarks = customBenchmarks || getCategoryFinancialBenchmarks(currentIdea);
+    setFinancialInputs(benchmarks);
+    setShowFinancialInputs(true);
+    handleAnalyzeLocationOpportunity(benchmarks);
+  };
+
+  const handleOpenFinancialsAndScroll = () => {
+    setShowFinancialInputs(true);
+    setTimeout(() => {
+      financialInputsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   // Map Click handler to change location
@@ -628,7 +709,7 @@ export const PredictionsPage: React.FC = () => {
               </div>
 
               {/* Row 3: Optional Financial Inputs Accordion */}
-              <div className="rounded-xl border border-[#27272A] bg-[#0B0B0C] overflow-hidden">
+              <div ref={financialInputsRef} className="rounded-xl border border-[#27272A] bg-[#0B0B0C] overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setShowFinancialInputs(!showFinancialInputs)}
@@ -648,10 +729,22 @@ export const PredictionsPage: React.FC = () => {
 
                 {showFinancialInputs && (
                   <div className="p-4 border-t border-[#27272A] space-y-4">
-                    <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
-                      Entering financial assumptions unlocks break-even velocity, net margin resilience, and the
-                      validated machine learning success probability model.
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-[#18181B] border border-[#27272A]">
+                      <p className="text-[11px] text-[#A1A1AA]">
+                        Entering financial assumptions unlocks break-even velocity, margin sensitivity, and calibrated ML success probability.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const benchmarks = getCategoryFinancialBenchmarks(getEffectiveBusinessIdea());
+                          setFinancialInputs(benchmarks);
+                        }}
+                        className="px-2.5 py-1 rounded-md bg-[#27272A] hover:bg-[#3F3F46] text-[#FFBF24] text-[11px] font-bold flex items-center gap-1.5 self-start sm:self-auto shrink-0 transition-colors cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Load Benchmark Values</span>
+                      </button>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       <div>
                         <label className="text-[10px] font-bold text-[#A1A1AA] uppercase font-mono block mb-1">
@@ -841,6 +934,25 @@ export const PredictionsPage: React.FC = () => {
                         <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
                           {locationResult.predictionAssessment.modelNotice}
                         </p>
+                        <div className="pt-1 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleApplyBenchmarksAndAnalyze()}
+                            disabled={analyzingLocation}
+                            className="px-3 py-1.5 rounded-lg bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Unlock ML Success Prediction (Load Benchmarks)</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleOpenFinancialsAndScroll}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#18181B] hover:bg-[#27272A] text-[#A1A1AA] hover:text-[#F8FAFC] border border-[#27272A] text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <SlidersHorizontal className="w-3 h-3 text-[#FFBF24]" />
+                            <span>Enter Custom Inputs</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1226,13 +1338,35 @@ export const PredictionsPage: React.FC = () => {
                       </div>
                     </>
                   ) : (
-                    <div className="p-6 text-center rounded-xl bg-[#0B0B0C] border border-[#27272A] space-y-2">
-                      <Calculator className="w-8 h-8 text-[#FFBF24] mx-auto opacity-50" />
-                      <p className="text-xs text-[#F8FAFC] font-semibold">No Financial Assumptions Provided</p>
-                      <p className="text-[11px] text-[#A1A1AA] max-w-md mx-auto">
-                        To compute break-even timelines, margin sensitivity, and unlock machine learning success
-                        probability, expand the &ldquo;Optional Financial Inputs&rdquo; panel above.
-                      </p>
+                    <div className="p-6 text-center rounded-xl bg-[#0B0B0C] border border-[#27272A] space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-[#FFBF24]/10 border border-[#FFBF24]/30 flex items-center justify-center mx-auto text-[#FFBF24]">
+                        <Calculator className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-[#F8FAFC] font-bold">No Financial Assumptions Provided</p>
+                        <p className="text-[11px] text-[#A1A1AA] max-w-lg mx-auto leading-relaxed">
+                          Pure location analysis assesses competitor density and footfall. Financial feasibility (profit margins, capital break-even, and ML success probability) requires investment and expense estimates.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => handleApplyBenchmarksAndAnalyze()}
+                          disabled={analyzingLocation}
+                          className="px-4 py-2 rounded-xl bg-[#FFBF24] hover:bg-[#F59E0B] text-[#0B0B0C] text-xs font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer disabled:opacity-50"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>Auto-Fill Industry Benchmarks & Compute Feasibility</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleOpenFinancialsAndScroll}
+                          className="px-3.5 py-2 rounded-xl bg-[#18181B] hover:bg-[#27272A] text-[#F8FAFC] border border-[#27272A] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-[#FFBF24]" />
+                          <span>Enter Custom Financials</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
