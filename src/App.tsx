@@ -35,6 +35,7 @@ import { PredictionsPage } from './pages/dashboard/PredictionsPage';
 import { RecommendationsPage } from './pages/dashboard/RecommendationsPage';
 import { SavedPage } from './pages/dashboard/SavedPage';
 import { ReportsPage } from './pages/dashboard/ReportsPage';
+import { PresentationPage } from './pages/dashboard/PresentationPage';
 import { SettingsPage } from './pages/dashboard/SettingsPage';
 import { NotFoundPage } from './pages/dashboard/NotFoundPage';
 
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/pitch" element={<PresentationPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -99,6 +101,7 @@ export default function App() {
             <Route path="/recommendations" element={<RecommendationsPage />} />
             <Route path="/saved" element={<SavedPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/presentation" element={<PresentationPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
 
@@ -111,6 +114,7 @@ export default function App() {
             }
           >
             <Route path="/admin" element={<AdminOverviewPage />} />
+            <Route path="/admin/presentation" element={<PresentationPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
             <Route path="/admin/market-data" element={<AdminMarketDataPage />} />

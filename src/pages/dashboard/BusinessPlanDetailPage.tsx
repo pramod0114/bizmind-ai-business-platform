@@ -24,8 +24,10 @@ import {
   AlertCircle,
   ExternalLink,
   Compass,
+  Download,
 } from 'lucide-react';
 import { planService } from '../../services/planService';
+import { generateBizMindPptx } from '../../services/pptxService';
 import { marketAnalysisService } from '../../services/marketAnalysisService';
 import { BusinessPlan, CalculatedFinancialResults, MarketAnalysisData } from '../../types';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
@@ -50,6 +52,20 @@ export const BusinessPlanDetailPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [growthRate, setGrowthRate] = useState<number>(3.0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isExportingPptx, setIsExportingPptx] = useState(false);
+
+  const handleExportPptx = async () => {
+    if (!plan) return;
+    setIsExportingPptx(true);
+    try {
+      await generateBizMindPptx(plan);
+      showToast('PowerPoint (.pptx) presentation exported successfully!');
+    } catch (err: any) {
+      alert(`Failed to export presentation: ${err?.message || 'Error'}`);
+    } finally {
+      setIsExportingPptx(false);
+    }
+  };
 
   const fetchPlanDetails = async () => {
     if (!id) return;
@@ -231,6 +247,16 @@ export const BusinessPlanDetailPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportPptx}
+            disabled={isExportingPptx}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#27272A] hover:bg-[#3F3F46] text-white rounded-lg text-xs font-semibold border border-[#3F3F46] transition-colors cursor-pointer disabled:opacity-50"
+            title="Download Microsoft PowerPoint .pptx presentation"
+          >
+            <Download className="w-4 h-4 text-sky-400" />
+            {isExportingPptx ? 'Exporting...' : 'Export PPTX'}
+          </button>
+
           <button
             onClick={() => navigate(`/business-plans/${plan.id}/financial-analysis`)}
             className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md transition-colors"

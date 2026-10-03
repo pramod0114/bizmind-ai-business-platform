@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ShieldAlert,
   Sparkles,
+  Presentation,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -30,6 +31,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggleC
 
   const adminNavItems = [
     { name: 'System Overview', path: '/admin', icon: LayoutGrid, exact: true },
+    { name: 'Pitch Deck (PPT)', path: '/admin/presentation', icon: Presentation, badge: 'PPTX' },
     { name: 'User Management', path: '/admin/users', icon: Users },
     { name: 'Business Data', path: '/admin/businesses', icon: Database },
     { name: 'Market Data', path: '/admin/market-data', icon: TrendingUp },

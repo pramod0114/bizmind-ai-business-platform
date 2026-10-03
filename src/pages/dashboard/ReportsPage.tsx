@@ -18,14 +18,17 @@ import {
   Layers,
 } from 'lucide-react';
 import { planService } from '../../services/planService';
+import { generateBizMindPptx } from '../../services/pptxService';
 import { BusinessPlan } from '../../types';
 import { formatCurrency, formatPercentage, formatDate } from '../../utils/formatters';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const ReportsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<BusinessPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<number | string>('');
   const [loading, setLoading] = useState(true);
+  const [isExportingPptx, setIsExportingPptx] = useState(false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -62,6 +65,17 @@ export const ReportsPage: React.FC = () => {
     downloadAnchor.remove();
   };
 
+  const handleExportPptx = async () => {
+    setIsExportingPptx(true);
+    try {
+      await generateBizMindPptx(plan);
+    } catch (err) {
+      console.error('Failed to export PPTX:', err);
+    } finally {
+      setIsExportingPptx(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="print:hidden">
@@ -86,11 +100,21 @@ export const ReportsPage: React.FC = () => {
               )}
 
               <Button size="sm" variant="outline" leftIcon={<Download className="w-3.5 h-3.5" />} onClick={handleDownloadJSON} disabled={!plan}>
-                Export JSON
+                JSON
+              </Button>
+
+              <Button
+                size="sm"
+                variant="outline"
+                leftIcon={<Download className="w-3.5 h-3.5 text-sky-400" />}
+                onClick={handleExportPptx}
+                disabled={!plan || isExportingPptx}
+              >
+                {isExportingPptx ? 'Exporting...' : 'Export PPTX'}
               </Button>
 
               <Button size="sm" leftIcon={<Printer className="w-3.5 h-3.5" />} onClick={handlePrint} disabled={!plan}>
-                Print Dossier / Save PDF
+                Print / Save PDF
               </Button>
             </div>
           }
