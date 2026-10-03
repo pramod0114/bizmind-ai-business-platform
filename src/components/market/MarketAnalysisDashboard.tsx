@@ -50,6 +50,7 @@ import {
   Crosshair,
   Trash2,
   ExternalLink,
+  Layers,
 } from 'lucide-react';
 
 const COMMON_BUSINESS_IDEAS = [
@@ -122,27 +123,35 @@ export const MarketAnalysisDashboard: React.FC = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [activeCompetitorId, setActiveCompetitorId] = useState<string | number | null>(null);
 
-  // Auto-scroll when directed via sidebar view parameter
+  // View mode state synchronized with query param (?view=location | directory | all)
+  const currentViewParam = searchParams.get('view');
+  const [activeView, setActiveView] = useState<'location' | 'directory' | 'all'>(() => {
+    if (currentViewParam === 'directory') return 'directory';
+    if (currentViewParam === 'location') return 'location';
+    return 'all';
+  });
+
   useEffect(() => {
-    const view = searchParams.get('view');
-    if (view === 'directory') {
-      const timer = setTimeout(() => {
-        const el = document.getElementById('competitor-directory-section');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    } else if (view === 'location') {
-      const timer = setTimeout(() => {
-        const el = document.getElementById('location-map-section');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
+    const v = searchParams.get('view');
+    if (v === 'directory') {
+      setActiveView('directory');
+    } else if (v === 'location') {
+      setActiveView('location');
+    } else if (v === 'all') {
+      setActiveView('all');
     }
-  }, [searchParams, analysisData]);
+  }, [searchParams]);
+
+  const handleSelectView = (view: 'location' | 'directory' | 'all') => {
+    setActiveView(view);
+    const newParams = new URLSearchParams(searchParams);
+    if (view === 'all') {
+      newParams.delete('view');
+    } else {
+      newParams.set('view', view);
+    }
+    navigate(`?${newParams.toString()}`, { replace: true });
+  };
 
   // Location search suggestions state
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -798,6 +807,59 @@ export const MarketAnalysisDashboard: React.FC = () => {
 
       {analysisData && (
         <>
+          {/* VIEW SWITCHER TABS: Location Intelligence vs Competitor Directory vs Combined */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-2 bg-[#111113] rounded-xl border border-[#27272A] shadow-md">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                id="tab-view-location"
+                onClick={() => handleSelectView('location')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeView === 'location'
+                    ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm font-bold'
+                    : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D]'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>Location Intelligence</span>
+              </button>
+
+              <button
+                type="button"
+                id="tab-view-directory"
+                onClick={() => handleSelectView('directory')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeView === 'directory'
+                    ? 'bg-[#38BDF8] text-[#0B0B0C] shadow-sm font-bold'
+                    : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D]'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Competitor Directory</span>
+              </button>
+
+              <button
+                type="button"
+                id="tab-view-all"
+                onClick={() => handleSelectView('all')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeView === 'all'
+                    ? 'bg-[#27272A] text-[#F8FAFC] border border-[#3F3F46]'
+                    : 'text-[#71717A] hover:text-[#F8FAFC]'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Combined View (All)</span>
+              </button>
+            </div>
+
+            <div className="text-[11px] text-[#A1A1AA] font-mono pr-2 hidden sm:block">
+              {activeView === 'location' && 'Spatial Map • Radial Isochrones • Density Breakdown'}
+              {activeView === 'directory' && 'Competitor Records • Direct Directory • Market Gaps'}
+              {activeView === 'all' && 'Comprehensive Spatial & Competitor Directory Intelligence'}
+            </div>
+          </div>
+
           {/* 4 CORE KPI CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
@@ -826,93 +888,144 @@ export const MarketAnalysisDashboard: React.FC = () => {
             />
           </div>
 
-          {/* EXECUTIVE SUMMARY */}
-          <MarketSummary data={analysisData} />
+          {/* IF DIRECTORY VIEW: Show Directory List immediately at the top */}
+          {activeView === 'directory' && (
+            <div id="competitor-directory-section" className="scroll-mt-20 space-y-6">
+              <CompetitorList
+                competitors={analysisData.competitors}
+                otherBusinesses={analysisData.otherBusinesses}
+                onSelectCompetitor={openCompetitorProfile}
+                onFocusOnMap={focusCompetitorOnMap}
+              />
 
-          {/* INTERACTIVE COMPETITOR MAP */}
-          <div id="location-map-section" className="space-y-2 scroll-mt-20">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider font-mono flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-[#FFBF24]" />
-                Interactive Competitor Spatial Map ({radiusKm} km Radius)
-              </span>
-              <span className="text-[11px] text-[#A1A1AA]">
-                Center: {analysisData.location.name}
-              </span>
+              {/* MARKET GAP & FACTUAL INSIGHTS */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MarketGapAnalysis
+                  observations={analysisData.marketGapObservations}
+                  businessIdea={analysisData.businessIdea}
+                />
+                <MarketInsights insights={analysisData.insights} />
+              </div>
+
+              {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <CompetitorDensity
+                  relevantCompetitors={analysisData.relevantCompetitorsCount}
+                  radiusKm={analysisData.radiusKm}
+                  areaKm2={analysisData.areaKm2}
+                  density={analysisData.competitorDensity}
+                />
+                <CompetitionRisk
+                  level={analysisData.competitionRisk.level}
+                  reason={analysisData.competitionRisk.reason}
+                  competitorCount={analysisData.relevantCompetitorsCount}
+                  density={analysisData.competitorDensity}
+                />
+                <MarketOpportunity
+                  indicator={analysisData.marketOpportunity.indicator}
+                  explanation={analysisData.marketOpportunity.explanation}
+                  totalNearby={analysisData.totalBusinesses}
+                  relevantCompetitors={analysisData.relevantCompetitorsCount}
+                />
+              </div>
             </div>
-            <CompetitorMap
-              center={coords}
-              radiusKm={radiusKm}
-              locationName={analysisData.location.name}
-              competitors={analysisData.competitors}
-              otherBusinesses={analysisData.otherBusinesses}
-              selectedCompetitorId={activeCompetitorId}
-              onSelectCompetitor={openCompetitorProfile}
-              onLocationSelect={handleMapClick}
-              height="450px"
-            />
-          </div>
+          )}
 
-          {/* 2-COLUMN ANALYTICS: CHARTS & RADIAL DISPERSION */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <CategoryDistribution
-              categories={analysisData.categoryDistribution}
-              businessIdea={analysisData.businessIdea}
-            />
+          {/* IF LOCATION INTELLIGENCE OR COMBINED VIEW: Show Map & Spatial Visualizations */}
+          {(activeView === 'location' || activeView === 'all') && (
+            <>
+              {/* EXECUTIVE SUMMARY */}
+              <MarketSummary data={analysisData} />
 
-            <DistanceAnalysis
-              nearest={analysisData.distanceMetrics.nearestDistanceFormatted}
-              farthest={analysisData.distanceMetrics.farthestDistanceFormatted}
-              average={analysisData.distanceMetrics.averageDistanceFormatted}
-              median={analysisData.distanceMetrics.medianDistanceFormatted}
-              relevantCount={analysisData.relevantCompetitorsCount}
-              distanceBuckets={analysisData.competitorDistanceBuckets}
-            />
-          </div>
+              {/* INTERACTIVE COMPETITOR MAP */}
+              <div id="location-map-section" className="space-y-2 scroll-mt-20">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider font-mono flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#FFBF24]" />
+                    Interactive Competitor Spatial Map ({radiusKm} km Radius)
+                  </span>
+                  <span className="text-[11px] text-[#A1A1AA]">
+                    Center: {analysisData.location.name}
+                  </span>
+                </div>
+                <CompetitorMap
+                  center={coords}
+                  radiusKm={radiusKm}
+                  locationName={analysisData.location.name}
+                  competitors={analysisData.competitors}
+                  otherBusinesses={analysisData.otherBusinesses}
+                  selectedCompetitorId={activeCompetitorId}
+                  onSelectCompetitor={openCompetitorProfile}
+                  onLocationSelect={handleMapClick}
+                  height="450px"
+                />
+              </div>
 
-          {/* DIRECTORY & DETAILED COMPETITOR LIST (ACCESSED IMMEDIATELY BELOW CATEGORY MIX & RADIAL DISPERSION) */}
-          <div id="competitor-directory-section" className="scroll-mt-20">
-            <CompetitorList
-              competitors={analysisData.competitors}
-              otherBusinesses={analysisData.otherBusinesses}
-              onSelectCompetitor={openCompetitorProfile}
-              onFocusOnMap={focusCompetitorOnMap}
-            />
-          </div>
+              {/* 2-COLUMN ANALYTICS: CHARTS & RADIAL DISPERSION */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CategoryDistribution
+                  categories={analysisData.categoryDistribution}
+                  businessIdea={analysisData.businessIdea}
+                />
+                <DistanceAnalysis
+                  nearest={analysisData.distanceMetrics.nearestDistanceFormatted}
+                  farthest={analysisData.distanceMetrics.farthestDistanceFormatted}
+                  average={analysisData.distanceMetrics.averageDistanceFormatted}
+                  median={analysisData.distanceMetrics.medianDistanceFormatted}
+                  relevantCount={analysisData.relevantCompetitorsCount}
+                  distanceBuckets={analysisData.competitorDistanceBuckets}
+                />
+              </div>
+            </>
+          )}
 
-          {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <CompetitorDensity
-              relevantCompetitors={analysisData.relevantCompetitorsCount}
-              radiusKm={analysisData.radiusKm}
-              areaKm2={analysisData.areaKm2}
-              density={analysisData.competitorDensity}
-            />
+          {/* IF ALL VIEW: Also show Competitor Directory below */}
+          {activeView === 'all' && (
+            <div id="competitor-directory-section" className="scroll-mt-20">
+              <CompetitorList
+                competitors={analysisData.competitors}
+                otherBusinesses={analysisData.otherBusinesses}
+                onSelectCompetitor={openCompetitorProfile}
+                onFocusOnMap={focusCompetitorOnMap}
+              />
+            </div>
+          )}
 
-            <CompetitionRisk
-              level={analysisData.competitionRisk.level}
-              reason={analysisData.competitionRisk.reason}
-              competitorCount={analysisData.relevantCompetitorsCount}
-              density={analysisData.competitorDensity}
-            />
+          {/* IF LOCATION OR ALL VIEW: Show 3-Column Tiers and Gap Analysis */}
+          {(activeView === 'location' || activeView === 'all') && (
+            <>
+              {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <CompetitorDensity
+                  relevantCompetitors={analysisData.relevantCompetitorsCount}
+                  radiusKm={analysisData.radiusKm}
+                  areaKm2={analysisData.areaKm2}
+                  density={analysisData.competitorDensity}
+                />
+                <CompetitionRisk
+                  level={analysisData.competitionRisk.level}
+                  reason={analysisData.competitionRisk.reason}
+                  competitorCount={analysisData.relevantCompetitorsCount}
+                  density={analysisData.competitorDensity}
+                />
+                <MarketOpportunity
+                  indicator={analysisData.marketOpportunity.indicator}
+                  explanation={analysisData.marketOpportunity.explanation}
+                  totalNearby={analysisData.totalBusinesses}
+                  relevantCompetitors={analysisData.relevantCompetitorsCount}
+                />
+              </div>
 
-            <MarketOpportunity
-              indicator={analysisData.marketOpportunity.indicator}
-              explanation={analysisData.marketOpportunity.explanation}
-              totalNearby={analysisData.totalBusinesses}
-              relevantCompetitors={analysisData.relevantCompetitorsCount}
-            />
-          </div>
-
-          {/* MARKET GAP & FACTUAL INSIGHTS */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MarketGapAnalysis
-              observations={analysisData.marketGapObservations}
-              businessIdea={analysisData.businessIdea}
-            />
-
-            <MarketInsights insights={analysisData.insights} />
-          </div>
+              {/* MARKET GAP & FACTUAL INSIGHTS */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MarketGapAnalysis
+                  observations={analysisData.marketGapObservations}
+                  businessIdea={analysisData.businessIdea}
+                />
+                <MarketInsights insights={analysisData.insights} />
+              </div>
+            </>
+          )}
 
           {/* CROSS-LOCATION COMPARISON BENCHMARK */}
           <LocationComparison

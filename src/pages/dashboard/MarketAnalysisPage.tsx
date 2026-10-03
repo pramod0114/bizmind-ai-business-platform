@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MarketAnalysisDashboard } from '../../components/market/MarketAnalysisDashboard';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/common/Card';
 import { Badge } from '../../components/common/Badge';
@@ -6,11 +7,12 @@ import { api } from '../../services/api';
 import {
   TrendingUp,
   Compass,
+  MapPin,
+  Building2,
   BarChart2,
   DollarSign,
   Activity,
   Globe,
-  Building2,
   ShieldCheck,
   AlertTriangle,
 } from 'lucide-react';
@@ -53,10 +55,23 @@ interface MarketDataResponse {
 }
 
 export const MarketAnalysisPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'competition' | 'macro'>('competition');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const currentView = searchParams.get('view') || 'location';
+  const isMacro = currentView === 'macro';
+  const isLocation = !isMacro && currentView !== 'directory';
+  const isDirectory = !isMacro && currentView === 'directory';
+
   const [macroData, setMacroData] = useState<MarketDataResponse | null>(null);
   const [loadingMacro, setLoadingMacro] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState<IndustryTrend | null>(null);
+
+  useEffect(() => {
+    if (isMacro) {
+      loadMacroData();
+    }
+  }, [isMacro]);
 
   const loadMacroData = async () => {
     if (macroData) return;
@@ -76,37 +91,47 @@ export const MarketAnalysisPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (tab: 'competition' | 'macro') => {
-    setActiveTab(tab);
-    if (tab === 'macro') {
-      loadMacroData();
-    }
+  const handleTabChange = (view: 'location' | 'directory' | 'macro') => {
+    navigate(`/market-analysis?view=${view}`);
   };
 
   return (
     <div className="space-y-6">
       {/* Top Module Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-[#27272A] pb-3">
-        <div className="flex items-center gap-2 bg-[#111113] p-1 rounded-xl border border-[#27272A] text-xs">
+      <div className="flex flex-wrap items-center justify-between border-b border-[#27272A] pb-3 gap-3">
+        <div className="flex items-center gap-2 bg-[#111113] p-1 rounded-xl border border-[#27272A] text-xs flex-wrap">
           <button
             type="button"
-            onClick={() => handleTabChange('competition')}
+            onClick={() => handleTabChange('location')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-              activeTab === 'competition'
-                ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm'
+              isLocation
+                ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm font-bold'
                 : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Hyperlocal Market & Competition (Part 6)</span>
+            <MapPin className="w-3.5 h-3.5" />
+            <span>Location Intelligence</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange('directory')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+              isDirectory
+                ? 'bg-[#38BDF8] text-[#0B0B0C] shadow-sm font-bold'
+                : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Competitor Directory</span>
           </button>
 
           <button
             type="button"
             onClick={() => handleTabChange('macro')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-              activeTab === 'macro'
-                ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm'
+              isMacro
+                ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm font-bold'
                 : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
             }`}
           >
@@ -116,15 +141,15 @@ export const MarketAnalysisPage: React.FC = () => {
         </div>
 
         <span className="text-[11px] text-[#A1A1AA] font-mono hidden sm:inline-block">
-          BizMind Decision Engine
+          Part 6: Market Intelligence Engine
         </span>
       </div>
 
-      {/* Tab 1: Primary Part 6 Market & Competition Analysis */}
-      {activeTab === 'competition' && <MarketAnalysisDashboard />}
+      {/* Primary Market & Competition Analysis (Location Intelligence / Competitor Directory) */}
+      {!isMacro && <MarketAnalysisDashboard />}
 
-      {/* Tab 2: Secondary Macroeconomic Industry Benchmarks */}
-      {activeTab === 'macro' && (
+      {/* Secondary Macroeconomic Industry Benchmarks */}
+      {isMacro && (
         <div className="space-y-6">
           <Card className="border-[#27272A] bg-[#1A1A1D]">
             <CardHeader>

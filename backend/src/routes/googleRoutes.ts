@@ -27,7 +27,7 @@ router.get('/config', (_req: Request, res: Response) => {
 
 /**
  * POST /api/google/nearby
- * Search nearby businesses using Places API (New) Nearby Search
+ * Search nearby businesses using Places API (New) Nearby Search with spatial engine fallback
  */
 router.post('/nearby', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -42,51 +42,63 @@ router.post('/nearby', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (!googlePlacesService.isKeyConfigured()) {
-      sendError(
-        res,
-        'Google Maps Platform API key is not configured. Please provide your Google Maps API key in the environment variables (VITE_GOOGLE_MAPS_API_KEY or GOOGLE_MAPS_SERVER_API_KEY).',
-        503
-      );
-      return;
+    let businesses: any[] = [];
+    let attribution = 'Map and place information provided by Google Maps Platform / Google Places (New).';
+
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        const placeTypes = googlePlacesService.mapCategoryToGoogleTypes(businessType || category || businessIdea);
+        const rawPlaces = await googlePlacesService.searchNearby({
+          latitude: lat,
+          longitude: lng,
+          radiusMeters: rMeters,
+          placeTypes,
+          maxResultCount: 20,
+        });
+
+        businesses = googlePlacesService.normalizeGooglePlaces(
+          rawPlaces,
+          lat,
+          lng,
+          category || businessType,
+          businessIdea
+        );
+      } catch (err: any) {
+        logger.info('Google Places searchNearby unavailable, falling back to spatial engine:', err?.message || err);
+      }
     }
 
-    // Determine place types
-    const placeTypes = googlePlacesService.mapCategoryToGoogleTypes(businessType || category || businessIdea);
-
-    // Call Google Places API (New)
-    const rawPlaces = await googlePlacesService.searchNearby({
-      latitude: lat,
-      longitude: lng,
-      radiusMeters: rMeters,
-      placeTypes,
-      maxResultCount: 20,
-    });
-
-    // Normalize to BizMind DiscoveredBusiness
-    const businesses = googlePlacesService.normalizeGooglePlaces(
-      rawPlaces,
-      lat,
-      lng,
-      category || businessType,
-      businessIdea
-    );
+    if (!businesses || businesses.length === 0) {
+      try {
+        businesses = await locationService.getNearbyBusinesses(
+          lat,
+          lng,
+          rMeters,
+          undefined,
+          category || businessType,
+          businessIdea
+        );
+        attribution = 'Place and business data provided by OpenStreetMap contributors.';
+      } catch (err: any) {
+        logger.info('Spatial engine getNearbyBusinesses fallback notice:', err?.message || err);
+      }
+    }
 
     sendSuccess(
       res,
       {
-        total: businesses.length,
+        total: (businesses || []).length,
         radius: rMeters,
-        businesses,
-        attribution: 'Map and place information provided by Google Maps Platform / Google Places (New).',
+        businesses: businesses || [],
+        attribution,
       },
-      `Discovered ${businesses.length} places via Google Places API (New)`
+      `Discovered ${(businesses || []).length} places`
     );
   } catch (err: any) {
     logger.error('POST /api/google/nearby error:', err?.message || err);
     sendError(
       res,
-      err?.message || 'Unable to load nearby businesses. Please check your Google Maps API configuration.',
+      err?.message || 'Unable to load nearby businesses.',
       500,
       err?.message
     );
@@ -95,7 +107,7 @@ router.post('/nearby', async (req: Request, res: Response): Promise<void> => {
 
 /**
  * POST /api/google/text-search
- * Search places by freeform business idea or text query using Places API (New) Text Search
+ * Search places by freeform business idea or text query using Places API (New) Text Search with spatial fallback
  */
 router.post('/text-search', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -111,49 +123,65 @@ router.post('/text-search', async (req: Request, res: Response): Promise<void> =
     const lng = longitude !== undefined ? parseFloat(String(longitude)) : undefined;
     const rMeters = Math.min(Math.max(parseInt(String(radius), 10) || 2000, 100), 50000);
 
-    if (!googlePlacesService.isKeyConfigured()) {
-      sendError(
-        res,
-        'Google Maps Platform API key is not configured. Please provide your Google Maps API key in the environment variables.',
-        503
-      );
-      return;
+    let businesses: any[] = [];
+    let attribution = 'Map and place information provided by Google Maps Platform / Google Places (New).';
+
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        const rawPlaces = await googlePlacesService.searchText({
+          textQuery: query,
+          latitude: lat,
+          longitude: lng,
+          radiusMeters: rMeters,
+          maxResultCount: 20,
+        });
+
+        const targetLat = lat !== undefined ? lat : 0;
+        const targetLng = lng !== undefined ? lng : 0;
+
+        businesses = googlePlacesService.normalizeGooglePlaces(
+          rawPlaces,
+          targetLat,
+          targetLng,
+          category,
+          query
+        );
+      } catch (err: any) {
+        logger.info('Google Places searchText unavailable, falling back to spatial engine:', err?.message || err);
+      }
     }
 
-    const rawPlaces = await googlePlacesService.searchText({
-      textQuery: query,
-      latitude: lat,
-      longitude: lng,
-      radiusMeters: rMeters,
-      maxResultCount: 20,
-    });
-
-    const targetLat = lat !== undefined ? lat : 0;
-    const targetLng = lng !== undefined ? lng : 0;
-
-    const businesses = googlePlacesService.normalizeGooglePlaces(
-      rawPlaces,
-      targetLat,
-      targetLng,
-      category,
-      query
-    );
+    if (!businesses || businesses.length === 0) {
+      try {
+        businesses = await locationService.getNearbyBusinesses(
+          lat || 0,
+          lng || 0,
+          rMeters,
+          undefined,
+          category,
+          query
+        );
+        attribution = 'Place and business data provided by OpenStreetMap contributors.';
+      } catch (err: any) {
+        logger.info('Spatial engine fallback notice in text-search:', err?.message || err);
+      }
+    }
 
     sendSuccess(
       res,
       {
-        total: businesses.length,
+        total: (businesses || []).length,
         radius: rMeters,
-        businesses,
-        attribution: 'Map and place information provided by Google Maps Platform / Google Places (New).',
+        businesses: businesses || [],
+        attribution,
       },
-      `Discovered ${businesses.length} places matching "${query}" via Google Places Text Search (New)`
+      `Discovered ${(businesses || []).length} places matching "${query}"`
     );
   } catch (err: any) {
     logger.error('POST /api/google/text-search error:', err?.message || err);
     sendError(
       res,
-      err?.message || 'Unable to complete text search. Please check your Google Maps API configuration.',
+      err?.message || 'Unable to complete text search.',
       500,
       err?.message
     );
@@ -162,7 +190,7 @@ router.post('/text-search', async (req: Request, res: Response): Promise<void> =
 
 /**
  * GET /api/google/geocode?address=...
- * Geocode an address, city, landmark, or PIN code
+ * Geocode an address, city, landmark, or PIN code with spatial fallback
  */
 router.get('/geocode', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -172,13 +200,25 @@ router.get('/geocode', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (!googlePlacesService.isKeyConfigured()) {
-      sendError(res, 'Google Maps Platform API key is not configured.', 503);
-      return;
+    let results: any[] = [];
+
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        results = await googlePlacesService.geocode(address);
+      } catch (err: any) {
+        logger.info('Google geocode API unavailable, using spatial engine fallback:', err?.message || err);
+      }
     }
 
-    const results = await googlePlacesService.geocode(address);
-    sendSuccess(res, results, `Geocoded ${results.length} locations for "${address}"`);
+    if (!results || results.length === 0) {
+      try {
+        results = await locationService.searchLocations(address);
+      } catch (err: any) {
+        logger.info('Spatial engine searchLocations fallback notice:', err?.message || err);
+      }
+    }
+
+    sendSuccess(res, results || [], `Geocoded ${(results || []).length} locations for "${address}"`);
   } catch (err: any) {
     logger.error('GET /api/google/geocode error:', err?.message || err);
     sendError(res, err?.message || 'Failed to geocode address.', 500, err?.message);
@@ -204,7 +244,7 @@ router.get('/geocode/reverse', async (req: Request, res: Response): Promise<void
       try {
         result = await googlePlacesService.reverseGeocode(lat, lng);
       } catch (err: any) {
-        logger.warn('Google reverseGeocode error, falling back to spatial engine:', err?.message || err);
+        logger.info('Google reverseGeocode notice, delegating to spatial engine:', err?.message || err);
       }
     }
 
@@ -212,7 +252,7 @@ router.get('/geocode/reverse', async (req: Request, res: Response): Promise<void
       try {
         result = await locationService.reverseGeocode(lat, lng);
       } catch (err: any) {
-        logger.warn('Spatial engine reverseGeocode error:', err?.message || err);
+        logger.info('Spatial engine reverseGeocode notice:', err?.message || err);
       }
     }
 
@@ -241,18 +281,14 @@ router.get('/geocode/reverse', async (req: Request, res: Response): Promise<void
 
 /**
  * POST /api/google/autocomplete
- * Places Autocomplete (New) for location search inputs
+ * Places Autocomplete (New) for location search inputs with spatial fallback
  */
 router.post('/autocomplete', async (req: Request, res: Response): Promise<void> => {
   try {
     const { input, latitude, longitude, radius } = req.body;
-    if (!input || !String(input).trim()) {
+    const trimmedInput = String(input || '').trim();
+    if (!trimmedInput) {
       sendSuccess(res, []);
-      return;
-    }
-
-    if (!googlePlacesService.isKeyConfigured()) {
-      sendError(res, 'Google Maps Platform API key is not configured.', 503);
       return;
     }
 
@@ -260,14 +296,36 @@ router.post('/autocomplete', async (req: Request, res: Response): Promise<void> 
     const lng = longitude !== undefined ? parseFloat(String(longitude)) : undefined;
     const rMeters = radius ? parseInt(String(radius), 10) : undefined;
 
-    const suggestions = await googlePlacesService.autocomplete({
-      input: String(input).trim(),
-      latitude: lat,
-      longitude: lng,
-      radiusMeters: rMeters,
-    });
+    let suggestions: any[] = [];
 
-    sendSuccess(res, suggestions, `Returned ${suggestions.length} autocomplete predictions`);
+    if (googlePlacesService.isKeyConfigured()) {
+      try {
+        suggestions = await googlePlacesService.autocomplete({
+          input: trimmedInput,
+          latitude: lat,
+          longitude: lng,
+          radiusMeters: rMeters,
+        });
+      } catch (err: any) {
+        logger.info('Google autocomplete unavailable, using spatial engine fallback:', err?.message || err);
+      }
+    }
+
+    if (!suggestions || suggestions.length === 0) {
+      try {
+        const places = await locationService.searchLocations(trimmedInput);
+        suggestions = places.map((p) => ({
+          placeId: String(p.place_id || ''),
+          description: p.display_name,
+          mainText: p.name,
+          secondaryText: p.display_name,
+        }));
+      } catch (err: any) {
+        logger.info('Spatial engine autocomplete fallback notice:', err?.message || err);
+      }
+    }
+
+    sendSuccess(res, suggestions || [], `Returned ${(suggestions || []).length} autocomplete predictions`);
   } catch (err: any) {
     logger.error('POST /api/google/autocomplete error:', err?.message || err);
     sendError(res, err?.message || 'Failed to fetch autocomplete suggestions.', 500, err?.message);

@@ -81,12 +81,17 @@ export class GooglePlacesService {
   private constructor() {}
 
   private currentReferer: string | null = null;
+  private isRefererRestricted: boolean = false;
 
   public static getInstance(): GooglePlacesService {
     if (!GooglePlacesService.instance) {
       GooglePlacesService.instance = new GooglePlacesService();
     }
     return GooglePlacesService.instance;
+  }
+
+  public isKeyRefererRestricted(): boolean {
+    return this.isRefererRestricted;
   }
 
   public setRequestContext(referer?: string): void {
@@ -109,11 +114,11 @@ export class GooglePlacesService {
       process.env.GOOGLE_MAPS_SERVER_API_KEY ||
       process.env.VITE_GOOGLE_MAPS_API_KEY ||
       process.env.GOOGLE_MAPS_API_KEY ||
-      'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo';
+      '';
     return rawKey.trim().replace(/^["']|["']$/g, '');
   }
 
-  public getRefererHeader(customReferer?: string): string {
+  public getRefererHeader(customReferer?: string): string | undefined {
     if (customReferer && customReferer.trim()) {
       try {
         const u = new URL(customReferer);
@@ -123,16 +128,12 @@ export class GooglePlacesService {
         return clean.endsWith('/') ? clean : `${clean}/`;
       }
     }
+    if (this.currentReferer) {
+      return this.currentReferer;
+    }
     if (process.env.GOOGLE_MAPS_REFERER && process.env.GOOGLE_MAPS_REFERER.trim()) {
       const r = process.env.GOOGLE_MAPS_REFERER.trim();
       return r.endsWith('/') ? r : `${r}/`;
-    }
-    if (process.env.RENDER_EXTERNAL_URL && process.env.RENDER_EXTERNAL_URL.trim()) {
-      const r = process.env.RENDER_EXTERNAL_URL.trim();
-      return r.endsWith('/') ? r : `${r}/`;
-    }
-    if (this.currentReferer) {
-      return this.currentReferer;
     }
     if (process.env.FRONTEND_URL && process.env.FRONTEND_URL.trim() && !process.env.FRONTEND_URL.includes('localhost')) {
       const r = process.env.FRONTEND_URL.trim();
@@ -142,7 +143,7 @@ export class GooglePlacesService {
       const r = process.env.APP_URL.trim();
       return r.endsWith('/') ? r : `${r}/`;
     }
-    return 'https://bizmind-ai-business-platform.onrender.com/';
+    return undefined;
   }
 
   public getHeaders(fieldMask?: string, customReferer?: string): Record<string, string> {
@@ -164,7 +165,12 @@ export class GooglePlacesService {
 
   public isKeyConfigured(): boolean {
     const key = this.getApiKey();
-    return key.length > 5 && !key.includes('YOUR_');
+    return Boolean(
+      key &&
+      key.length > 10 &&
+      !key.includes('YOUR_') &&
+      key !== 'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo'
+    );
   }
 
   /**
@@ -310,7 +316,11 @@ export class GooglePlacesService {
       return response.data.places || [];
     } catch (err: any) {
       const message = err.response?.data?.error?.message || err.message || 'Error communicating with Google Places API';
-      logger.error('Google Places searchNearby failed:', message);
+      if (message.includes('API key not valid') || message.includes('API key is missing') || message.includes('not configured')) {
+        logger.warn('Google Places searchNearby: API key invalid or unconfigured, using fallback');
+      } else {
+        logger.error('Google Places searchNearby failed:', message);
+      }
       throw new Error(`Google Places Nearby Search failed: ${message}`);
     }
   }
@@ -374,7 +384,11 @@ export class GooglePlacesService {
       return response.data.places || [];
     } catch (err: any) {
       const message = err.response?.data?.error?.message || err.message || 'Error communicating with Google Places API';
-      logger.error('Google Places searchText failed:', message);
+      if (message.includes('API key not valid') || message.includes('API key is missing') || message.includes('not configured')) {
+        logger.warn('Google Places searchText: API key invalid or unconfigured, using fallback');
+      } else {
+        logger.error('Google Places searchText failed:', message);
+      }
       throw new Error(`Google Places Text Search failed: ${message}`);
     }
   }
@@ -383,6 +397,10 @@ export class GooglePlacesService {
    * Google Geocoding API (Search address / city / landmark / PIN code)
    */
   public async geocode(query: string): Promise<GeoLocationResult[]> {
+    if (this.isRefererRestricted) {
+      throw new Error('API keys with referer restrictions cannot be used with this API.');
+    }
+
     const apiKey = this.getApiKey();
     if (!apiKey) {
       throw new Error('Google Maps Platform API key is missing.');
@@ -440,7 +458,13 @@ export class GooglePlacesService {
 
       return results;
     } catch (err: any) {
-      logger.error('Google Geocode error:', err?.message || err);
+      const msg = err?.message || String(err);
+      if (msg.includes('referer restrictions') || msg.includes('API key not valid') || msg.includes('REQUEST_DENIED')) {
+        this.isRefererRestricted = true;
+        logger.info('Google Geocode: Key restricted for web service, delegating to spatial fallback:', msg);
+      } else {
+        logger.info('Google Geocode notice:', msg);
+      }
       throw err;
     }
   }
@@ -449,6 +473,10 @@ export class GooglePlacesService {
    * Google Reverse Geocoding API
    */
   public async reverseGeocode(lat: number, lng: number): Promise<GeoLocationResult | null> {
+    if (this.isRefererRestricted) {
+      return null;
+    }
+
     const apiKey = this.getApiKey();
     if (!apiKey) {
       throw new Error('Google Maps Platform API key is missing.');
@@ -498,7 +526,13 @@ export class GooglePlacesService {
         },
       };
     } catch (err: any) {
-      logger.error('Google Reverse Geocode error:', err?.message || err);
+      const msg = err?.message || String(err);
+      if (msg.includes('referer restrictions') || msg.includes('API key not valid') || msg.includes('REQUEST_DENIED')) {
+        this.isRefererRestricted = true;
+        logger.info('Google Reverse Geocode: Key restricted for web service, delegating to spatial fallback:', msg);
+      } else {
+        logger.info('Google Reverse Geocode notice:', msg);
+      }
       throw err;
     }
   }

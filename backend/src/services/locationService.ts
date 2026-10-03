@@ -564,15 +564,15 @@ export class LocationService {
     const trimmed = query.trim();
     if (!trimmed) return [];
 
-    // Prioritize Google Geocoding API if key is available
-    if (googlePlacesService.isKeyConfigured()) {
+    // Prioritize Google Geocoding API if key is available and not restricted
+    if (googlePlacesService.isKeyConfigured() && !googlePlacesService.isKeyRefererRestricted()) {
       try {
         const googleResults = await googlePlacesService.geocode(trimmed);
         if (googleResults && googleResults.length > 0) {
           return googleResults;
         }
       } catch (err: any) {
-        logger.warn('Google Geocode error, falling back:', err?.message || err);
+        logger.info('Google Geocode notice, delegating to spatial engine:', err?.message || err);
       }
     }
 
@@ -683,15 +683,15 @@ export class LocationService {
     const roundedLat = parseFloat(lat.toFixed(4));
     const roundedLng = parseFloat(lng.toFixed(4));
 
-    // Prioritize Google Reverse Geocoding API if key is available
-    if (googlePlacesService.isKeyConfigured()) {
+    // Prioritize Google Reverse Geocoding API if key is available and not restricted
+    if (googlePlacesService.isKeyConfigured() && !googlePlacesService.isKeyRefererRestricted()) {
       try {
         const googleResult = await googlePlacesService.reverseGeocode(roundedLat, roundedLng);
         if (googleResult) {
           return googleResult;
         }
       } catch (err: any) {
-        logger.warn('Google Reverse Geocode error, falling back:', err?.message || err);
+        logger.info('Google Reverse Geocode notice, delegating to spatial engine:', err?.message || err);
       }
     }
 
@@ -812,7 +812,7 @@ export class LocationService {
           );
         }
       } catch (err: any) {
-        logger.warn('Google Places API call in getNearbyBusinesses failed, attempting secondary:', err?.message || err);
+        logger.info('Google Places API call in getNearbyBusinesses not available, attempting secondary:', err?.message || err);
       }
     }
 

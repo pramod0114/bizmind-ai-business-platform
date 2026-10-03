@@ -1,7 +1,7 @@
 /**
  * BizMind – Dashboard Sidebar Navigation
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -38,13 +38,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
 
   const isMarketPath = location.pathname === '/market-analysis' || location.pathname.startsWith('/location');
   const currentView = new URLSearchParams(location.search).get('view');
-  const isLocationActive = isMarketPath && currentView !== 'directory';
+  const isLocationActive = isMarketPath && (currentView === 'location' || !currentView);
   const isDirectoryActive = isMarketPath && currentView === 'directory';
 
+  // Automatically keep market submenu open only when on market-analysis path; close on other routes
+  useEffect(() => {
+    if (!isMarketPath) {
+      setIsMarketOpen(false);
+    } else {
+      setIsMarketOpen(true);
+    }
+  }, [isMarketPath]);
+
   const handleMarketToggle = () => {
-    setIsMarketOpen((prev) => !prev);
-    if (location.pathname !== '/market-analysis') {
+    if (!isMarketPath) {
+      setIsMarketOpen(true);
       navigate('/market-analysis');
+    } else {
+      setIsMarketOpen((prev) => !prev);
     }
   };
 
@@ -148,26 +159,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapse })
                   type="button"
                   onClick={handleMarketToggle}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer ${
-                    isMarketPath || isMarketOpen
+                    isMarketPath
                       ? 'bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/30 shadow-sm'
                       : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] border border-transparent'
                   }`}
-                  title="Market & Competition Intelligence"
+                  title="Market Analysis & Intelligence"
                 >
-                  <TrendingUp className="w-4 h-4 shrink-0 text-[#FFBF24]" />
-                  <span className="flex-1 text-left truncate font-semibold">Market & ...</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#1A1A1D] text-[#FFBF24] font-semibold border border-[#27272A] shrink-0">
-                    Part 6
+                  <TrendingUp className={`w-4 h-4 shrink-0 ${isMarketPath ? 'text-[#FFBF24]' : 'text-current'}`} />
+                  <span className="flex-1 text-left font-semibold text-xs md:text-sm whitespace-nowrap">
+                    Market Analysis
                   </span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
-                      isMarketOpen ? 'rotate-180 text-[#FFBF24]' : 'text-[#71717A]'
+                      isMarketOpen && isMarketPath ? 'rotate-180 text-[#FFBF24]' : 'text-[#71717A]'
                     }`}
                   />
                 </button>
 
-                {/* Submenu Dropdown (Only shown when user clicks Market & Competition Intelligence) */}
-                {isMarketOpen && (
+                {/* Submenu Dropdown (Only shown when user is on Market Analysis path) */}
+                {isMarketOpen && isMarketPath && (
                   <div className="relative ml-4 pl-3.5 mt-1.5 space-y-1 border-l border-[#27272A] animate-fadeIn">
                     {/* Location Intelligence */}
                     <NavLink

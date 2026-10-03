@@ -298,7 +298,7 @@ export class LocationPredictionService {
         if (p.id) placeMap.set(p.id, p);
       }
     } catch (err: any) {
-      logger.warn('Google Places Nearby Search error:', err?.message || err);
+      logger.info('Google Places Nearby Search notice:', err?.message || err);
       dataLimitations.push(`Nearby Search notice: ${err?.message || 'Limited nearby coverage'}`);
     }
 
@@ -316,7 +316,7 @@ export class LocationPredictionService {
         if (p.id) placeMap.set(p.id, p);
       }
     } catch (err: any) {
-      logger.warn('Google Places Text Search error:', err?.message || err);
+      logger.info('Google Places Text Search notice:', err?.message || err);
     }
 
     return {

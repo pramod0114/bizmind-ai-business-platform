@@ -314,7 +314,7 @@ export const PredictionsPage: React.FC = () => {
         });
       }
     } catch (err) {
-      console.error('Failed to geocode suggestion:', err);
+      console.warn('Geocode suggestion note:', err);
     }
   };
 

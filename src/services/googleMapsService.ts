@@ -98,8 +98,9 @@ if (typeof window !== 'undefined') {
   const originalAuthFailure = (window as any).gm_authFailure;
   (window as any).gm_authFailure = () => {
     hasAuthFailed = true;
-    authErrorMessage =
-      'Google Maps Platform: "Maps JavaScript API" is not activated on your Google Cloud Project or has website referrer restrictions. Please enable Maps JavaScript API in Google Cloud Console.';
+    setPreferredMapEngine('osm');
+    const siteUrl = typeof window !== 'undefined' ? `${window.location.origin}/*` : 'your domain';
+    authErrorMessage = `Google Maps Platform: HTTP referrer restriction blocked this URL. To authorize this domain, add "${siteUrl}" to your allowed referrers in Google Cloud Console. Switched to OpenStreetMap.`;
     console.warn('[BizMind Google Maps]', authErrorMessage);
     if (typeof originalAuthFailure === 'function') {
       try {
@@ -147,6 +148,8 @@ export function getPreferredMapEngine(): MapEngine {
   if (hasAuthFailed) return 'osm';
   const saved = localStorage.getItem('bizmind_map_engine');
   if (saved === 'osm' || saved === 'google') return saved;
+  const key = getGoogleMapsApiKey();
+  if (!key || key.length < 10) return 'osm';
   return 'google';
 }
 
@@ -172,8 +175,10 @@ export function getGoogleMapsApiKey(): string {
     env?.VITE_GOOGLE_MAPS_KEY ||
     (typeof window !== 'undefined' ? (window as any).__BIZMIND_GOOGLE_MAPS_KEY : '') ||
     cachedServerKey ||
-    'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo';
-  return String(raw).trim().replace(/^["']|["']$/g, '');
+    '';
+  const trimmed = String(raw).trim().replace(/^["']|["']$/g, '');
+  if (trimmed === 'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo') return '';
+  return trimmed;
 }
 
 /**
@@ -189,7 +194,7 @@ export async function loadGoogleMaps(): Promise<typeof google> {
   }
 
   let apiKey = getGoogleMapsApiKey();
-  if (!apiKey || apiKey === 'AIzaSyCrvQmobbKFWknOopoueWVcfLVwafIudTo') {
+  if (!apiKey) {
     try {
       const res = await fetch('/api/google/config');
       if (res.ok) {
