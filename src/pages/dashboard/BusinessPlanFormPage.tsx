@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   FileText,
   MapPin,
@@ -48,6 +48,25 @@ const BUSINESS_MODELS = [
 
 export const BusinessPlanFormPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as {
+    businessName?: string;
+    category?: string;
+    description?: string;
+    locationName?: string;
+    city?: string;
+    area?: string;
+    targetCustomer?: string;
+    initialInvestment?: number;
+    equipmentCost?: number;
+    setupCost?: number;
+    expectedMonthlyRevenue?: number;
+    sellingPrice?: number;
+    dailyCustomers?: number;
+    latitude?: number;
+    longitude?: number;
+  } | null;
+
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
 
@@ -58,23 +77,23 @@ export const BusinessPlanFormPage: React.FC = () => {
 
   // FORM STATE
   // Section A
-  const [businessName, setBusinessName] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [description, setDescription] = useState('');
+  const [businessName, setBusinessName] = useState(navState?.businessName || '');
+  const [category, setCategory] = useState(navState?.category || CATEGORIES[0]);
+  const [description, setDescription] = useState(navState?.description || '');
   const [businessModel, setBusinessModel] = useState(BUSINESS_MODELS[0]);
-  const [targetCustomer, setTargetCustomer] = useState('');
+  const [targetCustomer, setTargetCustomer] = useState(navState?.targetCustomer || '');
 
   // Section B
-  const [locationName, setLocationName] = useState('');
-  const [city, setCity] = useState('');
-  const [area, setArea] = useState('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState(navState?.locationName || '');
+  const [city, setCity] = useState(navState?.city || '');
+  const [area, setArea] = useState(navState?.area || '');
+  const [latitude, setLatitude] = useState<number | null>(navState?.latitude ?? null);
+  const [longitude, setLongitude] = useState<number | null>(navState?.longitude ?? null);
 
   // Section C - Investment
-  const [equipmentCost, setEquipmentCost] = useState<number>(150000);
+  const [equipmentCost, setEquipmentCost] = useState<number>(navState?.equipmentCost || 150000);
   const [furnitureCost, setFurnitureCost] = useState<number>(75000);
-  const [setupCost, setSetupCost] = useState<number>(100000);
+  const [setupCost, setSetupCost] = useState<number>(navState?.setupCost || 100000);
   const [securityDeposit, setSecurityDeposit] = useState<number>(120000);
   const [licenseCost, setLicenseCost] = useState<number>(25000);
   const [technologyCost, setTechnologyCost] = useState<number>(30000);
@@ -84,9 +103,9 @@ export const BusinessPlanFormPage: React.FC = () => {
 
   // Section D - Revenue
   const [revenueApproach, setRevenueApproach] = useState<'direct' | 'calculated'>('calculated');
-  const [expectedMonthlySales, setExpectedMonthlySales] = useState<number>(250000);
-  const [sellingPrice, setSellingPrice] = useState<number>(250);
-  const [expectedCustomersPerDay, setExpectedCustomersPerDay] = useState<number>(40);
+  const [expectedMonthlySales, setExpectedMonthlySales] = useState<number>(navState?.expectedMonthlyRevenue || 250000);
+  const [sellingPrice, setSellingPrice] = useState<number>(navState?.sellingPrice || 250);
+  const [expectedCustomersPerDay, setExpectedCustomersPerDay] = useState<number>(navState?.dailyCustomers || 40);
   const [operatingDays, setOperatingDays] = useState<number>(30);
   const [variableCostPerUnit, setVariableCostPerUnit] = useState<number>(90);
   const [otherRevenue, setOtherRevenue] = useState<number>(0);

@@ -27,7 +27,7 @@ import {
 import { planService } from '../../services/planService';
 import { api } from '../../services/api';
 import { BusinessPlan } from '../../types';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Sparkles,
   MapPin,
@@ -190,18 +190,29 @@ export const getCategoryFinancialBenchmarks = (categoryName: string): LocationPr
 
 export const PredictionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navState = location.state as {
+    businessIdea?: string;
+    category?: string;
+    locationQuery?: string;
+    coordinates?: { latitude: number; longitude: number };
+    radiusMeters?: number;
+    financialInputs?: LocationPredictionFinancialInputs;
+  } | null;
 
   // Navigation mode: Location-Based Prediction vs Business Plan Ensemble
   const [activeTab, setActiveTab] = useState<'location' | 'plan_ensemble'>('location');
 
   // Business Name & Location Search state
-  const [businessNameInput, setBusinessNameInput] = useState<string>('Coffee Shop');
-  const [targetLocationQuery, setTargetLocationQuery] = useState<string>('Vishrambag, Sangli');
-  const [targetCoords, setTargetCoords] = useState<{ latitude: number; longitude: number }>({
-    latitude: 16.8524,
-    longitude: 74.5815,
-  });
-  const [radiusMeters, setRadiusMeters] = useState<number>(2000);
+  const [businessNameInput, setBusinessNameInput] = useState<string>(navState?.businessIdea || 'Coffee Shop');
+  const [targetLocationQuery, setTargetLocationQuery] = useState<string>(navState?.locationQuery || 'Vishrambag, Sangli');
+  const [targetCoords, setTargetCoords] = useState<{ latitude: number; longitude: number }>(
+    navState?.coordinates || {
+      latitude: 16.8524,
+      longitude: 74.5815,
+    }
+  );
+  const [radiusMeters, setRadiusMeters] = useState<number>(navState?.radiusMeters || 2000);
 
   // Autocomplete Suggestions
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -214,9 +225,9 @@ export const PredictionsPage: React.FC = () => {
   const [gpsNotice, setGpsNotice] = useState<string | null>(null);
 
   // Optional Financial Inputs toggle
-  const [showFinancialInputs, setShowFinancialInputs] = useState(false);
+  const [showFinancialInputs, setShowFinancialInputs] = useState(Boolean(navState?.financialInputs));
   const [financialInputs, setFinancialInputs] = useState<LocationPredictionFinancialInputs>(() =>
-    getCategoryFinancialBenchmarks('Coffee Shop')
+    navState?.financialInputs || getCategoryFinancialBenchmarks(navState?.businessIdea || 'Coffee Shop')
   );
 
   // Location Analysis State
