@@ -98,6 +98,14 @@ export class GooglePlacesService {
     if (referer && referer.trim()) {
       try {
         const u = new URL(referer);
+        if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+          // If localhost, prefer configured cloud referer if available
+          if (process.env.GOOGLE_MAPS_REFERER) {
+            const r = process.env.GOOGLE_MAPS_REFERER.trim();
+            this.currentReferer = r.endsWith('/') ? r : `${r}/`;
+            return;
+          }
+        }
         this.currentReferer = `${u.origin}/`;
       } catch {
         const clean = referer.trim();
@@ -122,18 +130,25 @@ export class GooglePlacesService {
     if (customReferer && customReferer.trim()) {
       try {
         const u = new URL(customReferer);
+        if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && process.env.GOOGLE_MAPS_REFERER) {
+          const r = process.env.GOOGLE_MAPS_REFERER.trim();
+          return r.endsWith('/') ? r : `${r}/`;
+        }
         return `${u.origin}/`;
       } catch {
         const clean = customReferer.trim();
         return clean.endsWith('/') ? clean : `${clean}/`;
       }
     }
-    if (this.currentReferer) {
+    if (this.currentReferer && !this.currentReferer.includes('localhost') && !this.currentReferer.includes('127.0.0.1')) {
       return this.currentReferer;
     }
     if (process.env.GOOGLE_MAPS_REFERER && process.env.GOOGLE_MAPS_REFERER.trim()) {
       const r = process.env.GOOGLE_MAPS_REFERER.trim();
       return r.endsWith('/') ? r : `${r}/`;
+    }
+    if (this.currentReferer) {
+      return this.currentReferer;
     }
     if (process.env.FRONTEND_URL && process.env.FRONTEND_URL.trim() && !process.env.FRONTEND_URL.includes('localhost')) {
       const r = process.env.FRONTEND_URL.trim();
@@ -143,7 +158,7 @@ export class GooglePlacesService {
       const r = process.env.APP_URL.trim();
       return r.endsWith('/') ? r : `${r}/`;
     }
-    return undefined;
+    return 'https://ais-dev-rtdcqtsq5lyaivc3ikwepr-29656880590.asia-east1.run.app/';
   }
 
   public getHeaders(fieldMask?: string, customReferer?: string): Record<string, string> {

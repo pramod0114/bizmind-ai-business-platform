@@ -132,7 +132,10 @@ export const LocationMap: React.FC<LocationMapProps> = ({
   // Teardown Leaflet
   const destroyLeaflet = useCallback(() => {
     if (leafletMapRef.current) {
-      leafletMapRef.current.remove();
+      try {
+        leafletMapRef.current.off();
+        leafletMapRef.current.remove();
+      } catch {}
       leafletMapRef.current = null;
     }
     leafletCircleRef.current = null;

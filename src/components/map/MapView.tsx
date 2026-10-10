@@ -113,7 +113,10 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const destroyLeaflet = useCallback(() => {
     if (leafletMapRef.current) {
-      leafletMapRef.current.remove();
+      try {
+        leafletMapRef.current.off();
+        leafletMapRef.current.remove();
+      } catch {}
       leafletMapRef.current = null;
     }
     leafletCircleRef.current = null;

@@ -115,7 +115,10 @@ export const GooglePredictionMap: React.FC<GooglePredictionMapProps> = ({
     leafletMarkersRef.current.forEach((m) => m.remove());
     leafletMarkersRef.current = [];
     if (leafletMapRef.current) {
-      leafletMapRef.current.remove();
+      try {
+        leafletMapRef.current.off();
+        leafletMapRef.current.remove();
+      } catch {}
       leafletMapRef.current = null;
     }
   }, []);

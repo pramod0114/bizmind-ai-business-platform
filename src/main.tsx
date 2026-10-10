@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+import './utils/leafletPatch.ts';
+
 // Early interceptor for Google Maps authentication & referrer error handling
 if (typeof window !== 'undefined') {
   const origConsoleError = console.error;
@@ -21,6 +23,13 @@ if (typeof window !== 'undefined') {
           (window as any).gm_authFailure();
         } catch {}
       }
+      return;
+    }
+    if (
+      msg.includes("Cannot read properties of null (reading 'offsetWidth')") ||
+      msg.includes('getSizedParentNode')
+    ) {
+      console.warn('[BizMind Leaflet Notice] Suppressed detached node offsetWidth notice');
       return;
     }
     origConsoleError.apply(console, args);

@@ -51,6 +51,7 @@ import {
   Trash2,
   ExternalLink,
   Layers,
+  ChevronRight,
 } from 'lucide-react';
 
 const COMMON_BUSINESS_IDEAS = [
@@ -130,6 +131,9 @@ export const MarketAnalysisDashboard: React.FC = () => {
     if (currentViewParam === 'location') return 'location';
     return 'all';
   });
+
+  // Global toggle to expand or collapse details across all cards simultaneously
+  const [expandAllDetails, setExpandAllDetails] = useState(false);
 
   useEffect(() => {
     const v = searchParams.get('view');
@@ -853,10 +857,26 @@ export const MarketAnalysisDashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-[11px] text-[#A1A1AA] font-mono pr-2 hidden sm:block">
-              {activeView === 'location' && 'Spatial Map • Radial Isochrones • Density Breakdown'}
-              {activeView === 'directory' && 'Competitor Records • Direct Directory • Market Gaps'}
-              {activeView === 'all' && 'Comprehensive Spatial & Competitor Directory Intelligence'}
+            <div className="flex items-center gap-2.5">
+              <div className="text-[11px] text-[#A1A1AA] font-mono pr-2 hidden lg:block">
+                {activeView === 'location' && 'Spatial Map • Radial Isochrones • Density Breakdown'}
+                {activeView === 'directory' && 'Competitor Records • Direct Directory • Market Gaps'}
+                {activeView === 'all' && 'Comprehensive Spatial & Competitor Directory Intelligence'}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setExpandAllDetails(!expandAllDetails)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-[#F8FAFC] transition-colors cursor-pointer"
+                title={expandAllDetails ? 'Collapse all card details' : 'Expand all card details'}
+              >
+                <span>{expandAllDetails ? 'Collapse Details' : 'Expand Details'}</span>
+                <ChevronRight
+                  className={`w-3.5 h-3.5 text-[#FFBF24] transition-transform duration-200 ${
+                    expandAllDetails ? 'rotate-90' : ''
+                  }`}
+                />
+              </button>
             </div>
           </div>
 
@@ -901,31 +921,43 @@ export const MarketAnalysisDashboard: React.FC = () => {
               {/* MARKET GAP & FACTUAL INSIGHTS */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <MarketGapAnalysis
+                  key={`dir-gap-${expandAllDetails}`}
                   observations={analysisData.marketGapObservations}
                   businessIdea={analysisData.businessIdea}
+                  defaultExpanded={expandAllDetails}
                 />
-                <MarketInsights insights={analysisData.insights} />
+                <MarketInsights
+                  key={`dir-insights-${expandAllDetails}`}
+                  insights={analysisData.insights}
+                  defaultExpanded={expandAllDetails}
+                />
               </div>
 
               {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <CompetitorDensity
+                  key={`dir-density-${expandAllDetails}`}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
                   radiusKm={analysisData.radiusKm}
                   areaKm2={analysisData.areaKm2}
                   density={analysisData.competitorDensity}
+                  defaultExpanded={expandAllDetails}
                 />
                 <CompetitionRisk
+                  key={`dir-risk-${expandAllDetails}`}
                   level={analysisData.competitionRisk.level}
                   reason={analysisData.competitionRisk.reason}
                   competitorCount={analysisData.relevantCompetitorsCount}
                   density={analysisData.competitorDensity}
+                  defaultExpanded={expandAllDetails}
                 />
                 <MarketOpportunity
+                  key={`dir-opp-${expandAllDetails}`}
                   indicator={analysisData.marketOpportunity.indicator}
                   explanation={analysisData.marketOpportunity.explanation}
                   totalNearby={analysisData.totalBusinesses}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
+                  defaultExpanded={expandAllDetails}
                 />
               </div>
             </div>
@@ -997,48 +1029,66 @@ export const MarketAnalysisDashboard: React.FC = () => {
               {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <CompetitorDensity
+                  key={`density-${expandAllDetails}`}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
                   radiusKm={analysisData.radiusKm}
                   areaKm2={analysisData.areaKm2}
                   density={analysisData.competitorDensity}
+                  defaultExpanded={expandAllDetails}
                 />
                 <CompetitionRisk
+                  key={`risk-${expandAllDetails}`}
                   level={analysisData.competitionRisk.level}
                   reason={analysisData.competitionRisk.reason}
                   competitorCount={analysisData.relevantCompetitorsCount}
                   density={analysisData.competitorDensity}
+                  defaultExpanded={expandAllDetails}
                 />
                 <MarketOpportunity
+                  key={`opp-${expandAllDetails}`}
                   indicator={analysisData.marketOpportunity.indicator}
                   explanation={analysisData.marketOpportunity.explanation}
                   totalNearby={analysisData.totalBusinesses}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
+                  defaultExpanded={expandAllDetails}
                 />
               </div>
 
               {/* MARKET GAP & FACTUAL INSIGHTS */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <MarketGapAnalysis
+                  key={`gap-${expandAllDetails}`}
                   observations={analysisData.marketGapObservations}
                   businessIdea={analysisData.businessIdea}
+                  defaultExpanded={expandAllDetails}
                 />
-                <MarketInsights insights={analysisData.insights} />
+                <MarketInsights
+                  key={`insights-${expandAllDetails}`}
+                  insights={analysisData.insights}
+                  defaultExpanded={expandAllDetails}
+                />
               </div>
             </>
           )}
 
           {/* CROSS-LOCATION COMPARISON BENCHMARK */}
           <LocationComparison
+            key={`comparison-${expandAllDetails}`}
             currentLocationName={analysisData.location.name}
             currentLat={coords[0]}
             currentLng={coords[1]}
             businessIdea={analysisData.businessIdea}
             businessCategory={analysisData.businessCategory}
             radiusKm={analysisData.radiusKm}
+            defaultExpanded={expandAllDetails}
           />
 
           {/* DATA SOURCE & METHODOLOGICAL DISCLOSURES */}
-          <DataSourceInfo retrievedAt={analysisData.dataSource.retrievedAt} />
+          <DataSourceInfo
+            key={`datasource-${expandAllDetails}`}
+            retrievedAt={analysisData.dataSource.retrievedAt}
+            defaultExpanded={expandAllDetails}
+          />
 
           {/* COMPETITOR PROFILE MODAL */}
           <CompetitorProfile
