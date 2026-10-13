@@ -1,5 +1,5 @@
 /**
- * Market Analysis Controller (Part 6)
+ * Market Analysis & Competition Intelligence Controller
  * Endpoints for calculating, saving, retrieving, and comparing market & competition intelligence.
  */
 import { Response } from 'express';

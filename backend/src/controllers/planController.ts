@@ -2,7 +2,7 @@
  * BizMind – Business Plan & Financial Feasibility Controller
  * 
  * Server-side authoritative validation and calculation execution.
- * Exposes full Part 5 Financial Feasibility APIs.
+ * Exposes authoritative Financial Feasibility & Planning APIs.
  */
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware.js';

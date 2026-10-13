@@ -438,7 +438,7 @@ export const BusinessPlannerPage: React.FC = () => {
       <PageHeader
         title="Business Planner & Financial Feasibility Engine"
         description="Formulate capital allocation, fixed and variable operating costs, and stress-test venture feasibility with real-time financial modeling."
-        badge="Part 3 Engine"
+        badge="Financial Engine"
         actions={
           <div className="flex items-center gap-2">
             <Button

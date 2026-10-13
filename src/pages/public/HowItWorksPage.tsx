@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/common/Card';
+import { Card } from '../../components/common/Card';
+import { ExpandableText } from '../../components/common/ExpandableText';
 import { FileSpreadsheet, MapPin, Calculator, Cpu, Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
@@ -9,57 +10,57 @@ export const HowItWorksPage: React.FC = () => {
   const steps = [
     {
       num: '01',
-      title: 'Step 1: Enter Business Requirements',
+      title: 'Define Business Concept & Goals',
       desc: 'Define initial parameters including category taxonomy, intended investment capital, target customer persona, and expansion milestones.',
       icon: FileSpreadsheet,
       details: [
-        'Select from industry benchmark categories',
-        'Set minimum and maximum capital allocation',
-        'Define primary operational goals and timeline',
+        'Select from verified industry benchmark categories',
+        'Set minimum and maximum initial capital allocation',
+        'Define primary operating model (B2C, B2B, Subscription, Direct)',
       ],
     },
     {
       num: '02',
-      title: 'Step 2: Analyze Location and Market',
-      desc: 'Pinpoint geographic coordinates on the interactive OpenStreetMap engine to calculate footfall, demographics, and competitor proximity.',
+      title: 'Analyze Location & Geospatial Market',
+      desc: 'Pinpoint geographic coordinates on the interactive mapping engine to calculate footfall, demographics, and competitor proximity.',
       icon: MapPin,
       details: [
-        'Geospatial boundary and radius zoning',
-        'Competitor cluster mapping with price tiers',
-        'Area classification (Tier 1, Tier 2, Tier 3)',
+        'Adjust radial boundaries from 500m up to 10km',
+        'Categorize competitor clusters and nearby market density',
+        'Dual GIS mapping (Google Places & high-reliability OpenStreetMap)',
       ],
     },
     {
       num: '03',
-      title: 'Step 3: Calculate Financial Feasibility',
+      title: 'Calculate Financial Feasibility & Runway',
       desc: 'The deterministic calculation engine models fixed burn rate, variable cost ratios, expected margin, and break-even runway.',
       icon: Calculator,
       details: [
-        'Automated fixed vs. variable expense modeling',
-        'Projected revenue milestones at 12 & 36 months',
+        'Automated fixed vs. variable expense modeling and unit economics',
+        'Projected revenue milestones with 12-month financial tables',
         'Cashflow sensitivity & burn-rate buffer analysis',
       ],
     },
     {
       num: '04',
-      title: 'Step 4: Run ML Prediction',
-      desc: 'Transmit structured feature vectors to the Python FastAPI microservice where Scikit-learn Random Forest models estimate survival odds.',
+      title: 'Run Machine Learning Viability Prediction',
+      desc: 'Transmit structured feature vectors to the predictive modeling engine where calibrated classifiers estimate survival odds.',
       icon: Cpu,
       details: [
-        'Input normalization across all 6 core metrics',
-        'Ensemble prediction probability calculation',
+        'Input normalization across location, capital, and market metrics',
+        'Ensemble prediction probability calculation (0% to 100%)',
         'Risk tier categorization (Low, Moderate, High, Critical)',
       ],
     },
     {
       num: '05',
-      title: 'Step 5: Receive Comprehensive Recommendation',
+      title: 'Receive Actionable Executive Intelligence',
       desc: 'Generate executive summary reports with actionable mitigation steps, alternative location suggestions, and capital adjustments.',
       icon: Sparkles,
       details: [
-        'Tailored strategic business recommendations',
-        'Executive PDF/dossier export ready structure',
-        'Ongoing progress tracking in saved opportunities',
+        'Tailored strategic recommendations for founder action',
+        'Exportable presentation slides and PDF/PPTX briefs',
+        'Ongoing tracking and scenario simulations in saved plans',
       ],
     },
   ];
@@ -91,16 +92,23 @@ export const HowItWorksPage: React.FC = () => {
                   <h3 className="text-lg font-bold text-[#F8FAFC]">{s.title}</h3>
                   <p className="text-sm text-[#A1A1AA] mt-1 leading-relaxed">{s.desc}</p>
 
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    {s.details.map((d, i) => (
-                      <div
-                        key={i}
-                        className="px-3 py-2 rounded-lg bg-[#111113] border border-[#27272A] text-xs text-[#F8FAFC] flex items-center gap-2"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FFBF24] shrink-0" />
-                        <span>{d}</span>
+                  <div className="mt-3">
+                    <ExpandableText
+                      label="View technical breakdown"
+                      collapseLabel="Hide technical breakdown"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                        {s.details.map((d, i) => (
+                          <div
+                            key={i}
+                            className="px-3 py-2 rounded-lg bg-[#111113] border border-[#27272A] text-xs text-[#F8FAFC] flex items-center gap-2"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#FFBF24] shrink-0" />
+                            <span>{d}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </ExpandableText>
                   </div>
                 </div>
               </div>

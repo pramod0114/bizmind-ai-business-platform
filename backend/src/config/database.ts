@@ -1789,7 +1789,7 @@ export class DatabaseService {
     return newLog;
   }
 
-  // --- MARKET & COMPETITION ANALYSIS (Part 6) ---
+  // --- MARKET & COMPETITION ANALYSIS ---
   private seedInitialMarketAnalyses(): void {
     if (this.marketAnalysesSeeded) return;
     this.marketAnalysesSeeded = true;

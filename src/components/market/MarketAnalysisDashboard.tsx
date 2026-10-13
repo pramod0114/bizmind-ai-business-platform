@@ -517,7 +517,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
       <PageHeader
         title="Market & Competition Intelligence"
         description="Data-derived commercial density, competitor identification, spatial dispersion, and rule-based trade gap analysis."
-        badge="Part 6: Market Intelligence"
+        badge="Market Intelligence"
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             {initialPlanId && (

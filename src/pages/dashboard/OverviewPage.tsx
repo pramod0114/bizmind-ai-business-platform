@@ -4,6 +4,7 @@ import { StatCard } from '../../components/common/StatCard';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
+import { ExpandableText } from '../../components/common/ExpandableText';
 import { planService } from '../../services/planService';
 import { locationApiService } from '../../services/locationService';
 import { BusinessPlan, SavedLocationAnalysis, SavedBusiness } from '../../types';
@@ -74,7 +75,7 @@ export const OverviewPage: React.FC = () => {
         <StatCard
           label="Business Plans"
           value={loading ? '...' : String(plans.length)}
-          sublabel={plans.length > 0 ? 'Active business models in vault' : 'Draft your first plan in Part 2'}
+          sublabel={plans.length > 0 ? 'Active business models in vault' : 'Draft your first plan in Business Planner'}
           icon={<FileSpreadsheet className="w-5 h-5" />}
         />
         <StatCard
@@ -215,38 +216,59 @@ export const OverviewPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* 9-Part Capstone Roadmap Status Card */}
+        {/* Platform Intelligence Status Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>9-Part Build Lifecycle</CardTitle>
-              <Badge variant="primary" size="sm">Part 4 Active</Badge>
+              <CardTitle>Platform Engines</CardTitle>
+              <Badge variant="success" size="sm">All Engines Active</Badge>
             </div>
             <CardDescription>
-              Progression roadmap strictly adhering to capstone development boundaries.
+              Operational status of core analytics and predictive inference services.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-xs">
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 1: Architecture, Monorepo & UI Shell</span>
-              <span className="text-[10px] text-[#22C55E]">Completed</span>
+              <span>Authentication & Vault Storage</span>
+              <span className="text-[10px] text-[#22C55E]">Operational</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 2: Authentication & Business Planner</span>
-              <span className="text-[10px] text-[#22C55E]">Completed</span>
+              <span>Business Planner & Economics</span>
+              <span className="text-[10px] text-[#22C55E]">Operational</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 3: Financial Feasibility Engine</span>
-              <span className="text-[10px] text-[#22C55E]">Completed</span>
+              <span>Financial Feasibility Calculator</span>
+              <span className="text-[10px] text-[#22C55E]">Operational</span>
             </div>
             <div className="p-2 rounded bg-[#FFBF24]/10 border border-[#FFBF24]/30 flex items-center justify-between text-[#FFBF24]">
-              <span className="font-semibold">Part 4: Location Intelligence & OSM Discovery</span>
+              <span className="font-semibold">Geospatial Intelligence (Google & OSM)</span>
               <span className="font-mono text-[10px] bg-[#FFBF24]/20 px-1.5 py-0.5 rounded">Active</span>
             </div>
             <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
-              <span>Part 5: Python ML Model & Success Engine</span>
-              <span className="text-[10px] text-[#71717A]">Next Phase</span>
+              <span>Machine Learning Success Predictor</span>
+              <span className="text-[10px] text-[#22C55E]">Operational</span>
             </div>
+
+            <ExpandableText
+              label="View additional active services"
+              collapseLabel="Hide additional services"
+              className="pt-1"
+            >
+              <div className="space-y-2 pt-1">
+                <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
+                  <span>Market Demographics & Competitor Radar</span>
+                  <span className="text-[10px] text-[#22C55E]">Operational</span>
+                </div>
+                <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
+                  <span>Multi-Venture Sensitivity Matrix</span>
+                  <span className="text-[10px] text-[#22C55E]">Operational</span>
+                </div>
+                <div className="p-2 rounded bg-[#111113] border border-[#27272A] flex items-center justify-between text-[#A1A1AA]">
+                  <span>Executive Presentation & Slide Deck Export</span>
+                  <span className="text-[10px] text-[#22C55E]">Operational</span>
+                </div>
+              </div>
+            </ExpandableText>
           </CardContent>
         </Card>
       </div>

@@ -141,7 +141,7 @@ export const MarketAnalysisPage: React.FC = () => {
         </div>
 
         <span className="text-[11px] text-[#A1A1AA] font-mono hidden sm:inline-block">
-          Part 6: Market Intelligence Engine
+          Market & Spatial Intelligence Engine
         </span>
       </div>
 

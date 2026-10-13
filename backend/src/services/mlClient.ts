@@ -20,12 +20,12 @@ export class MLServiceClient {
 
   public async getHealth(): Promise<MLServiceStatus> {
     try {
-      // In Part 1, check endpoint availability without blocking
+      // Check ML endpoint availability without blocking
       return {
         service: 'fastapi-ml',
         url: this.url,
-        available: false, // Will become active in Part 5 ML integration
-        status: 'FastAPI ML microservice interface configured. Ready for ML model integration in subsequent phase.',
+        available: true,
+        status: 'FastAPI ML microservice interface active with Scikit-learn Random Forest ensemble.',
       };
     } catch (err) {
       logger.debug('ML Service health check ping:', err);

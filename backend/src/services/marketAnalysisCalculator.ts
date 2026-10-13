@@ -1,5 +1,5 @@
 /**
- * Market & Competition Analysis Calculation Engine (Part 6)
+ * Market & Competition Analysis Calculation Engine
  * Authoritative backend calculations strictly derived from actual retrieved spatial data.
  */
 import { DiscoveredBusiness } from './locationService.js';

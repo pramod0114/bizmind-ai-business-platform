@@ -507,7 +507,7 @@ export interface LocationAdminStats {
 }
 
 // ==========================================
-// Part 6: Market & Competition Analysis Types
+// Market & Competition Analysis Types
 // ==========================================
 
 export interface MarketCompetitor {

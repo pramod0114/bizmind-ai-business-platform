@@ -36,6 +36,7 @@ import { Projection12MonthTable } from '../../components/planner/Projection12Mon
 import { ScenarioComparisonSection } from '../../components/planner/ScenarioComparisonSection';
 import { SensitivityAnalysisSection } from '../../components/planner/SensitivityAnalysisSection';
 import { FeasibilityAndRiskSection } from '../../components/planner/FeasibilityAndRiskSection';
+import { ExpandableText } from '../../components/common/ExpandableText';
 
 export const BusinessPlanDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,7 +85,7 @@ export const BusinessPlanDetailPage: React.FC = () => {
         setGrowthRate(finAnalysis.revenueGrowthRate ?? 3.0);
       }
 
-      // Load linked Market & Competition Analysis (Part 6)
+      // Load linked Market & Competition Analysis
       try {
         const mData = await marketAnalysisService.getByPlanId(id);
         if (mData) setMarketAnalysis(mData);
@@ -365,7 +366,13 @@ export const BusinessPlanDetailPage: React.FC = () => {
           </div>
           {plan.description && (
             <div className="md:col-span-3 pt-2 text-slate-300 leading-relaxed bg-[#202024] p-3 rounded-lg border border-[#27272A]">
-              {plan.description}
+              <ExpandableText
+                text={plan.description}
+                maxChars={120}
+                label="Show full business description"
+                collapseLabel="Collapse description"
+                className="text-xs text-slate-300"
+              />
             </div>
           )}
         </div>
@@ -415,7 +422,7 @@ export const BusinessPlanDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* MARKET & COMPETITION SECTION (Part 6 Integration) */}
+      {/* MARKET & COMPETITION SECTION */}
       <div className="bg-[#18181B] rounded-xl border border-[#27272A] p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#27272A] pb-3 gap-2">
           <div className="flex items-center gap-2">

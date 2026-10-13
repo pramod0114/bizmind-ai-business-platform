@@ -1062,7 +1062,7 @@ export class LocationService {
       }
     });
 
-    // 6. Competitor Grouping based on Target Business Plan (Part 3 integration)
+    // 6. Competitor Grouping based on Target Business Plan
     const normalizeText = (text: string) =>
       (text || '')
         .normalize('NFD')

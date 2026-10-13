@@ -18,9 +18,9 @@ export const ContactPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <PageHeader
-        title="Contact & Capstone Feedback"
-        description="Project correspondence and technical inquiry channel."
-        badge="Correspondence"
+        title="Contact & Support"
+        description="Get in touch with the BizMind engineering and advisory team."
+        badge="Get In Touch"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -31,12 +31,12 @@ export const ContactPage: React.FC = () => {
             </div>
             <CardTitle>Inquiries</CardTitle>
             <CardDescription>
-              Submit questions regarding architecture, ML pipeline design, or capstone evaluation.
+              Submit questions regarding platform features, intelligence APIs, or business planning assistance.
             </CardDescription>
           </CardHeader>
           <div className="text-xs text-[#A1A1AA] space-y-2 pt-2 border-t border-[#27272A]">
-            <p className="font-semibold text-[#F8FAFC]">Repository Notice</p>
-            <p>Monorepo architecture configured for standalone and containerized deployment.</p>
+            <p className="font-semibold text-[#F8FAFC]">Platform Status</p>
+            <p>Engineered for enterprise scale, secure data processing, and real-time decision support.</p>
           </div>
         </Card>
 
@@ -48,7 +48,7 @@ export const ContactPage: React.FC = () => {
               </div>
               <h3 className="text-lg font-bold text-[#F8FAFC]">Message Received</h3>
               <p className="text-xs text-[#A1A1AA] max-w-sm mx-auto">
-                Thank you for your feedback on the BizMind project foundation.
+                Thank you for reaching out. A platform specialist will respond to your inquiry shortly.
               </p>
               <Button size="sm" variant="outline" onClick={() => setSubmitted(false)}>
                 Send Another Message
@@ -66,7 +66,7 @@ export const ContactPage: React.FC = () => {
               <Input
                 label="Email Address"
                 type="email"
-                placeholder="e.g. reviewer@university.edu"
+                placeholder="e.g. founder@company.com"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -74,7 +74,7 @@ export const ContactPage: React.FC = () => {
               <Textarea
                 label="Message / Feedback"
                 rows={4}
-                placeholder="Enter feedback regarding system architecture..."
+                placeholder="Enter your message or business planning inquiry..."
                 required
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
