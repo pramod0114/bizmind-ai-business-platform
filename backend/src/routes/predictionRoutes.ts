@@ -19,6 +19,7 @@ router.get('/status', getModelStatus);
 
 // New Feature: Location-Based Business Success Prediction
 router.post('/location-based', optionalAuth, predictLocationBased);
+router.post('/location-based/compare', optionalAuth, compareLocations);
 router.post('/compare-locations', optionalAuth, compareLocations);
 router.post('/save', authenticateUser, saveLocationPrediction);
 router.get('/location-based', authenticateUser, listLocationPredictions);

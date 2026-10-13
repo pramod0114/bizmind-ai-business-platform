@@ -1446,35 +1446,94 @@ export const PredictionsPage: React.FC = () => {
                   </button>
 
                   {openSections.mlFeatures && (
-                    <div className="p-4 border-t border-[#27272A] bg-[#0E0E10] space-y-3 animate-fadeIn">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {locationResult.predictionAssessment.feasibilityAssessment.keyFactors.map((fact, idx) => (
-                          <div key={idx} className="p-3 rounded-lg bg-[#111113] border border-[#27272A] space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="font-bold text-[#F8FAFC]">{fact.name}</span>
-                              <Badge
-                                variant={fact.impact === 'Positive' ? 'success' : fact.impact === 'Neutral' ? 'warning' : 'danger'}
-                                size="sm"
-                              >
-                                {fact.score}/100 • {fact.impact}
-                              </Badge>
+                    <div className="p-4 border-t border-[#27272A] bg-[#0E0E10] space-y-5 animate-fadeIn">
+                      {/* 1. Feature Contributions & Weight Breakdown */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#F8FAFC]">Model Feature Weights & Contribution Points:</span>
+                          <span className="text-[10px] text-[#A1A1AA] font-mono">Calibrated Random Forest + Gradient Boosting</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {(
+                            locationResult.predictionAssessment.featureContributions ||
+                            locationResult.predictionAssessment.feasibilityAssessment.keyFactors
+                          ).map((fact: any, idx: number) => (
+                            <div key={idx} className="p-3 rounded-lg bg-[#111113] border border-[#27272A] space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-[#F8FAFC]">{fact.name}</span>
+                                <div className="flex items-center gap-1.5">
+                                  {fact.contributionPoints !== undefined && (
+                                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#FFBF24]/10 text-[#FFBF24] border border-[#FFBF24]/30">
+                                      +{fact.contributionPoints} pts
+                                    </span>
+                                  )}
+                                  <Badge
+                                    variant={fact.impact === 'Positive' ? 'success' : fact.impact === 'Neutral' ? 'warning' : 'danger'}
+                                    size="sm"
+                                  >
+                                    {fact.score}/100 • {fact.impact}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-[#27272A] overflow-hidden">
+                                <div
+                                  className={`h-full ${
+                                    fact.impact === 'Positive'
+                                      ? 'bg-emerald-400'
+                                      : fact.impact === 'Neutral'
+                                      ? 'bg-[#FFBF24]'
+                                      : 'bg-rose-400'
+                                  }`}
+                                  style={{ width: `${fact.score}%` }}
+                                />
+                              </div>
+                              <p className="text-[11px] text-[#A1A1AA] leading-relaxed">{fact.explanation}</p>
                             </div>
-                            <div className="w-full h-1.5 rounded-full bg-[#27272A] overflow-hidden">
-                              <div
-                                className={`h-full ${
-                                  fact.impact === 'Positive'
-                                    ? 'bg-emerald-400'
-                                    : fact.impact === 'Neutral'
-                                    ? 'bg-[#FFBF24]'
-                                    : 'bg-rose-400'
-                                }`}
-                                style={{ width: `${fact.score}%` }}
-                              />
-                            </div>
-                            <p className="text-[11px] text-[#A1A1AA] leading-relaxed">{fact.explanation}</p>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
+
+                      {/* 2. Interactive What-If Sensitivity Simulations */}
+                      {locationResult.predictionAssessment.sensitivitySimulations && (
+                        <div className="space-y-2 pt-2 border-t border-[#27272A]">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#F8FAFC] flex items-center gap-1.5">
+                              <TrendingUp className="w-3.5 h-3.5 text-[#FFBF24]" />
+                              <span>What-If Sensitivity Matrix (Predictive Stress-Testing):</span>
+                            </span>
+                            <span className="text-[10px] text-[#71717A]">Impact on Success %</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {locationResult.predictionAssessment.sensitivitySimulations.map((sim, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className={`p-3 rounded-lg border text-xs space-y-1.5 ${
+                                  sim.delta >= 0
+                                    ? 'bg-[#111113] border-emerald-500/30'
+                                    : 'bg-[#111113] border-rose-500/30'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-[#F8FAFC]">{sim.factor}</span>
+                                  <span
+                                    className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded ${
+                                      sim.delta >= 0
+                                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                    }`}
+                                  >
+                                    {sim.predictedProbability}% ({sim.delta >= 0 ? `+${sim.delta}%` : `${sim.delta}%`})
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-[#FFBF24] font-medium">{sim.adjustment}</div>
+                                <p className="text-[10px] text-[#A1A1AA]">{sim.interpretation}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

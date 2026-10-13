@@ -9,7 +9,7 @@ export async function checkHealth(_req: Request, res: Response): Promise<void> {
 
   sendSuccess(res, {
     platform: 'BIZMIND AI Platform API',
-    version: '1.0.0-part1',
+    version: '1.0.0',
     status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),

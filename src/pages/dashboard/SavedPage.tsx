@@ -127,7 +127,7 @@ export const SavedPage: React.FC = () => {
                 title="No Saved Locations"
                 description="Scan any coordinate or address on the interactive map and click 'Save Analysis' to archive candidate locations here."
                 actionLabel="Open Location Map"
-                onAction={() => navigate('/location-analysis')}
+                onAction={() => navigate('/market-analysis')}
               />
             </CardContent>
           </Card>
@@ -195,7 +195,7 @@ export const SavedPage: React.FC = () => {
                 title="No Bookmarked Businesses"
                 description="When viewing nearby businesses on the location intelligence map, click 'Bookmark Business' to track competitors and suppliers here."
                 actionLabel="Explore Businesses"
-                onAction={() => navigate('/location-analysis')}
+                onAction={() => navigate('/market-analysis')}
               />
             </CardContent>
           </Card>

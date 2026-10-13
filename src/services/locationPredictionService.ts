@@ -88,6 +88,23 @@ export interface FinancialFeasibilityOutput {
   };
 }
 
+export interface FeatureContribution {
+  name: string;
+  weight: number;
+  score: number;
+  contributionPoints: number;
+  impact: 'Positive' | 'Neutral' | 'Negative';
+  explanation: string;
+}
+
+export interface PredictionSensitivityOption {
+  factor: string;
+  adjustment: string;
+  predictedProbability: number;
+  delta: number;
+  interpretation: string;
+}
+
 export interface PredictionAssessmentOutput {
   mlModelValidated: boolean;
   validationStatus: 'VALIDATED_ML_MODEL' | 'UNVALIDATED_INSUFFICIENT_DATA';
@@ -96,6 +113,8 @@ export interface PredictionAssessmentOutput {
   riskTier: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
   modelType: string;
   modelNotice: string;
+  featureContributions?: FeatureContribution[];
+  sensitivitySimulations?: PredictionSensitivityOption[];
   feasibilityAssessment: {
     scoreOutOf100: number;
     feasibilityGrade: 'High Feasibility' | 'Moderate Feasibility' | 'Cautious / High Risk';
