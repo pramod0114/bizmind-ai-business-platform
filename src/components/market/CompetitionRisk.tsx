@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../common/Card';
+import { Card, CardHeader, CardContent } from '../common/Card';
 import { Badge } from '../common/Badge';
 import { ShieldAlert, ShieldCheck, AlertTriangle, Info, ChevronRight } from 'lucide-react';
 
@@ -25,7 +25,19 @@ export const CompetitionRisk: React.FC<CompetitionRiskProps> = ({
   const getBadgeVariant = () => {
     if (level === 'Low') return 'success';
     if (level === 'Moderate') return 'warning';
-    return 'error';
+    return 'danger';
+  };
+
+  const getDisplayBadge = () => {
+    switch (level) {
+      case 'Low':
+        return 'Low Risk';
+      case 'Moderate':
+        return 'Moderate Risk';
+      case 'High':
+      default:
+        return 'High Risk';
+    }
   };
 
   const getIcon = () => {
@@ -35,79 +47,88 @@ export const CompetitionRisk: React.FC<CompetitionRiskProps> = ({
   };
 
   return (
-    <Card className={`border-[#27272A] bg-[#1A1A1D] flex flex-col justify-between ${className}`}>
-      <div>
+    <Card className={`border-[#27272A] bg-[#1A1A1D] flex flex-col justify-between h-full ${className}`}>
+      <div className="flex-1 flex flex-col">
         <CardHeader className="pb-3 border-b border-[#27272A]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {getIcon()}
-              <CardTitle>Competition Intensity & Risk</CardTitle>
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <span className="shrink-0 mt-0.5">{getIcon()}</span>
+              <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] tracking-tight leading-snug">
+                Competition Intensity & Risk
+              </h3>
             </div>
-            <Badge variant={getBadgeVariant()} size="sm">
-              {level} Competition
+            <Badge
+              variant={getBadgeVariant()}
+              size="sm"
+              className="shrink-0 text-[10px] whitespace-nowrap"
+              title={`${level} Competition Risk`}
+            >
+              {getDisplayBadge()}
             </Badge>
           </div>
-          <CardDescription>
+          <p className="text-xs text-[#A1A1AA] leading-relaxed mt-1">
             Descriptive structural indicator derived from observed market crowding.
-          </CardDescription>
+          </p>
         </CardHeader>
 
-        <CardContent className="pt-4 space-y-3 text-xs">
-          {/* Main takeaway */}
-          <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A] space-y-1">
-            <div className="flex items-center justify-between text-[10px] text-[#A1A1AA] uppercase font-mono">
-              <span>Rule Evaluation</span>
-              <span className="font-semibold text-[#FFBF24]">{competitorCount} Incumbents</span>
-            </div>
-            <p className="text-xs text-[#F8FAFC] font-semibold leading-snug">{reason}</p>
-          </div>
-
-          {/* Multi-tier progress bar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] text-[#A1A1AA]">
-              <span>Observed Density Scale</span>
-              <span className="font-mono text-[#F8FAFC]">
-                {competitorCount} competitors ({density.toFixed(2)}/km²)
-              </span>
-            </div>
-            <div className="h-2 w-full bg-[#111113] rounded-full overflow-hidden flex border border-[#27272A]">
-              <div
-                className={`h-full transition-all ${
-                  level === 'Low'
-                    ? 'bg-[#22C55E] w-1/3'
-                    : level === 'Moderate'
-                    ? 'bg-[#FACC15] w-2/3'
-                    : 'bg-[#EF4444] w-full'
-                }`}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] text-[#71717A] font-mono">
-              <span>Low (0–3)</span>
-              <span>Moderate (4–8)</span>
-              <span>High (&gt;8)</span>
-            </div>
-          </div>
-
-          {/* Collapsible Methodology Note & In-Depth Rationale */}
-          {showDetails && (
-            <div className="space-y-2.5 animate-in fade-in duration-150 pt-1">
-              <div className="p-2.5 rounded-lg bg-[#18181B] border border-[#27272A] text-[11px] text-[#A1A1AA] flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-[#38BDF8] shrink-0 mt-0.5" />
-                <p className="leading-relaxed">
-                  <strong>Methodology Note:</strong> This is a descriptive risk classification, not a prediction of business failure. High competitor presence often indicates proven customer footfall and product-market viability.
-                </p>
+        <CardContent className="pt-4 space-y-3 text-xs flex-1 flex flex-col justify-between">
+          <div className="space-y-3">
+            {/* Main takeaway */}
+            <div className="p-3 rounded-lg bg-[#111113] border border-[#27272A] space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-[#A1A1AA] uppercase font-mono">
+                <span>Rule Evaluation</span>
+                <span className="font-semibold text-[#FFBF24]">{competitorCount} Incumbents</span>
               </div>
+              <p className="text-xs text-[#F8FAFC] font-semibold leading-snug">{reason}</p>
+            </div>
 
-              <div className="p-2.5 rounded-lg bg-[#111113] border border-[#27272A] text-[11px] text-[#71717A] leading-relaxed">
-                Strategic takeaway: Incumbents in this density bracket often benefit from shared foot traffic. Differentiate via superior service, distinct menu/inventory items, or operational speed.
+            {/* Multi-tier progress bar */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] text-[#A1A1AA]">
+                <span>Observed Density Scale</span>
+                <span className="font-mono text-[#F8FAFC]">
+                  {competitorCount} competitors ({density.toFixed(2)}/km²)
+                </span>
+              </div>
+              <div className="h-2 w-full bg-[#111113] rounded-full overflow-hidden flex border border-[#27272A]">
+                <div
+                  className={`h-full transition-all ${
+                    level === 'Low'
+                      ? 'bg-[#22C55E] w-1/3'
+                      : level === 'Moderate'
+                      ? 'bg-[#FACC15] w-2/3'
+                      : 'bg-[#EF4444] w-full'
+                  }`}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-[#71717A] font-mono">
+                <span>Low (0–3)</span>
+                <span>Moderate (4–8)</span>
+                <span>High (&gt;8)</span>
               </div>
             </div>
-          )}
+
+            {/* Collapsible Methodology Note & In-Depth Rationale */}
+            {showDetails && (
+              <div className="space-y-2.5 animate-in fade-in duration-150 pt-1">
+                <div className="p-2.5 rounded-lg bg-[#18181B] border border-[#27272A] text-[11px] text-[#A1A1AA] flex items-start gap-2">
+                  <Info className="w-3.5 h-3.5 text-[#38BDF8] shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong>Methodology Note:</strong> This is a descriptive risk classification, not a prediction of business failure. High competitor presence often indicates proven customer footfall and product-market viability.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-[#111113] border border-[#27272A] text-[11px] text-[#71717A] leading-relaxed">
+                  Strategic takeaway: Incumbents in this density bracket often benefit from shared foot traffic. Differentiate via superior service, distinct menu/inventory items, or operational speed.
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </div>
 
       {/* Interactive Toggle Footer */}
-      <div className="px-5 py-3 border-t border-[#27272A] flex items-center justify-between bg-[#141416] rounded-b-xl">
+      <div className="mt-4 pt-3 border-t border-[#27272A] flex items-center justify-between">
         <span className="text-[11px] text-[#71717A] font-mono">
           {showDetails ? 'Methodology active' : 'Click Details for methodology'}
         </span>

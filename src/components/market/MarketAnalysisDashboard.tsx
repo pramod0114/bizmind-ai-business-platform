@@ -934,7 +934,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
               </div>
 
               {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 <CompetitorDensity
                   key={`dir-density-${expandAllDetails}`}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
@@ -1027,7 +1027,7 @@ export const MarketAnalysisDashboard: React.FC = () => {
           {(activeView === 'location' || activeView === 'all') && (
             <>
               {/* 3-COLUMN STRUCTURAL TIERS: DENSITY, RISK, OPPORTUNITY */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 <CompetitorDensity
                   key={`density-${expandAllDetails}`}
                   relevantCompetitors={analysisData.relevantCompetitorsCount}
