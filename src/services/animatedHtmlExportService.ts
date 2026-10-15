@@ -133,8 +133,8 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
     .slide {
       display: none;
       opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
+      transform: translateY(16px);
+      transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
       height: 100%;
     }
     .slide.active {
@@ -143,6 +143,17 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       justify-content: center;
       opacity: 1;
       transform: translateY(0);
+    }
+    .slide.active .card, .slide.active .radar-box {
+      animation: cardFadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    }
+    .slide.active .card:nth-child(1) { animation-delay: 0.12s; }
+    .slide.active .card:nth-child(2) { animation-delay: 0.22s; }
+    .slide.active .card:nth-child(3) { animation-delay: 0.32s; }
+    .slide.active .card:nth-child(4) { animation-delay: 0.42s; }
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .slide-tag {
@@ -274,9 +285,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
           <div style="font-size: 8px; font-weight: 800; color: #374151; letter-spacing: 1px;">RAJARAMBAPU INSTITUTE OF TECHNOLOGY</div>
         </div>
 
-        <div style="font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">Master Of Computer Applications (MCA)</div>
-        <div style="font-size: 11px; font-weight: 700; color: #fff; margin: 4px 0;">CAPSTONE PROJECT TECHNICAL REPORT ON</div>
-        <div style="font-size: 22px; font-weight: 800; color: var(--accent-gold); margin-bottom: 16px;">
+        <div style="font-size: 24px; font-weight: 800; color: var(--accent-gold); margin: 6px 0 18px;">
           “<span style="color:#EF4444;">Biz</span>Mind – AI Business Planner & Success Prediction Platform”
         </div>
 
@@ -287,7 +296,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
             <div style="font-size: 10px; color: var(--text-muted);">Department of Computer Applications, RIT</div>
           </div>
           <div class="card">
-            <div style="font-size: 9px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 4px;">Submitted By (Project Team)</div>
+            <div style="font-size: 9px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 4px;">Presented By (Project Team)</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10.5px;">
               <div><strong>Pramod R. Mahajan</strong> <span style="color:var(--accent-gold); font-size:9px;">(2547047)</span></div>
               <div><strong>Harshad S. Patil</strong> <span style="color:var(--accent-gold); font-size:9px;">(2547062)</span></div>
@@ -525,6 +534,44 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
         </div>
       </div>
     </div>
+
+    <!-- Slide 10: Thank You & Project Defense -->
+    <div class="slide" id="slide-10">
+      <div style="max-width: 850px; margin: 0 auto; text-align: center;">
+        <div style="font-size: 52px; font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: -1px;">
+          Thank <span style="color: var(--accent-gold);">You!</span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">
+          We express our sincere gratitude to our guide <strong style="color:#fff;">Ms. A. R. Patil</strong> and faculty members at <strong style="color:#fff;">Rajarambapu Institute of Technology</strong> for their continuous mentorship, support, and guidance.
+        </div>
+
+        <div class="card" style="max-width: 580px; margin: 0 auto; text-align: left; padding: 20px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 12px; text-align: center; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 8px;">Presented By (Project Team)</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11.5px;">
+            <div style="background: #0E121B; border: 1px solid var(--bg-card-border); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <strong>Pramod R. Mahajan</strong>
+              <span style="color:var(--accent-gold); font-family:monospace; font-size:10.5px; background: rgba(255,199,44,0.1); padding: 2px 6px; border-radius: 4px;">2547047</span>
+            </div>
+            <div style="background: #0E121B; border: 1px solid var(--bg-card-border); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <strong>Harshad S. Patil</strong>
+              <span style="color:var(--accent-gold); font-family:monospace; font-size:10.5px; background: rgba(255,199,44,0.1); padding: 2px 6px; border-radius: 4px;">2547062</span>
+            </div>
+            <div style="background: #0E121B; border: 1px solid var(--bg-card-border); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <strong>Sakshi D. Randive</strong>
+              <span style="color:var(--accent-gold); font-family:monospace; font-size:10.5px; background: rgba(255,199,44,0.1); padding: 2px 6px; border-radius: 4px;">2547048</span>
+            </div>
+            <div style="background: #0E121B; border: 1px solid var(--bg-card-border); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <strong>Rutika R. Deshmukh</strong>
+              <span style="color:var(--accent-gold); font-family:monospace; font-size:10.5px; background: rgba(255,199,44,0.1); padding: 2px 6px; border-radius: 4px;">2547025</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 18px; font-size: 10px; color: var(--text-dim); font-family: monospace;">
+          RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR • SANGALI, MAHARASHTRA • 2026–27
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer>
@@ -534,7 +581,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
 
   <script>
     let currentSlideIndex = 0;
-    const totalSlides = 9;
+    const totalSlides = 10;
     const slides = document.querySelectorAll('.slide');
     const counter = document.getElementById('slide-counter');
     const progressFill = document.getElementById('progress-fill');
@@ -591,6 +638,45 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
         toggleFullscreen();
       }
     });
+
+    let isScrolling = false;
+    let scrollTimeout = null;
+    window.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) < 25) return;
+      if (isScrolling) return;
+      isScrolling = true;
+      if (e.deltaY > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 750);
+    }, { passive: true });
+
+    let touchStartY = null;
+    window.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    window.addEventListener('touchend', (e) => {
+      if (touchStartY === null) return;
+      const deltaY = e.changedTouches[0].clientY - touchStartY;
+      touchStartY = null;
+      if (isScrolling) return;
+      if (deltaY < -45) {
+        isScrolling = true;
+        nextSlide();
+      } else if (deltaY > 45) {
+        isScrolling = true;
+        prevSlide();
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 750);
+    }, { passive: true });
   </script>
 </body>
 </html>`;

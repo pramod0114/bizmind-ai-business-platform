@@ -168,14 +168,8 @@ export const PresentationPage: React.FC = () => {
             <RitLogo className="w-56 h-16 sm:w-64 sm:h-20 shadow-xl border border-black/20" />
           </motion.div>
 
-          {/* Degree & Project Title */}
-          <motion.div variants={fadeUpVariant} className="space-y-1.5">
-            <div className="text-xs font-mono tracking-widest text-[#94A3B8] uppercase">
-              Master Of Computer Applications (MCA)
-            </div>
-            <div className="text-xs font-bold text-[#E2E8F0] tracking-wider uppercase">
-              CAPSTONE PROJECT TECHNICAL REPORT ON
-            </div>
+          {/* Project Title */}
+          <motion.div variants={fadeUpVariant} className="space-y-1.5 pt-1">
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
               &ldquo;<span className="text-[#EF4444]">Biz</span><span className="text-white">Mind</span> &ndash; AI Business Planner &amp; Success Prediction Platform&rdquo;
             </h1>
@@ -197,11 +191,11 @@ export const PresentationPage: React.FC = () => {
               </div>
             </motion.div>
 
-            {/* Submitted By Team Card */}
+            {/* Presented By Team Card */}
             <motion.div variants={popScaleVariant} className="p-3.5 rounded-xl bg-[#121722] border border-[#1E2433] text-left space-y-1.5">
               <div className="text-[10px] font-semibold text-[#38BDF8] uppercase tracking-wider flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-[#38BDF8]" />
-                <span>Submitted By (Project Team)</span>
+                <span>Presented By (Project Team)</span>
               </div>
               <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                 <div>
@@ -915,6 +909,68 @@ export const PresentationPage: React.FC = () => {
         );
       },
     },
+
+    // SLIDE 10: Attractive Animated Thank You & Project Defense
+    {
+      id: 10,
+      category: '10 / Thank You & Project Defense',
+      title: 'THANK YOU!',
+      subtitle: 'Questions, Technical Inquiries & Defense Discussion — BizMind AI Business Planning & Location Intelligence Platform',
+      notes:
+        'Thank the respected evaluators, guide Ms. A. R. Patil, and Department of Computer Applications faculty. The floor is open for project defense questions, technical architectural inquiries, and live system demonstrations.',
+      content: () => (
+        <motion.div
+          variants={containerStaggerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col justify-center items-center h-full max-w-5xl mx-auto text-center space-y-6 py-4"
+        >
+          {/* Large Hero Title */}
+          <motion.div variants={popScaleVariant} className="space-y-3">
+            <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-none text-white">
+              Thank <span className="bg-gradient-to-r from-[#FFBF24] via-[#F59E0B] to-[#38BDF8] bg-clip-text text-transparent">You!</span>
+            </h1>
+            <p className="text-sm sm:text-base text-[#94A3B8] font-medium max-w-2xl mx-auto leading-relaxed">
+              We extend our heartfelt gratitude to our project guide <strong className="text-white">Ms. A. R. Patil</strong> and faculty members at <strong className="text-white">Rajarambapu Institute of Technology</strong> for their continuous mentorship, support, and guidance.
+            </p>
+          </motion.div>
+
+          {/* Centered Presented By Team Card */}
+          <motion.div
+            variants={popScaleVariant}
+            className="w-full max-w-2xl mx-auto p-5 sm:p-6 rounded-2xl bg-[#121722] border border-[#1E2433] space-y-4 hover:border-[#38BDF8]/40 transition-colors shadow-2xl shadow-black/60"
+          >
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-[#38BDF8] uppercase tracking-wider pb-2.5 border-b border-[#1E2433]">
+              <Users className="w-4 h-4 text-[#38BDF8]" />
+              <span>Presented By (Project Team)</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+              <div className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433] flex items-center justify-between">
+                <span className="font-semibold text-white text-xs sm:text-sm">Pramod Rajendra Mahajan</span>
+                <span className="text-[11px] font-mono text-[#FFBF24] bg-[#FFBF24]/10 border border-[#FFBF24]/20 px-2 py-0.5 rounded">2547047</span>
+              </div>
+              <div className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433] flex items-center justify-between">
+                <span className="font-semibold text-white text-xs sm:text-sm">Harshad Shahaji Patil</span>
+                <span className="text-[11px] font-mono text-[#FFBF24] bg-[#FFBF24]/10 border border-[#FFBF24]/20 px-2 py-0.5 rounded">2547062</span>
+              </div>
+              <div className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433] flex items-center justify-between">
+                <span className="font-semibold text-white text-xs sm:text-sm">Sakshi Dnyaneshwar Randive</span>
+                <span className="text-[11px] font-mono text-[#FFBF24] bg-[#FFBF24]/10 border border-[#FFBF24]/20 px-2 py-0.5 rounded">2547048</span>
+              </div>
+              <div className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433] flex items-center justify-between">
+                <span className="font-semibold text-white text-xs sm:text-sm">Rutika Rajesh Deshmukh</span>
+                <span className="text-[11px] font-mono text-[#FFBF24] bg-[#FFBF24]/10 border border-[#FFBF24]/20 px-2 py-0.5 rounded">2547025</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Footer Institutional Banner */}
+          <motion.div variants={fadeUpVariant} className="text-[11px] font-mono text-[#64748B] pt-1">
+            RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR • SANGALI, MAHARASHTRA • 2026–27
+          </motion.div>
+        </motion.div>
+      ),
+    },
   ];
 
   const totalSlides = slides.length;
@@ -974,6 +1030,99 @@ export const PresentationPage: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextSlide, prevSlide]);
+
+  // Smooth mouse-wheel and touch-pad scrolling navigation with debounce lock
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<any>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Don't hijack if drawer modal is open
+      if (showDrawer) return;
+
+      // Allow internal scrolling inside interactive maps or modal lists
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.leaflet-container') || target?.closest('.overflow-y-auto') || target?.closest('select')) {
+        return;
+      }
+
+      // Filter out small jitter
+      if (Math.abs(e.deltaY) < 25) return;
+
+      if (isScrollingRef.current) return;
+
+      if (e.deltaY > 0) {
+        // Scroll down -> advance to next slide
+        isScrollingRef.current = true;
+        nextSlide();
+      } else if (e.deltaY < 0) {
+        // Scroll up -> return to previous slide
+        isScrollingRef.current = true;
+        prevSlide();
+      }
+
+      // 750ms lock prevents rapid skipping and gives animations ample time to play smoothly
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 750);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (showDrawer) return;
+      touchStartY.current = e.touches[0].clientY;
+      touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current === null || touchStartX.current === null || showDrawer) return;
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      touchStartY.current = null;
+      touchStartX.current = null;
+
+      if (isScrollingRef.current) return;
+
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        if (deltaY < -45) {
+          isScrollingRef.current = true;
+          nextSlide();
+        } else if (deltaY > 45) {
+          isScrollingRef.current = true;
+          prevSlide();
+        }
+      } else {
+        if (deltaX < -45) {
+          isScrollingRef.current = true;
+          nextSlide();
+        } else if (deltaX > 45) {
+          isScrollingRef.current = true;
+          prevSlide();
+        }
+      }
+
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 750);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: true });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchend', handleTouchEnd);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, [nextSlide, prevSlide, showDrawer]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -1127,7 +1276,7 @@ export const PresentationPage: React.FC = () => {
               title="Download Native PowerPoint (.pptx) with Vector Charts & RIT Branding"
             >
               <Presentation className="w-3.5 h-3.5" />
-              <span>{isExportingPptx ? 'Exporting...' : 'Export PPTX (9p)'}</span>
+              <span>{isExportingPptx ? 'Exporting...' : 'Export PPTX (10p)'}</span>
             </button>
 
             <button
@@ -1171,7 +1320,7 @@ export const PresentationPage: React.FC = () => {
 
         {/* Slide Body Animated Transition */}
         <div className="flex-1 w-full min-h-[460px] flex items-center justify-center">
-          <SlideAnimationEngine slideKey={currentSlide} direction={direction}>
+          <SlideAnimationEngine currentSlide={currentSlide} slideKey={currentSlide} direction={direction}>
             {currentSlideData.content(selectedPlan)}
           </SlideAnimationEngine>
         </div>
@@ -1242,7 +1391,7 @@ export const PresentationPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <RitLogo className="w-16 h-5" />
                   <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <span>9-Slide Deck Index</span>
+                    <span>10-Slide Deck Index</span>
                   </h3>
                 </div>
                 <button

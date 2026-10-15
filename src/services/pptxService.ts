@@ -47,7 +47,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     TEXT_DIM: '64748B',      // Footnotes
   };
 
-  const TOTAL_SLIDES = 9;
+  const TOTAL_SLIDES = 10;
 
   // Helper: Adds consistent RIT logo badge on slide header
   const addRitLogoBadge = (slide: any, x = 11.2, y = 0.45, w = 1.35, h = 0.42) => {
@@ -273,38 +273,13 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   // Centered Official RIT Logo
   addRitLogoBadge(slide1, 5.2, 1.85, 2.9, 0.9);
 
-  // Master of Computer Applications Subtitle
-  slide1.addText('Master Of Computer Applications (MCA)', {
-    x: 1.2,
-    y: 2.85,
-    w: 10.9,
-    h: 0.3,
-    fontSize: 12,
-    fontFace: 'Arial',
-    color: C.TEXT_MUTED,
-    align: 'center',
-    bold: true,
-  });
-
-  slide1.addText('CAPSTONE PROJECT TECHNICAL REPORT ON', {
-    x: 1.2,
-    y: 3.15,
-    w: 10.9,
-    h: 0.28,
-    fontSize: 11,
-    fontFace: 'Arial',
-    color: C.TEXT_WHITE,
-    align: 'center',
-    bold: true,
-  });
-
   // Project Title Highlight
   slide1.addText('“BizMind – AI Business Planner & Success Prediction Platform”', {
     x: 1.2,
-    y: 3.45,
+    y: 3.15,
     w: 10.9,
-    h: 0.7,
-    fontSize: 24,
+    h: 0.8,
+    fontSize: 26,
     fontFace: 'Arial',
     color: C.GOLD,
     align: 'center',
@@ -355,7 +330,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     lineSpacing: 14,
   });
 
-  // Right Card: Project Team (Submitted By)
+  // Right Card: Project Team (Presented By)
   slide1.addShape(pptx.ShapeType.roundRect, {
     x: 5.6,
     y: 4.35,
@@ -366,7 +341,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     line: { color: C.CYAN, width: 1.2 },
   });
 
-  slide1.addText('SUBMITTED BY (PROJECT TEAM)', {
+  slide1.addText('PRESENTED BY (PROJECT TEAM)', {
     x: 5.8,
     y: 4.55,
     w: 6.1,
@@ -1327,6 +1302,104 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       lineSpacing: 13,
     }
   );
+
+  // =========================================================================
+  // SLIDE 10: Thank You & Project Defense (Page 10 of 10)
+  // =========================================================================
+  const slide10 = addMasterSlide(
+    'THANK YOU!',
+    10,
+    'Thank the faculty evaluation committee, guide Ms. A. R. Patil, and Department of Computer Applications. Open the floor for technical project defense inquiries and live system demonstrations.',
+    '10 / THANK YOU & PROJECT DEFENSE'
+  );
+
+  // Hero Card Backdrop
+  slide10.addShape(pptx.ShapeType.roundRect, {
+    x: 0.8,
+    y: 1.6,
+    w: 11.7,
+    h: 5.2,
+    rectRadius: 0.12,
+    fill: { color: C.BG_CARD },
+    line: { color: C.BG_CARD_LIGHT, width: 1.5 },
+  });
+
+  // Main Thank You Heading
+  slide10.addText('Thank You!', {
+    x: 1.2,
+    y: 2.05,
+    w: 10.9,
+    h: 0.9,
+    fontSize: 42,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    bold: true,
+    align: 'center',
+  });
+
+  slide10.addText(
+    'We express our sincere gratitude to our guide Ms. A. R. Patil and faculty members at Rajarambapu Institute of Technology for their continuous mentorship, support, and guidance.',
+    {
+      x: 2.2,
+      y: 2.95,
+      w: 8.9,
+      h: 0.45,
+      fontSize: 10.5,
+      fontFace: 'Arial',
+      color: C.TEXT_MUTED,
+      align: 'center',
+    }
+  );
+
+  // Centered Card: Presented By (Project Team)
+  slide10.addShape(pptx.ShapeType.roundRect, {
+    x: 3.2,
+    y: 3.65,
+    w: 6.9,
+    h: 2.3,
+    rectRadius: 0.1,
+    fill: { color: C.BG_DARK },
+    line: { color: C.CYAN, width: 1.2 },
+  });
+
+  slide10.addText('PRESENTED BY (PROJECT TEAM)', {
+    x: 3.4,
+    y: 3.85,
+    w: 6.5,
+    h: 0.25,
+    fontSize: 10,
+    fontFace: 'Arial',
+    color: C.CYAN,
+    bold: true,
+    align: 'center',
+  });
+
+  slide10.addText(
+    '• Pramod Rajendra Mahajan  (Roll No: 2547047)\n• Harshad Shahaji Patil  (Roll No: 2547062)\n• Sakshi Dnyaneshwar Randive  (Roll No: 2547048)\n• Rutika Rajesh Deshmukh  (Roll No: 2547025)',
+    {
+      x: 3.6,
+      y: 4.25,
+      w: 6.1,
+      h: 1.5,
+      fontSize: 11,
+      fontFace: 'Arial',
+      color: C.TEXT_WHITE,
+      lineSpacing: 18,
+      align: 'center',
+    }
+  );
+
+  // Footer Tagline
+  slide10.addText('RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR • SANGALI, MAHARASHTRA • 2026–27', {
+    x: 1.2,
+    y: 6.35,
+    w: 10.9,
+    h: 0.25,
+    fontSize: 8.5,
+    fontFace: 'Arial',
+    color: C.TEXT_DIM,
+    align: 'center',
+  });
 
   // =========================================================================
   // Generate Base PPTX Blob
