@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Sparkles,
+  Presentation,
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
@@ -97,6 +98,39 @@ export const AdminOverviewPage: React.FC = () => {
           <span>{actionSuccess}</span>
         </div>
       )}
+
+      {/* Featured Executive Pitch Deck Banner (8 Pages + Live Demo) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#121722] via-[#161D2B] to-[#121722] border border-[#FFBF24]/30 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-[#FFBF24]/15 border border-[#FFBF24]/40 flex items-center justify-center text-[#FFBF24] shrink-0 mt-0.5 shadow-md">
+            <Presentation className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm sm:text-base font-bold text-white">
+                Project Pitch Deck & Executive Presentation
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FFBF24]/20 text-[#FFBF24] border border-[#FFBF24]/30 font-bold">
+                8 Pages • Live Demo
+              </span>
+            </div>
+            <p className="text-xs text-[#94A3B8] mt-1 leading-relaxed max-w-2xl">
+              Complete investor & stakeholder presentation explaining the entire BizMind system: CapEx allocation, 12-month trajectory line graph, sensitivity stress-testing, and live interactive location intelligence map simulation.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-end">
+          <Link to="/admin/presentation">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Presentation className="w-3.5 h-3.5" />}
+            >
+              Launch 8-Page Deck
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       {/* Top Core Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
