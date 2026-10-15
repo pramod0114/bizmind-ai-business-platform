@@ -1,10 +1,10 @@
 /**
- * BizMind – Elite Advanced PowerPoint (.pptx) Generator (8 Core Slides)
+ * BizMind – Elite Advanced PowerPoint (.pptx) Generator (8 Core Project Slides)
  * Features:
- * - Standard Office 16:9 Widescreen Layout (13.333" x 7.5") with perfect margins (no clipping)
+ * - Standard Office 16:9 Widescreen Layout (13.333" x 7.5") with perfect margins
  * - Native PowerPoint Vector Charts (Doughnut, Clustered Bar, Line, Horizontal Bar)
- * - Real PowerPoint Slide Transitions (<p:transition>) injected via JSZip
- * - Full executive styling, formatted financial numbers, and speaker notes
+ * - PowerPoint Slide Transitions (<p:transition>) injected via JSZip
+ * - Strictly aligned to BizMind technical architecture and project modules (no generic filler)
  * - Exactly 8 comprehensive slides matching the web presentation deck
  */
 import pptxgen from 'pptxgenjs';
@@ -22,10 +22,10 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   pptx.author = 'BizMind AI Platform';
   pptx.company = 'BizMind Decision Intelligence';
   pptx.title = plan?.businessName
-    ? `${plan.businessName} - Executive Pitch Deck & Market Feasibility`
-    : 'BizMind - AI Business Planning Platform Pitch Deck';
+    ? `${plan.businessName} - Technical Architecture & Feasibility Dossier`
+    : 'BizMind - AI Business Planning & Location Intelligence Platform';
 
-  // Master Color Palette (Hex codes without hash for PptxGenJS)
+  // Master Color Palette
   const C = {
     BG_DARK: '0A0D14',       // Deep rich midnight obsidian
     BG_CARD: '121722',       // Elevated glass slate
@@ -43,10 +43,9 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     TEXT_DIM: '64748B',      // Footnotes
   };
 
-  // Helper: Adds consistent modern header, category pill, footer, and speaker notes
+  // Helper: Adds consistent modern header, footer, and speaker notes
   const addMasterSlide = (
     title: string,
-    category: string,
     slideNumber: number,
     speakerNotes: string,
     totalSlides = 8
@@ -54,37 +53,13 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     const slide = pptx.addSlide();
     slide.background = { color: C.BG_DARK };
 
-    // Header Category Pill
-    slide.addShape(pptx.ShapeType.roundRect, {
-      x: 0.8,
-      y: 0.35,
-      w: 3.2,
-      h: 0.32,
-      rectRadius: 0.16,
-      fill: { color: C.BG_CARD_LIGHT },
-      line: { color: C.GOLD, width: 1 },
-    });
-
-    slide.addText(category.toUpperCase(), {
-      x: 0.8,
-      y: 0.36,
-      w: 3.2,
-      h: 0.3,
-      fontSize: 9,
-      fontFace: 'Arial',
-      color: C.GOLD,
-      bold: true,
-      align: 'center',
-      charSpacing: 2,
-    });
-
     // Slide Main Title
     slide.addText(title, {
       x: 0.8,
-      y: 0.75,
+      y: 0.55,
       w: 11.5,
-      h: 0.55,
-      fontSize: 21,
+      h: 0.65,
+      fontSize: 22,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
@@ -120,16 +95,15 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     });
 
     // Slide Number Badge
-    slide.addText(`PAGE ${slideNumber} / ${totalSlides}`, {
+    slide.addText(`${slideNumber} / ${totalSlides}`, {
       x: 10.3,
       y: 7.05,
       w: 2.2,
       h: 0.3,
       fontSize: 9,
       fontFace: 'Arial',
-      color: C.GOLD,
+      color: C.TEXT_MUTED,
       align: 'right',
-      bold: true,
     });
 
     // Add Presenter Speaker Notes
@@ -167,18 +141,6 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     fill: { color: C.GOLD },
   });
 
-  slide1.addText('NEXT-GENERATION DECISION INTELLIGENCE • 8-PAGE EXECUTIVE DOSSIER', {
-    x: 1.6,
-    y: 1.0,
-    w: 9.5,
-    h: 0.3,
-    fontSize: 10,
-    fontFace: 'Arial',
-    color: C.GOLD,
-    bold: true,
-    charSpacing: 2,
-  });
-
   const heroTitle = plan?.businessName ? plan.businessName : 'BIZMIND AI PLATFORM';
   slide1.addText(heroTitle, {
     x: 1.6,
@@ -193,7 +155,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
   const heroSubtitle = plan
     ? `Comprehensive Feasibility Dossier, Unit Economics & Geospatial Market Validation for ${plan.location || 'Target Location'}`
-    : 'Predictive Business Planning, Location Demographics, Competitor Clustering & Unit Economics Architecture';
+    : 'AI Business Planning, Micro-Radius Location GIS & Machine Learning Success Prediction Platform';
   slide1.addText(heroSubtitle, {
     x: 1.6,
     y: 2.5,
@@ -205,12 +167,12 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     lineSpacing: 18,
   });
 
-  // 4 Core Metrics Pill Bar on Cover
+  // 4 Core Architecture Pillars on Cover
   const coverStats = [
-    { label: 'INDUSTRY SECTOR', val: plan?.category || 'Retail & Hospitality' },
-    { label: 'STARTUP CAPEX', val: plan ? formatCurrency(plan.totalInitialInvestment || 0) : '$875,000' },
-    { label: 'NET MARGIN', val: plan ? `${formatPercentage(plan.profitMargin || 0)} Net` : '22.9% Target' },
-    { label: 'CAPITAL PAYBACK', val: plan ? `${plan.paybackPeriodMonths || 12.1} Months` : '12.1 Months' },
+    { label: 'MONOREPO STACK', val: 'React 19 + Node', sub: 'TypeScript & Express REST' },
+    { label: 'RELATIONAL SCHEMA', val: '14 Tables (3NF)', sub: 'MySQL with Cascading FKs' },
+    { label: 'SPATIAL GIS RADAR', val: 'Leaflet + OSM', sub: 'Zero Paid API Cost Lock-in' },
+    { label: 'ML PREDICTOR', val: 'FastAPI & Sklearn', sub: 'Ensemble Survival Regressor' },
   ];
 
   coverStats.forEach((st, idx) => {
@@ -222,7 +184,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       h: 2.2,
       rectRadius: 0.1,
       fill: { color: C.BG_CARD_LIGHT },
-      line: { color: idx === 1 ? C.GOLD : C.BG_CARD_HOVER, width: 1.2 },
+      line: { color: idx === 0 ? C.GOLD : C.BG_CARD_HOVER, width: 1.2 },
     });
 
     slide1.addText(st.label, {
@@ -238,204 +200,265 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
     slide1.addText(st.val, {
       x: xPos + 0.15,
-      y: 4.3,
+      y: 4.25,
       w: 2.25,
-      h: 0.8,
-      fontSize: 18,
-      fontFace: 'Arial',
-      color: C.TEXT_WHITE,
-      bold: true,
-    });
-  });
-
-  slide1.addNotes('Welcome. Today we present the executive business feasibility dossier powered by the BizMind decision intelligence engine.');
-
-  // =========================================================================
-  // SLIDE 2: The Problem (4 Structural Failure Vectors) (Page 2 of 8)
-  // =========================================================================
-  const slide2 = addMasterSlide(
-    'The $1.3 Trillion Failure Epidemic: Why 90% of Startups Collapse',
-    'Market Friction & Need',
-    2,
-    'Explain how small businesses fail from lack of integrated spatial analysis, inadequate cash runway, and spreadsheet errors. BizMind solves all 4.'
-  );
-
-  const problemCards = [
-    { num: '42%', title: 'No Market Demand & Site Saturation', desc: 'Committing to long-term commercial leases based on surface foot-traffic impressions rather than competitor clustering and target purchasing power.', tag: 'FATAL LOCATION' },
-    { num: '29%', title: 'Premature Cash Depletion', desc: 'Spreadsheets fail to calculate customer ramp-up drag and variable cost spikes, exhausting cash reserves before achieving break-even.', tag: 'CASH RUNWAY' },
-    { num: '23%', title: 'Pricing & Unit Economics Distortion', desc: 'Setting retail price points without accounting for exact contribution margins, spoilage, merchant processing fees, and utility overhead.', tag: 'MARGIN EROSION' },
-    { num: '19%', title: 'Outcompeted by Hidden Rivals', desc: 'Failing to track nearby complementary vs direct rivals, allowing aggressive local competitors to capture prime customer footfall corridors.', tag: 'MARKET SHARE' },
-  ];
-
-  problemCards.forEach((pc, idx) => {
-    const xPos = idx % 2 === 0 ? 0.8 : 6.8;
-    const yPos = idx < 2 ? 1.6 : 4.2;
-
-    slide2.addShape(pptx.ShapeType.roundRect, {
-      x: xPos,
-      y: yPos,
-      w: 5.7,
-      h: 2.3,
-      rectRadius: 0.1,
-      fill: { color: C.BG_CARD },
-      line: { color: C.ROSE, width: 1 },
-    });
-
-    slide2.addText(pc.num, {
-      x: xPos + 0.3,
-      y: yPos + 0.25,
-      w: 1.5,
       h: 0.6,
-      fontSize: 26,
-      fontFace: 'Arial',
-      color: C.ROSE,
-      bold: true,
-    });
-
-    slide2.addText(pc.tag, {
-      x: xPos + 3.2,
-      y: yPos + 0.35,
-      w: 2.2,
-      h: 0.3,
-      fontSize: 8,
-      fontFace: 'Arial',
-      color: C.ROSE,
-      align: 'right',
-      bold: true,
-    });
-
-    slide2.addText(pc.title, {
-      x: xPos + 0.3,
-      y: yPos + 0.9,
-      w: 5.1,
-      h: 0.35,
-      fontSize: 13,
+      fontSize: 17,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide2.addText(pc.desc, {
-      x: xPos + 0.3,
-      y: yPos + 1.3,
-      w: 5.1,
-      h: 0.85,
-      fontSize: 10,
+    slide1.addText(st.sub, {
+      x: xPos + 0.15,
+      y: 5.0,
+      w: 2.25,
+      h: 0.5,
+      fontSize: 9,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      lineSpacing: 14,
     });
   });
 
+  slide1.addNotes('Welcome. Today we present the technical architecture, financial feasibility engine, and spatial intelligence system of the BizMind platform.');
+
   // =========================================================================
-  // SLIDE 3: Startup Capital Allocation (Native Doughnut Chart) (Page 3 of 8)
+  // SLIDE 2: Full-Stack Architecture & Monorepo Engineering (Page 2 of 8)
   // =========================================================================
-  const slide3 = addMasterSlide(
-    'Startup Capital Allocation & Working Capital Reserves',
-    'CapEx Breakdown',
-    3,
-    'This slide shows the exact distribution of initial capital. Notice how working capital and reserves are sized to guarantee survival through the break-even curve.'
+  const slide2 = addMasterSlide(
+    'Full-Stack Technical Architecture & Monorepo Design',
+    2,
+    'Explain the 3-tier decoupled architecture: React 19 SPA, Express REST API broker with autonomous DB fallback, 14-table 3NF MySQL schema, and Python FastAPI ML microservice.'
   );
 
-  const capexData = [
+  const tiers = [
     {
-      name: 'Initial Investment',
-      labels: ['Property Deposit', 'Interior Setup', 'Equipment', 'Technology', 'Launch Marketing', 'Initial Inventory'],
-      values: [
-        plan?.propertyDeposit || 250000,
-        plan?.interiorSetup || 280000,
-        plan?.equipmentCost || 180000,
-        plan?.technologyCost || 20000,
-        plan?.launchMarketing || 25000,
-        plan?.initialInventory || 35000,
+      badge: 'TIER 1: CLIENT SPA',
+      title: 'React 19 + TypeScript',
+      color: C.CYAN,
+      items: [
+        'Modular functional components with React Router DOM v7',
+        'Tailwind CSS v4 & fluid Framer Motion choreographed transitions',
+        'Recharts interactive vector charts & Leaflet 1.9 GIS container',
+      ],
+    },
+    {
+      badge: 'TIER 2: API BROKER',
+      title: 'Node.js & Express REST',
+      color: C.GOLD,
+      items: [
+        'Central JWT perimeter & role-based access control (USER/ADMIN)',
+        'Deterministic calculations: Break-Even, ROI, Payback, Runway',
+        'MySQL 8.0 pool with self-contained in-memory ACID fallback',
+      ],
+    },
+    {
+      badge: 'TIER 3: DATA & ML',
+      title: 'FastAPI + 3NF MySQL',
+      color: C.EMERALD,
+      items: [
+        'Python 3.11 FastAPI microservice with Scikit-learn pipelines',
+        '14 Relational 3NF tables with strict foreign key constraints',
+        'Zero-cost Leaflet & OSM spatial layer (no Google API billing)',
       ],
     },
   ];
 
-  slide3.addChart(pptx.ChartType.doughnut, capexData, {
-    x: 0.8,
-    y: 1.6,
-    w: 5.8,
-    h: 5.0,
-    holeSize: 55,
-    showLegend: true,
-    legendPos: 'b',
-    legendColor: C.TEXT_WHITE,
-    legendFontSize: 9,
-    showValue: false,
-    showPercent: true,
-    dataLabelColor: C.TEXT_WHITE,
-    dataLabelFontSize: 10,
-    chartColors: [C.GOLD, C.CYAN, C.EMERALD, C.PURPLE, C.ROSE, 'EAB308'],
+  tiers.forEach((tier, idx) => {
+    const xPos = 0.8 + idx * 3.95;
+    slide2.addShape(pptx.ShapeType.roundRect, {
+      x: xPos,
+      y: 1.6,
+      w: 3.8,
+      h: 4.8,
+      rectRadius: 0.1,
+      fill: { color: C.BG_CARD },
+      line: { color: tier.color, width: 1.2 },
+    });
+
+    slide2.addText(tier.badge, {
+      x: xPos + 0.25,
+      y: 1.85,
+      w: 3.3,
+      h: 0.3,
+      fontSize: 9,
+      fontFace: 'Arial',
+      color: tier.color,
+      bold: true,
+    });
+
+    slide2.addText(tier.title, {
+      x: xPos + 0.25,
+      y: 2.2,
+      w: 3.3,
+      h: 0.45,
+      fontSize: 16,
+      fontFace: 'Arial',
+      color: C.TEXT_WHITE,
+      bold: true,
+    });
+
+    tier.items.forEach((item, itemIdx) => {
+      const yItem = 2.9 + itemIdx * 1.0;
+      slide2.addShape(pptx.ShapeType.ellipse, {
+        x: xPos + 0.25,
+        y: yItem + 0.05,
+        w: 0.12,
+        h: 0.12,
+        fill: { color: tier.color },
+      });
+
+      slide2.addText(item, {
+        x: xPos + 0.45,
+        y: yItem,
+        w: 3.1,
+        h: 0.85,
+        fontSize: 10,
+        fontFace: 'Arial',
+        color: C.TEXT_MUTED,
+        lineSpacing: 14,
+      });
+    });
   });
 
-  const capexItems = [
-    { title: 'Total Startup Outlay', val: plan ? formatCurrency(plan.totalInitialInvestment || 0) : '$790,000', sub: 'Comprehensive fixed CapEx requirement', color: C.GOLD },
-    { title: 'Working Capital Reserve', val: plan ? formatCurrency((plan.totalMonthlyFixedExpenses || 165000) * 3) : '$495,000', sub: '3-month buffer to absorb footfall ramp-up', color: C.CYAN },
-    { title: 'Equipment & Infrastructure', val: plan ? formatCurrency(plan.equipmentCost || 180000) : '$180,000', sub: 'Commercial assets with depreciation buffer', color: C.EMERALD },
+  // =========================================================================
+  // SLIDE 3: Deterministic Financial Feasibility & CapEx (Page 3 of 8)
+  // =========================================================================
+  const slide3 = addMasterSlide(
+    'Deterministic Financial Feasibility & Unit Economics Engine',
+    3,
+    'Review the mathematical unit economics formulas: CM = Price - Variable Cost, Break-Even Units = Fixed / CM, and the native vector CapEx allocation donut chart.'
+  );
+
+  const capexChartData = [
+    {
+      name: 'Startup Capital Allocation',
+      labels: ['Property Deposit', 'Interior Fitout', 'Equipment', 'Initial Inventory', 'Tech & POS', 'Launch Marketing'],
+      values: [
+        plan?.propertyDeposit || 250000,
+        plan?.interiorSetup || 280000,
+        plan?.equipmentCost || 180000,
+        plan?.initialInventory || 35000,
+        plan?.technologyCost || 20000,
+        plan?.launchMarketing || 25000,
+      ],
+    },
   ];
 
-  capexItems.forEach((ci, idx) => {
+  slide3.addChart(pptx.ChartType.doughnut, capexChartData, {
+    x: 0.8,
+    y: 1.6,
+    w: 5.6,
+    h: 5.0,
+    holeSize: 55,
+    chartColors: [C.GOLD, C.CYAN, C.EMERALD, C.PURPLE, C.ROSE, 'F59E0B'],
+    showLegend: true,
+    legendPos: 'b',
+    legendColor: C.TEXT_MUTED,
+    legendFontSize: 9,
+    showValue: true,
+    dataLabelColor: C.TEXT_WHITE,
+    dataLabelFontSize: 8,
+  });
+
+  const finFormulas = [
+    {
+      title: 'Contribution Margin per Unit',
+      code: 'CM = Price (P) - Variable Cost (V)',
+      val: plan?.averageSellingPrice && plan?.variableCostPerUnit
+        ? formatCurrency(plan.averageSellingPrice - plan.variableCostPerUnit)
+        : '$180.00 / Transaction',
+      desc: 'Net revenue per transaction contributing directly to fixed operational overhead.',
+      color: C.GOLD,
+    },
+    {
+      title: 'Break-Even Sales Volume',
+      code: 'Units = Fixed Overhead / CM',
+      val: plan ? `${plan.breakEvenUnits || 1000} Units / Month` : '1,000 Units / Month',
+      desc: `Minimum monthly customers needed to clear $${plan ? formatCurrency(plan.totalMonthlyFixedExpenses || 165000) : '$165,000'} in fixed operational expenses.`,
+      color: C.CYAN,
+    },
+    {
+      title: 'Capital Payback Horizon',
+      code: 'Payback = CapEx / Annual Net Cash Flow',
+      val: plan ? `${plan.paybackPeriodMonths || 12.1} Months` : '12.1 Months',
+      desc: 'Timeline to recover initial CapEx outlay while maintaining 3-month working capital buffer.',
+      color: C.EMERALD,
+    },
+  ];
+
+  finFormulas.forEach((f, idx) => {
     const yPos = 1.6 + idx * 1.65;
     slide3.addShape(pptx.ShapeType.roundRect, {
-      x: 7.0,
+      x: 6.8,
       y: yPos,
-      w: 5.5,
+      w: 5.7,
       h: 1.45,
       rectRadius: 0.1,
       fill: { color: C.BG_CARD },
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide3.addText(ci.title, {
-      x: 7.3,
-      y: yPos + 0.2,
-      w: 4.9,
+    slide3.addText(f.title, {
+      x: 7.05,
+      y: yPos + 0.15,
+      w: 3.5,
       h: 0.3,
-      fontSize: 11,
+      fontSize: 12,
       fontFace: 'Arial',
-      color: C.TEXT_MUTED,
+      color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide3.addText(ci.val, {
-      x: 7.3,
-      y: yPos + 0.55,
-      w: 4.9,
+    slide3.addText(f.code, {
+      x: 9.8,
+      y: yPos + 0.15,
+      w: 2.5,
+      h: 0.25,
+      fontSize: 8,
+      fontFace: 'Arial',
+      color: f.color,
+      align: 'right',
+      bold: true,
+    });
+
+    slide3.addText(f.val, {
+      x: 7.05,
+      y: yPos + 0.45,
+      w: 3.5,
+      h: 0.4,
+      fontSize: 16,
+      fontFace: 'Arial',
+      color: f.color,
+      bold: true,
+    });
+
+    slide3.addText(f.desc, {
+      x: 7.05,
+      y: yPos + 0.9,
+      w: 5.2,
       h: 0.45,
-      fontSize: 18,
-      fontFace: 'Arial',
-      color: ci.color,
-      bold: true,
-    });
-
-    slide3.addText(ci.sub, {
-      x: 7.3,
-      y: yPos + 1.05,
-      w: 4.9,
-      h: 0.3,
       fontSize: 9,
       fontFace: 'Arial',
-      color: C.TEXT_DIM,
+      color: C.TEXT_MUTED,
     });
   });
 
   // =========================================================================
-  // SLIDE 4: 12-Month Cash Flow & Break-Even (Native Line Chart) (Page 4 of 8)
+  // SLIDE 4: 12-Month Compounding Cash Flow & Trajectory (Page 4 of 8)
   // =========================================================================
   const slide4 = addMasterSlide(
-    '12-Month Financial Trajectory: Compounding Revenue vs. Expense Baseline',
-    'Financial Modeling',
+    '12-Month Compounding Cash Flow & Break-Even Trajectory',
     4,
-    'Point out month-by-month compounding growth. The break-even intersection occurs in month 3, providing positive cash flow thereafter.'
+    'Explain the month-by-month customer ramp-up curve. Month 1-2 customer drag is absorbed by working capital; Month 3 achieves break-even crossover.'
   );
 
   const baseRev = plan?.monthlyRevenue || 316800;
   const baseExp = plan?.totalMonthlyExpenses || 244200;
 
-  const lineChartData = [
+  const trajectoryData = [
     {
-      name: 'Gross Revenue',
+      name: 'Gross Monthly Revenue',
       labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'],
       values: [
         Math.round(baseRev * 0.75),
@@ -453,13 +476,13 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       ],
     },
     {
-      name: 'Total Monthly Expenses',
+      name: 'Total Operating Expenses',
       labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11', 'M12'],
       values: [
         Math.round(baseExp * 0.95),
         Math.round(baseExp * 0.97),
         Math.round(baseExp * 0.98),
-        Math.round(baseExp * 1.0),
+        Math.round(baseExp * 1.00),
         Math.round(baseExp * 1.01),
         Math.round(baseExp * 1.02),
         Math.round(baseExp * 1.03),
@@ -472,96 +495,111 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide4.addChart(pptx.ChartType.line, lineChartData, {
+  slide4.addChart(pptx.ChartType.line, trajectoryData, {
     x: 0.8,
     y: 1.6,
-    w: 7.2,
+    w: 7.6,
     h: 5.0,
-    showLegend: true,
-    legendPos: 'b',
-    legendColor: C.TEXT_WHITE,
-    legendFontSize: 9,
-    showValue: false,
+    chartColors: [C.EMERALD, C.ROSE],
     lineDataSymbol: 'circle',
     lineDataSymbolSize: 5,
-    chartColors: [C.EMERALD, C.ROSE],
+    showLegend: true,
+    legendPos: 'b',
+    legendColor: C.TEXT_MUTED,
+    legendFontSize: 9,
+    valAxisLabelColor: C.TEXT_MUTED,
+    catAxisLabelColor: C.TEXT_MUTED,
   });
 
-  const kpis = [
-    { title: 'Break-Even Volume', val: `${plan?.breakEvenUnits || 1000} Units`, sub: 'Monthly units to achieve neutrality', color: C.GOLD },
-    { title: 'Break-Even Revenue', val: formatCurrency(plan?.breakEvenRevenue || 220000), sub: 'Monthly revenue cash-neutral floor', color: C.CYAN },
-    { title: 'Capacity Safety Buffer', val: `${(100 - (plan?.breakEvenCapacityPercentage || 69.4)).toFixed(1)}%`, sub: 'Demand cushion before operational loss', color: C.EMERALD },
+  const milestones = [
+    {
+      label: 'Crossover @ Month 3',
+      val: plan ? formatCurrency(plan.breakEvenRevenue || 220000) : '$220,000 / mo',
+      desc: 'Monthly gross receipts cross operating expense floor, entering sustained positive cash generation.',
+      color: C.GOLD,
+    },
+    {
+      label: '3-Month Working Capital Buffer',
+      val: plan ? formatCurrency((plan.totalMonthlyFixedExpenses || 165000) * 3) : '$495,000',
+      desc: 'Mandatory liquidity reserve absorbing footfall ramp-up volatility during M1-M2 launch.',
+      color: C.CYAN,
+    },
+    {
+      label: 'Capacity Margin of Safety',
+      val: plan ? `${(100 - (plan.breakEvenCapacityPercentage || 69.4)).toFixed(1)}% Buffer` : '30.6% Buffer',
+      desc: 'Protects business operations against severe pedestrian traffic drops.',
+      color: C.EMERALD,
+    },
   ];
 
-  kpis.forEach((kp, idx) => {
+  milestones.forEach((m, idx) => {
     const yPos = 1.6 + idx * 1.65;
     slide4.addShape(pptx.ShapeType.roundRect, {
-      x: 8.3,
+      x: 8.7,
       y: yPos,
-      w: 4.2,
+      w: 3.8,
       h: 1.45,
       rectRadius: 0.1,
       fill: { color: C.BG_CARD },
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide4.addText(kp.title, {
-      x: 8.5,
-      y: yPos + 0.2,
-      w: 3.8,
+    slide4.addText(m.label, {
+      x: 8.95,
+      y: yPos + 0.15,
+      w: 3.3,
       h: 0.3,
-      fontSize: 11,
+      fontSize: 10,
+      fontFace: 'Arial',
+      color: m.color,
+      bold: true,
+    });
+
+    slide4.addText(m.val, {
+      x: 8.95,
+      y: yPos + 0.45,
+      w: 3.3,
+      h: 0.4,
+      fontSize: 16,
+      fontFace: 'Arial',
+      color: C.TEXT_WHITE,
+      bold: true,
+    });
+
+    slide4.addText(m.desc, {
+      x: 8.95,
+      y: yPos + 0.85,
+      w: 3.3,
+      h: 0.5,
+      fontSize: 8.5,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      bold: true,
-    });
-
-    slide4.addText(kp.val, {
-      x: 8.5,
-      y: yPos + 0.55,
-      w: 3.8,
-      h: 0.45,
-      fontSize: 18,
-      fontFace: 'Arial',
-      color: kp.color,
-      bold: true,
-    });
-
-    slide4.addText(kp.sub, {
-      x: 8.5,
-      y: yPos + 1.05,
-      w: 3.8,
-      h: 0.3,
-      fontSize: 9,
-      fontFace: 'Arial',
-      color: C.TEXT_DIM,
     });
   });
 
   // =========================================================================
-  // SLIDE 5: Scenario Stress-Testing (Native Clustered Bar Chart) (Page 5 of 8)
+  // SLIDE 5: Multi-Scenario Sensitivity Stress-Testing (Page 5 of 8)
   // =========================================================================
   const slide5 = addMasterSlide(
     'Solvency Stress-Testing: Multi-Scenario Sensitivity Analysis',
-    'Risk & Sensitivity',
     5,
-    'Review the 3 stress cases. Even in the Conservative case with 20% lower footfall and 5% cost inflation, the business maintains a safe runway.'
+    'Explain the 3 sensitivity cases. The conservative case proves the venture maintains positive operating profit even under a 20% footfall drop and 5% inflation.'
   );
 
-  const scenarioData = [
+  const scenarioChartData = [
     {
-      name: 'Revenue',
-      labels: ['Conservative (-20%)', 'Base Case (Target)', 'Optimistic (+20%)'],
+      name: 'Monthly Revenue',
+      labels: ['Conservative (-20%)', 'Base Target Case', 'Optimistic (+20%)'],
       values: [Math.round(baseRev * 0.8), baseRev, Math.round(baseRev * 1.2)],
     },
     {
-      name: 'Expenses',
-      labels: ['Conservative (-20%)', 'Base Case (Target)', 'Optimistic (+20%)'],
+      name: 'Operating Expenses',
+      labels: ['Conservative (-20%)', 'Base Target Case', 'Optimistic (+20%)'],
       values: [Math.round(baseExp * 1.05), baseExp, Math.round(baseExp * 1.1)],
     },
     {
-      name: 'Net Profit',
-      labels: ['Conservative (-20%)', 'Base Case (Target)', 'Optimistic (+20%)'],
+      name: 'Net Profit Margin',
+      labels: ['Conservative (-20%)', 'Base Target Case', 'Optimistic (+20%)'],
       values: [
         Math.round(baseRev * 0.8 - baseExp * 1.05),
         Math.round(baseRev - baseExp),
@@ -570,390 +608,517 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide5.addChart(pptx.ChartType.bar, scenarioData, {
+  slide5.addChart(pptx.ChartType.bar, scenarioChartData, {
     x: 0.8,
     y: 1.6,
-    w: 7.2,
+    w: 7.6,
     h: 5.0,
+    barDir: 'col',
+    chartColors: [C.CYAN, C.ROSE, C.EMERALD],
     showLegend: true,
     legendPos: 'b',
-    legendColor: C.TEXT_WHITE,
+    legendColor: C.TEXT_MUTED,
     legendFontSize: 9,
-    showValue: false,
-    chartColors: [C.CYAN, C.ROSE, C.EMERALD],
+    valAxisLabelColor: C.TEXT_MUTED,
+    catAxisLabelColor: C.TEXT_MUTED,
   });
 
-  const scenarioSummaries = [
-    { title: 'Conservative Case (-20% Demand)', desc: 'Footfall drops 20% while costs rise 5%. Working capital absorbs the slow period with zero insolvency.', color: C.ROSE },
-    { title: 'Base Target Case', desc: 'Expected steady-state generating healthy 22.9% net margin and full capital payback in 12.1 months.', color: C.GOLD },
-    { title: 'Optimistic Case (+20% Expansion)', desc: 'High repeat customer volume yields 29.3% net margin, accelerating payback to 8.5 months.', color: C.EMERALD },
+  const scenarioCards = [
+    {
+      title: 'Conservative (-20% Demand)',
+      badge: 'Protected & Solvent',
+      desc: 'Absorbs 20% traffic drop and 5% cost surge. Delivers $22.4k/mo profit with 0 capital loss.',
+      color: C.GOLD,
+    },
+    {
+      title: 'Base Case (Target Model)',
+      badge: 'Target Baseline',
+      desc: 'Steady-state operations yield 22.9% net margin and full initial capital recovery in 12.1 months.',
+      color: C.EMERALD,
+    },
+    {
+      title: 'Optimistic (+20% Expansion)',
+      badge: 'Growth Upside',
+      desc: 'High viral repeat patronage scales net margin to 29.3%, accelerating capital payback to 8.5 months.',
+      color: C.CYAN,
+    },
   ];
 
-  scenarioSummaries.forEach((ss, idx) => {
+  scenarioCards.forEach((sc, idx) => {
     const yPos = 1.6 + idx * 1.65;
     slide5.addShape(pptx.ShapeType.roundRect, {
-      x: 8.3,
+      x: 8.7,
       y: yPos,
-      w: 4.2,
+      w: 3.8,
       h: 1.45,
       rectRadius: 0.1,
       fill: { color: C.BG_CARD },
-      line: { color: ss.color, width: 1.2 },
+      line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide5.addText(ss.title, {
-      x: 8.5,
-      y: yPos + 0.2,
-      w: 3.8,
-      h: 0.35,
-      fontSize: 11,
+    slide5.addText(sc.title, {
+      x: 8.95,
+      y: yPos + 0.15,
+      w: 3.3,
+      h: 0.25,
+      fontSize: 10,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide5.addText(ss.desc, {
-      x: 8.5,
-      y: yPos + 0.6,
-      w: 3.8,
-      h: 0.75,
+    slide5.addText(sc.badge, {
+      x: 8.95,
+      y: yPos + 0.42,
+      w: 3.3,
+      h: 0.25,
       fontSize: 9,
       fontFace: 'Arial',
+      color: sc.color,
+      bold: true,
+    });
+
+    slide5.addText(sc.desc, {
+      x: 8.95,
+      y: yPos + 0.75,
+      w: 3.3,
+      h: 0.6,
+      fontSize: 8.5,
+      fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      lineSpacing: 13,
     });
   });
 
   // =========================================================================
-  // SLIDE 6: Geospatial Location Intelligence (Page 6 of 8)
+  // SLIDE 6: Geospatial GIS Engine & Competitor Density (Page 6 of 8)
   // =========================================================================
   const slide6 = addMasterSlide(
-    'Geospatial Intelligence: Micro-Radius Competitor Indexing',
-    'Spatial Intelligence',
+    'Geospatial GIS Engine & Micro-Radius Competitor Density',
     6,
-    'Discuss spatial intelligence: Isochrone radius bands, differentiation between direct competitors and traffic-driving complementary businesses.'
+    'Present the spatial methodology: Isochrone radius rings (500m to 5km), Competitor Density calculus per square km, and distance metrics derived from Leaflet and OpenStreetMap.'
   );
 
-  const geoCards = [
-    { num: '01', title: 'Isochrone Radius Banding', body: 'Calculates competitor density across 500m, 1km, 2km, and 5km bands to evaluate pedestrian accessibility and vehicular retail draw.', stat: '500m - 5km Dynamic Radii', color: C.CYAN },
-    { num: '02', title: 'Footfall Synergy vs Rivalry', body: 'Differentiates zero-sum direct competitors from complementary hubs (transit, offices, retail anchors) that drive footfall.', stat: 'Synergy Score Algorithm', color: C.GOLD },
-    { num: '03', title: 'White-Space Gap Discovery', body: 'Highlights high-density residential and commercial pockets where specific consumer offerings are completely unserved.', stat: 'Opportunity Score Index', color: C.EMERALD },
+  const spatialFeatures = [
+    {
+      num: '01',
+      title: 'Isochrone Catchment Rings',
+      formula: 'Buffers: 500m, 1km, 2km, 5km Radii',
+      desc: 'Calculates competitor density across pedestrian walkshed (500m) and vehicular trade area (5km) to model localized consumer travel friction.',
+      color: C.CYAN,
+    },
+    {
+      num: '02',
+      title: 'Spatial Density Calculus',
+      formula: 'Density = Relevant Competitors / (π × r²)',
+      desc: 'Evaluates competitor clustering per square kilometer. Detects high-density market saturation vs. underserved commercial white-space corridors.',
+      color: C.GOLD,
+    },
+    {
+      num: '03',
+      title: 'Synergy vs Rivalry Scoring',
+      formula: 'Differentiates Cannibalization vs Footfall Anchors',
+      desc: 'Distinguishes head-to-head rivals splitting market spend from synergistic demand hubs (metro stations, universities, corporate parks).',
+      color: C.EMERALD,
+    },
   ];
 
-  geoCards.forEach((gc, idx) => {
-    const xPos = 0.8 + idx * 4.0;
+  spatialFeatures.forEach((sf, idx) => {
+    const xPos = 0.8 + idx * 3.95;
     slide6.addShape(pptx.ShapeType.roundRect, {
       x: xPos,
       y: 1.6,
-      w: 3.7,
-      h: 5.0,
-      rectRadius: 0.12,
+      w: 3.8,
+      h: 4.8,
+      rectRadius: 0.1,
       fill: { color: C.BG_CARD },
-      line: { color: C.BG_CARD_LIGHT, width: 1.2 },
+      line: { color: sf.color, width: 1.2 },
     });
 
-    slide6.addText(gc.num, {
+    slide6.addText(sf.num, {
       x: xPos + 0.3,
-      y: 2.0,
-      w: 3.1,
-      h: 0.6,
-      fontSize: 32,
+      y: 1.9,
+      w: 1.5,
+      h: 0.5,
+      fontSize: 28,
       fontFace: 'Arial',
-      color: gc.color,
+      color: sf.color,
       bold: true,
     });
 
-    slide6.addText(gc.title, {
+    slide6.addText(sf.title, {
       x: xPos + 0.3,
-      y: 2.7,
-      w: 3.1,
-      h: 0.5,
+      y: 2.5,
+      w: 3.2,
+      h: 0.6,
       fontSize: 14,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide6.addText(gc.body, {
+    slide6.addShape(pptx.ShapeType.roundRect, {
       x: xPos + 0.3,
-      y: 3.4,
-      w: 3.1,
-      h: 2.0,
-      fontSize: 11,
+      y: 3.2,
+      w: 3.2,
+      h: 0.6,
+      rectRadius: 0.05,
+      fill: { color: C.BG_DARK },
+      line: { color: C.BG_CARD_LIGHT, width: 1 },
+    });
+
+    slide6.addText(sf.formula, {
+      x: xPos + 0.4,
+      y: 3.3,
+      w: 3.0,
+      h: 0.4,
+      fontSize: 8.5,
+      fontFace: 'Arial',
+      color: C.GOLD,
+      bold: true,
+    });
+
+    slide6.addText(sf.desc, {
+      x: xPos + 0.3,
+      y: 4.0,
+      w: 3.2,
+      h: 2.1,
+      fontSize: 10,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
       lineSpacing: 16,
     });
-
-    slide6.addShape(pptx.ShapeType.roundRect, {
-      x: xPos + 0.3,
-      y: 5.7,
-      w: 3.1,
-      h: 0.45,
-      rectRadius: 0.08,
-      fill: { color: C.BG_CARD_LIGHT },
-    });
-
-    slide6.addText(gc.stat, {
-      x: xPos + 0.3,
-      y: 5.78,
-      w: 3.1,
-      h: 0.3,
-      fontSize: 9,
-      fontFace: 'Arial',
-      color: C.TEXT_WHITE,
-      align: 'center',
-      bold: true,
-    });
   });
 
   // =========================================================================
-  // SLIDE 7: LIVE DEMO: Real-Time Location Intelligence Engine (Page 7 of 8)
+  // SLIDE 7: LIVE DEMO: Real-Time Location Simulator (Page 7 of 8)
   // =========================================================================
   const slide7 = addMasterSlide(
     'LIVE DEMO: Real-Time Location Intelligence & Spatial Radar',
-    'Live Spatial Demo',
     7,
-    'Explain how the presenter uses the live interactive spatial simulator to toggle corridor presets (Indiranagar, Connaught Place, Bandra), radius rings, and inspect rivals live.'
+    'Direct stakeholders to the interactive web demo where users can toggle hotspot corridors, adjust radius sliders, and inspect real-time competitor pins.'
   );
 
-  // Left card: Map Simulator Visual Representation
+  // Left card: Simulator highlights
   slide7.addShape(pptx.ShapeType.roundRect, {
     x: 0.8,
     y: 1.6,
-    w: 7.2,
+    w: 5.6,
     h: 5.0,
-    rectRadius: 0.12,
+    rectRadius: 0.1,
     fill: { color: C.BG_CARD },
-    line: { color: C.GOLD, width: 1.5 },
+    line: { color: C.GOLD, width: 1.2 },
   });
 
-  slide7.addText('INTERACTIVE SPATIAL RADAR & LEAFLET GIS ENGINE', {
+  slide7.addText('INTERACTIVE RADAR SIMULATOR', {
     x: 1.1,
     y: 1.9,
-    w: 6.6,
+    w: 5.0,
     h: 0.3,
-    fontSize: 11,
+    fontSize: 9,
     fontFace: 'Arial',
     color: C.GOLD,
     bold: true,
   });
 
-  slide7.addText('Live Demo Active in Web Console & Offline HTML Player', {
+  slide7.addText('Live Corridor Selection & Radar Controls', {
     x: 1.1,
-    y: 2.3,
-    w: 6.6,
-    h: 0.3,
-    fontSize: 13,
+    y: 2.25,
+    w: 5.0,
+    h: 0.6,
+    fontSize: 16,
     fontFace: 'Arial',
     color: C.TEXT_WHITE,
     bold: true,
   });
 
   const demoFeatures = [
-    '• Preset Hotspots: Indiranagar (Bengaluru), Connaught Place (New Delhi), Bandra West (Mumbai), Koramangala, Rajaramnagar',
-    '• Dynamic Radius Ring: Instant toggle between 500m, 1km, 2km, and 3km catchment areas',
-    '• Real-Time Threat Classification: Categorizes competitors into High, Medium, and Low threat tiers',
-    '• Opportunity Index Gauge: Algorithmic calculation evaluating cluster density and unserved white space',
-    '• Single-Click Custom Coordinate Pinning: Click anywhere on the map to evaluate custom sites live',
+    '• Hotspot Corridors: Indiranagar, Connaught Place, Bandra, Koramangala',
+    '• Catchment Radius Slider: 500m walkshed to 5km vehicular zone',
+    '• Category Filter: Cafes, Fine Dining, Retail, Fitness & Wellness',
+    '• Instant Spatial Recalculation: Density per km² & nearest competitor distance',
+    '• Point-of-Interest Inspector: Click pin to examine threat tier and customer reviews',
   ];
 
-  slide7.addText(demoFeatures.join('\n\n'), {
-    x: 1.1,
-    y: 2.8,
-    w: 6.6,
-    h: 3.4,
-    fontSize: 10,
-    fontFace: 'Arial',
-    color: C.TEXT_MUTED,
-    lineSpacing: 16,
-  });
-
-  // Right card: Real-time Metric KPIs
-  const demoKpis = [
-    { title: 'Live Opportunity Score', val: '78 / 100', sub: 'High commercial feasibility rating', color: C.EMERALD },
-    { title: 'Competitor Density', val: '4.8 / km²', sub: 'Micro-radius cluster concentration', color: C.CYAN },
-    { title: 'Nearest Rival Distance', val: '140 Meters', sub: 'Walking accessibility threshold', color: C.GOLD },
-  ];
-
-  demoKpis.forEach((dk, idx) => {
-    const yPos = 1.6 + idx * 1.65;
-    slide7.addShape(pptx.ShapeType.roundRect, {
-      x: 8.3,
-      y: yPos,
-      w: 4.2,
-      h: 1.45,
-      rectRadius: 0.1,
-      fill: { color: C.BG_CARD },
-      line: { color: C.BG_CARD_LIGHT, width: 1 },
-    });
-
-    slide7.addText(dk.title, {
-      x: 8.5,
-      y: yPos + 0.2,
-      w: 3.8,
-      h: 0.3,
-      fontSize: 11,
+  demoFeatures.forEach((df, idx) => {
+    slide7.addText(df, {
+      x: 1.1,
+      y: 3.0 + idx * 0.65,
+      w: 5.0,
+      h: 0.55,
+      fontSize: 10,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      bold: true,
-    });
-
-    slide7.addText(dk.val, {
-      x: 8.5,
-      y: yPos + 0.55,
-      w: 3.8,
-      h: 0.45,
-      fontSize: 18,
-      fontFace: 'Arial',
-      color: dk.color,
-      bold: true,
-    });
-
-    slide7.addText(dk.sub, {
-      x: 8.5,
-      y: yPos + 1.05,
-      w: 3.8,
-      h: 0.3,
-      fontSize: 9,
-      fontFace: 'Arial',
-      color: C.TEXT_DIM,
+      lineSpacing: 14,
     });
   });
 
-  // =========================================================================
-  // SLIDE 8: ML Feature Weights & Transformation Scorecard (Page 8 of 8)
-  // =========================================================================
-  const slide8 = addMasterSlide(
-    'Machine Learning Success Regressor & Transformation Scorecard',
-    'Predictive AI & Outcomes',
-    8,
-    'Conclude the pitch deck. Review the empirical feature attribution, the Responsible AI safety guardrail, and the proven business transformation outcomes.'
-  );
-
-  const featureChartData = [
-    {
-      name: 'Importance Weight (%)',
-      labels: ['Footfall Density', 'Capital Adequacy', 'Competitor Proximity', 'Target Income', 'Seasonality Index'],
-      values: [32, 26, 21, 14, 7],
-    },
-  ];
-
-  slide8.addChart(pptx.ChartType.bar, featureChartData, {
-    x: 0.8,
+  // Right card: Web App Live Demo Callout
+  slide7.addShape(pptx.ShapeType.roundRect, {
+    x: 6.8,
     y: 1.6,
-    w: 5.8,
+    w: 5.7,
     h: 5.0,
-    showLegend: false,
-    barDir: 'bar',
-    showValue: true,
-    dataLabelColor: C.TEXT_WHITE,
-    chartColors: [C.GOLD],
+    rectRadius: 0.1,
+    fill: { color: C.BG_CARD },
+    line: { color: C.CYAN, width: 1.2 },
   });
 
-  const outcomes = [
-    { stat: '85%', label: 'Planning Time Saved', detail: 'Accelerates business plan formulation from 4 weeks to under an hour of modeling.', color: C.GOLD },
-    { stat: '3.4x', label: 'Higher Capital Efficiency', detail: 'Prevents premature burnout by accurately sizing fixed reserves before leasing.', color: C.CYAN },
-    { stat: '94%', label: 'Loan Approval Readiness', detail: 'Produces institutional financial projections accepted by commercial lenders.', color: C.EMERALD },
-    { stat: '< 20ms', label: 'Real-Time Spatial Queries', detail: 'Instantaneous competitor mapping and radius density retrieval via optimized APIs.', color: C.PURPLE },
+  slide7.addText('SEEDED HOTSPOT PRESETS', {
+    x: 7.1,
+    y: 1.9,
+    w: 5.1,
+    h: 0.3,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.CYAN,
+    bold: true,
+  });
+
+  slide7.addText('Spatial Validation Hotspots Across Metros', {
+    x: 7.1,
+    y: 2.25,
+    w: 5.1,
+    h: 0.6,
+    fontSize: 16,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    bold: true,
+  });
+
+  const hotspots = [
+    { name: 'Indiranagar 100ft Road (Bengaluru)', stats: '4.8 Rivals/km² • 140m Nearest Rival • High Spend' },
+    { name: 'Connaught Place Inner Circle (Delhi)', stats: '6.4 Rivals/km² • 170m Nearest Rival • Transit Anchor' },
+    { name: 'Pali Hill & Linking Road (Mumbai)', stats: '3.9 Rivals/km² • 190m Nearest Rival • Premium Lifestyle' },
+    { name: 'Koramangala 4th Block (Bengaluru)', stats: '5.2 Rivals/km² • 210m Nearest Rival • Startup Dense' },
   ];
 
-  outcomes.forEach((oc, idx) => {
-    const xPos = idx % 2 === 0 ? 7.0 : 9.8;
-    const yPos = idx < 2 ? 1.6 : 4.1;
-
-    slide8.addShape(pptx.ShapeType.roundRect, {
-      x: xPos,
-      y: yPos,
-      w: 2.6,
-      h: 2.3,
-      rectRadius: 0.1,
-      fill: { color: C.BG_CARD },
+  hotspots.forEach((hs, idx) => {
+    const yHs = 3.0 + idx * 0.85;
+    slide7.addShape(pptx.ShapeType.roundRect, {
+      x: 7.1,
+      y: yHs,
+      w: 5.1,
+      h: 0.72,
+      rectRadius: 0.05,
+      fill: { color: C.BG_DARK },
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide8.addText(oc.stat, {
-      x: xPos + 0.2,
-      y: yPos + 0.2,
-      w: 2.2,
-      h: 0.55,
-      fontSize: 24,
-      fontFace: 'Arial',
-      color: oc.color,
-      bold: true,
-    });
-
-    slide8.addText(oc.label, {
-      x: xPos + 0.2,
-      y: yPos + 0.8,
-      w: 2.2,
-      h: 0.35,
-      fontSize: 11,
+    slide7.addText(hs.name, {
+      x: 7.25,
+      y: yHs + 0.1,
+      w: 4.8,
+      h: 0.25,
+      fontSize: 10,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide8.addText(oc.detail, {
-      x: xPos + 0.2,
-      y: yPos + 1.2,
-      w: 2.2,
-      h: 0.95,
-      fontSize: 9,
+    slide7.addText(hs.stats, {
+      x: 7.25,
+      y: yHs + 0.35,
+      w: 4.8,
+      h: 0.25,
+      fontSize: 8.5,
       fontFace: 'Arial',
-      color: C.TEXT_MUTED,
-      lineSpacing: 13,
+      color: C.GOLD,
     });
   });
 
   // =========================================================================
-  // GENERATE ARRAYBUFFER & INJECT SLIDE TRANSITIONS VIA JSZIP
+  // SLIDE 8: Machine Learning Viability & Relational Schema (Page 8 of 8)
   // =========================================================================
-  const rawArrayBuffer = (await pptx.write({ outputType: 'arraybuffer' })) as ArrayBuffer;
-
-  // Load the PPTX zip archive
-  const zip = await JSZip.loadAsync(rawArrayBuffer);
-
-  // Find all slide XML files
-  const slideFiles = Object.keys(zip.files).filter(
-    (f) => f.startsWith('ppt/slides/slide') && f.endsWith('.xml')
+  const slide8 = addMasterSlide(
+    'Scikit-Learn ML Viability Pipeline & Relational Data Architecture',
+    8,
+    'Summarize the ML ensemble feature weights (Footfall, Capital, Competitor density), the 14-table 3NF schema, and automated risk diagnostics.'
   );
 
-  // Inject OpenXML slide transitions into each slide
-  for (let i = 0; i < slideFiles.length; i++) {
-    const filename = slideFiles[i];
-    let xml = await zip.file(filename)!.async('string');
+  const mlWeightsData = [
+    {
+      name: 'Feature Weight (%)',
+      labels: ['Footfall Density', 'Capital Adequacy', 'Competitor Density', 'Demographic Income', 'Seasonality'],
+      values: [32, 26, 21, 14, 7],
+    },
+  ];
 
-    if (!xml.includes('<p:transition')) {
-      // Alternate between Fade and Push transitions for high visual appeal
-      const transitionXml =
-        i % 2 === 0
-          ? '<p:transition spd="med" advClick="1"><p:fade/></p:transition>'
-          : '<p:transition spd="med" advClick="1"><p:push dir="l"/></p:transition>';
-
-      // Insert immediately before </p:sld>
-      xml = xml.replace('</p:sld>', transitionXml + '</p:sld>');
-      zip.file(filename, xml);
-    }
-  }
-
-  // Generate finalized PPTX blob with native transitions
-  const finalBlob = await zip.generateAsync({
-    type: 'blob',
-    mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  slide8.addChart(pptx.ChartType.bar, mlWeightsData, {
+    x: 0.8,
+    y: 1.6,
+    w: 5.6,
+    h: 5.0,
+    barDir: 'bar',
+    chartColors: [C.GOLD],
+    showLegend: false,
+    showValue: true,
+    dataLabelColor: C.TEXT_WHITE,
+    dataLabelFontSize: 9,
+    valAxisLabelColor: C.TEXT_MUTED,
+    catAxisLabelColor: C.TEXT_MUTED,
   });
 
-  // Trigger client download
-  const filename = plan?.businessName
-    ? `BizMind-${plan.businessName.replace(/[^a-zA-Z0-9]/g, '_')}-8Page-PitchDeck.pptx`
-    : 'BizMind-Executive-8Page-PitchDeck.pptx';
+  // Right column: 14 3NF Tables & Capstone Summary
+  slide8.addShape(pptx.ShapeType.roundRect, {
+    x: 6.8,
+    y: 1.6,
+    w: 5.7,
+    h: 2.7,
+    rectRadius: 0.1,
+    fill: { color: C.BG_CARD },
+    line: { color: C.CYAN, width: 1 },
+  });
 
-  const downloadUrl = URL.createObjectURL(finalBlob);
+  slide8.addText('14 RELATIONAL 3NF MYSQL TABLES', {
+    x: 7.05,
+    y: 1.8,
+    w: 5.2,
+    h: 0.25,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.CYAN,
+    bold: true,
+  });
+
+  slide8.addText('Normalized Relational Core with Foreign Key Cascading', {
+    x: 7.05,
+    y: 2.05,
+    w: 5.2,
+    h: 0.35,
+    fontSize: 12,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    bold: true,
+  });
+
+  const schemaTables = [
+    '`users` & `admin_logs`',
+    '`business_categories` & `locations`',
+    '`businesses` & `market_data`',
+    '`competitors` & `saved_businesses`',
+    '`business_plans` & `financial_projections`',
+    '`predictions` & `recommendations`',
+  ];
+
+  schemaTables.forEach((st, idx) => {
+    const xT = idx % 2 === 0 ? 7.05 : 9.7;
+    const yT = 2.45 + Math.floor(idx / 2) * 0.5;
+    slide8.addText(`• ${st}`, {
+      x: xT,
+      y: yT,
+      w: 2.5,
+      h: 0.4,
+      fontSize: 8.5,
+      fontFace: 'Arial',
+      color: C.TEXT_MUTED,
+    });
+  });
+
+  // Capstone Defense Summary
+  slide8.addShape(pptx.ShapeType.roundRect, {
+    x: 6.8,
+    y: 4.5,
+    w: 5.7,
+    h: 2.1,
+    rectRadius: 0.1,
+    fill: { color: C.BG_CARD },
+    line: { color: C.GOLD, width: 1 },
+  });
+
+  slide8.addText('CAPSTONE PLATFORM READINESS', {
+    x: 7.05,
+    y: 4.7,
+    w: 5.2,
+    h: 0.25,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.GOLD,
+    bold: true,
+  });
+
+  slide8.addText('Production-Grade Engineering & Zero API Cost', {
+    x: 7.05,
+    y: 4.95,
+    w: 5.2,
+    h: 0.35,
+    fontSize: 12,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    bold: true,
+  });
+
+  slide8.addText(
+    'BizMind eliminates expensive proprietary Google Maps API billing with 100% open-source spatial GIS (Leaflet + OpenStreetMap), backed by deterministic financial feasibility calculus, multi-venture comparisons, and calibrated Scikit-learn viability ensembles.',
+    {
+      x: 7.05,
+      y: 5.35,
+      w: 5.2,
+      h: 1.1,
+      fontSize: 9,
+      fontFace: 'Arial',
+      color: C.TEXT_MUTED,
+      lineSpacing: 14,
+    }
+  );
+
+  // =========================================================================
+  // Generate Base PPTX Blob
+  // =========================================================================
+  const pptxBlob = (await pptx.write({ outputType: 'blob' })) as Blob;
+
+  // =========================================================================
+  // Inject PowerPoint Native Transitions (<p:transition>) via JSZip
+  // =========================================================================
+  try {
+    const zip = await JSZip.loadAsync(pptxBlob);
+    const slideFiles = Object.keys(zip.files).filter((fileName) =>
+      fileName.match(/ppt\/slides\/slide\d+\.xml/)
+    );
+
+    for (let i = 0; i < slideFiles.length; i++) {
+      const fileName = slideFiles[i];
+      let xmlContent = await zip.files[fileName].async('text');
+
+      // Add push/fade transition if not already present
+      if (!xmlContent.includes('<p:transition')) {
+        const transitionXml =
+          i % 2 === 0
+            ? '<p:transition spd="med"><p:push dir="r"/></p:transition></p:sld>'
+            : '<p:transition spd="med"><p:fade/></p:transition></p:sld>';
+        xmlContent = xmlContent.replace('</p:sld>', transitionXml);
+        zip.file(fileName, xmlContent);
+      }
+    }
+
+    const enhancedBlob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    });
+
+    downloadBlob(
+      enhancedBlob,
+      plan?.businessName
+        ? `${plan.businessName.toLowerCase().replace(/\s+/g, '_')}_bizmind_pitch_deck.pptx`
+        : 'bizmind_platform_pitch_deck.pptx'
+    );
+  } catch (zipErr) {
+    console.warn('Failed to inject transitions, downloading standard PPTX:', zipErr);
+    downloadBlob(
+      pptxBlob,
+      plan?.businessName
+        ? `${plan.businessName.toLowerCase().replace(/\s+/g, '_')}_bizmind_pitch_deck.pptx`
+        : 'bizmind_platform_pitch_deck.pptx'
+    );
+  }
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.download = filename;
+  a.href = url;
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(downloadUrl);
+  URL.revokeObjectURL(url);
 }

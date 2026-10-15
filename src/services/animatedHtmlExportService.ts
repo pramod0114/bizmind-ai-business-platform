@@ -2,6 +2,7 @@
  * BizMind – Standalone Animated HTML Presentation Generator (8 Core Slides)
  * Generates a self-contained, offline-ready animated HTML slide deck
  * with CSS/JS motion effects, vector charts, interactive location radar, and keyboard navigation.
+ * Synchronized with the technical architecture of the BizMind platform.
  */
 import { BusinessPlan } from '../types';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
@@ -22,7 +23,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${planName} – 8-Page Animated Project Pitch Deck</title>
+  <title>${planName} – Technical Architecture & Feasibility Presentation</title>
   <style>
     :root {
       --bg-dark: #0A0D14;
@@ -59,7 +60,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 50;
+      z-index: 10;
     }
     .brand {
       display: flex;
@@ -69,108 +70,125 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
     .brand-icon {
       width: 32px;
       height: 32px;
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid var(--accent-gold);
       border-radius: 8px;
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 900;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 900;
-      color: var(--accent-gold);
     }
-    .brand-text h1 { font-size: 14px; font-weight: 700; color: #fff; }
-    .brand-text p { font-size: 11px; color: var(--text-muted); }
+    .brand-text h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
 
-    .controls { display: flex; gap: 8px; align-items: center; }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .btn {
-      background: #121722;
+      background: #141824;
       border: 1px solid var(--bg-card-border);
       color: var(--text-muted);
       padding: 6px 14px;
       border-radius: 8px;
       font-size: 12px;
-      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      font-weight: 600;
+      transition: all 0.2s;
     }
-    .btn:hover { background: #1E2433; color: #fff; border-color: var(--accent-gold); }
-    .btn-gold { background: var(--accent-gold); color: #0A0D14; font-weight: 800; border: none; }
-    .btn-gold:hover { background: #D97706; color: #000; }
+    .btn:hover {
+      background: #1A2030;
+      color: #fff;
+      border-color: var(--text-dim);
+    }
+    .btn-gold {
+      background: var(--accent-gold);
+      color: #000;
+      border-color: var(--accent-gold);
+    }
+    .btn-gold:hover {
+      background: #e59306;
+      color: #000;
+    }
 
-    /* Progress Line */
+    /* Progress Bar */
     .progress-bar {
-      width: 100%;
       height: 3px;
-      background: #121722;
+      background: #141824;
+      width: 100%;
     }
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--accent-gold), var(--accent-cyan));
+      background: var(--accent-gold);
       width: 12.5%;
-      transition: width 0.4s ease;
+      transition: width 0.3s ease;
     }
 
-    /* Slide Arena */
+    /* Main Slide Arena */
     main {
       flex: 1;
-      position: relative;
       padding: 36px 48px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      position: relative;
       overflow-y: auto;
     }
 
     .slide {
-      width: 100%;
-      max-width: 1080px;
       display: none;
       opacity: 0;
-      transform: translateY(16px);
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(12px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      height: 100%;
     }
     .slide.active {
       display: flex;
       flex-direction: column;
+      justify-content: center;
       opacity: 1;
       transform: translateY(0);
     }
 
     .slide-tag {
       font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      font-family: monospace;
       color: var(--accent-gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 1px;
       margin-bottom: 6px;
     }
     .slide-title {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 800;
       color: #fff;
       margin-bottom: 4px;
       line-height: 1.2;
     }
     .slide-subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       line-height: 1.5;
     }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 
     .card {
       background: var(--bg-card);
       border: 1px solid var(--bg-card-border);
-      border-radius: 14px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 16px;
       transition: border-color 0.2s;
     }
     .card:hover { border-color: rgba(245, 158, 11, 0.4); }
@@ -180,14 +198,14 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 280px;
+      height: 220px;
     }
     .donut-legend {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-      font-size: 11px;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 10px;
       color: var(--text-muted);
     }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -196,20 +214,20 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
     /* Bar/Line SVG styling */
     .chart-box {
       width: 100%;
-      height: 260px;
+      height: 220px;
       background: #0D111A;
       border: 1px solid var(--bg-card-border);
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 10px;
+      padding: 12px;
     }
 
     /* Radar Map Simulator */
     .radar-box {
       width: 100%;
-      height: 300px;
+      height: 260px;
       background: #0B0E17;
       border: 1px solid var(--bg-card-border);
-      border-radius: 14px;
+      border-radius: 12px;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -226,7 +244,7 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(245, 158, 11, 0.2) 0deg, transparent 60deg);
+      background: conic-gradient(from 0deg, rgba(245, 158, 11, 0.25) 0deg, transparent 60deg);
       animation: sweep 4s linear infinite;
     }
     @keyframes sweep {
@@ -253,7 +271,6 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       color: var(--text-dim);
     }
 
-    /* Keyboard Nav Helpers */
     .kbd {
       background: #121722;
       border: 1px solid var(--bg-card-border);
@@ -271,8 +288,8 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
     <div class="brand">
       <div class="brand-icon">B</div>
       <div class="brand-text">
-        <h1>${planName} – Executive Pitch Deck</h1>
-        <p>BizMind AI Decision Support Platform • 8 Comprehensive Pages</p>
+        <h1>BIZMIND PLATFORM ARCHITECTURE</h1>
+        <p>AI Business Planning, Micro-Radius Location GIS & ML Success Prediction</p>
       </div>
     </div>
     <div class="controls">
@@ -292,89 +309,113 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
   <main>
     <!-- Slide 1: Platform Vision & Hero -->
     <div class="slide active" id="slide-1">
-      <div class="slide-tag">Executive Overview • Page 01 of 08</div>
-      <div class="slide-title">${planName}</div>
-      <div class="slide-subtitle">Where Spatial Demographics Meet Financial Precision — Complete Venture Dossier for ${location}</div>
+      <div class="slide-tag">01 / Project Overview • Page 01 of 08</div>
+      <div class="slide-title">BIZMIND: AI Business Planning & Location Intelligence</div>
+      <div class="slide-subtitle">Plan Smarter. Analyze Better. Build with Confidence. — Empirical decision-support platform for modern business ventures.</div>
 
       <div class="grid-4" style="margin-top: 12px;">
         <div class="card">
           <div style="font-size: 10px; color: var(--accent-gold); font-weight: 700; text-transform: uppercase;">Startup CapEx Outlay</div>
-          <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">${capex}</div>
-          <div style="font-size: 11px; color: var(--text-dim);">Turnkey launch capital</div>
+          <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;">${capex}</div>
+          <div style="font-size: 10px; color: var(--text-dim);">Turnkey launch capital</div>
         </div>
         <div class="card">
           <div style="font-size: 10px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase;">Fixed Burn (OpEx)</div>
-          <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">${opex}</div>
-          <div style="font-size: 11px; color: var(--text-dim);">Recurring monthly overhead</div>
+          <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;">${opex}</div>
+          <div style="font-size: 10px; color: var(--text-dim);">Recurring monthly overhead</div>
         </div>
         <div class="card">
           <div style="font-size: 10px; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase;">Projected Margin</div>
-          <div style="font-size: 26px; font-weight: 800; color: var(--accent-emerald); margin: 4px 0;">${profitMargin}</div>
-          <div style="font-size: 11px; color: var(--text-dim);">Net operating return</div>
+          <div style="font-size: 24px; font-weight: 800; color: var(--accent-emerald); margin: 4px 0;">${profitMargin}</div>
+          <div style="font-size: 10px; color: var(--text-dim);">Net operating return</div>
         </div>
         <div class="card">
           <div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; text-transform: uppercase;">Payback Period</div>
-          <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">${payback}</div>
-          <div style="font-size: 11px; color: var(--text-dim);">Capital recovery window</div>
+          <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;">${payback}</div>
+          <div style="font-size: 10px; color: var(--text-dim);">Capital recovery window</div>
         </div>
       </div>
 
-      <div class="card" style="margin-top: 20px; border-color: rgba(245, 158, 11, 0.3);">
-        <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px;">The 4 Pillars of Decision Intelligence:</div>
-        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-          1. Deterministic Unit Economics &nbsp;•&nbsp; 2. Dual-Engine Spatial Competitor Radar &nbsp;•&nbsp; 3. Multi-Scenario Solvency Stress-Testing &nbsp;•&nbsp; 4. Calibrated ML Success Regressor
+      <div class="grid-4" style="margin-top: 16px;">
+        <div class="card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-cyan);">Spatial GIS Radar</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Micro-radius competitor indexing (500m-5km) using Leaflet & OpenStreetMap with 0 API cost.</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-gold);">Financial Engine</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Deterministic unit economics, contribution margin, break-even calculus, and 12-month compounding cash curves.</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald);">Solvency Stress-Testing</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Multi-scenario sensitivity simulations under market downturn (-20%) and cost inflation (+5%).</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-purple);">Predictive ML</div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Scikit-Learn Random Forest and Gradient Boosting classifier with automated risk diagnostics.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: System Architecture & Technical Stack -->
+    <div class="slide" id="slide-2">
+      <div class="slide-tag">02 / Technical Stack • Page 02 of 08</div>
+      <div class="slide-title">Full-Stack Technical Architecture & Monorepo Design</div>
+      <div class="slide-subtitle">Decoupled multi-tier architecture delivering high-throughput spatial queries, deterministic math, and ML inference</div>
+
+      <div class="grid-3">
+        <div class="card" style="border-top: 3px solid var(--accent-cyan);">
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-cyan); font-weight: 700;">TIER 1: CLIENT SPA</div>
+          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0 8px;">React 19 + TypeScript</div>
+          <ul style="font-size: 11px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
+            <li>React Router DOM v7 client routing</li>
+            <li>Tailwind CSS v4 & Framer Motion transitions</li>
+            <li>Leaflet 1.9 GIS container with dark tiles</li>
+            <li>Recharts vector visualization charts</li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-top: 3px solid var(--accent-gold);">
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-gold); font-weight: 700;">TIER 2: API BROKER</div>
+          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0 8px;">Node.js / Express REST</div>
+          <ul style="font-size: 11px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
+            <li>Central JWT perimeter & role access control</li>
+            <li>Deterministic Break-Even & ROI calculation engines</li>
+            <li>MySQL 8.0 pool with ACID in-memory fallback</li>
+            <li>Request logging and audit telemetry</li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-top: 3px solid var(--accent-emerald);">
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-emerald); font-weight: 700;">TIER 3: DATA & ML</div>
+          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0 8px;">Python FastAPI + 3NF MySQL</div>
+          <ul style="font-size: 11px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
+            <li>Python 3.11 FastAPI serving /predict endpoints</li>
+            <li>Scikit-Learn Random Forest ensemble pipelines</li>
+            <li>14 Normalized 3NF relational tables in MySQL</li>
+            <li>Zero-cost Leaflet & OpenStreetMap spatial layer</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px; border-color: rgba(245, 158, 11, 0.3);">
+        <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">Core Architecture Principle: Strict Layer Separation</div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+          The frontend maintains zero business secrets or database credentials. The Express API acts as the secure central broker, orchestrating relational database queries and invoking the isolated Python statistical modeling microservice.
         </p>
       </div>
     </div>
 
-    <!-- Slide 2: The Core Problem -->
-    <div class="slide" id="slide-2">
-      <div class="slide-tag">Market Need & Friction • Page 02 of 08</div>
-      <div class="slide-title">The $1.3T Startup Failure Epidemic: Why 90% Collapse</div>
-      <div class="slide-subtitle">Entrepreneurs fail not from poor products, but from preventable blind spots in location selection and static financial spreadsheets</div>
-
-      <div class="grid-2">
-        <div class="card" style="border-left: 4px solid var(--accent-rose);">
-          <div style="font-size: 28px; font-weight: 900; color: var(--accent-rose);">42%</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0;">Misjudged Location Demand & Saturation</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Committing to expensive long-term commercial leases based on surface foot-traffic impressions rather than empirical competitor clustering.</p>
-          <div style="margin-top: 8px; font-size: 11px; color: var(--accent-emerald);"><strong>BizMind Solution:</strong> Isochrone radius indexing (500m to 5km).</div>
-        </div>
-
-        <div class="card" style="border-left: 4px solid var(--accent-gold);">
-          <div style="font-size: 28px; font-weight: 900; color: var(--accent-gold);">29%</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0;">Premature Cash Depletion & Burnout</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Static spreadsheets fail to model footfall ramp-up drag and variable cost spikes, exhausting cash reserves before achieving break-even.</p>
-          <div style="margin-top: 8px; font-size: 11px; color: var(--accent-emerald);"><strong>BizMind Solution:</strong> 3-month dynamic working capital buffers.</div>
-        </div>
-
-        <div class="card" style="border-left: 4px solid var(--accent-cyan);">
-          <div style="font-size: 28px; font-weight: 900; color: var(--accent-cyan);">23%</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0;">Distorted Pricing & Omitted COGS</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Setting price points without granular contribution margins, inventory spoilage, merchant processing fees, or utility escalations.</p>
-          <div style="margin-top: 8px; font-size: 11px; color: var(--accent-emerald);"><strong>BizMind Solution:</strong> Granular contribution margin calculus.</div>
-        </div>
-
-        <div class="card" style="border-left: 4px solid var(--accent-purple);">
-          <div style="font-size: 28px; font-weight: 900; color: var(--accent-purple);">19%</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0;">Blind to Undetected Competitor Clusters</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Failing to track nearby complementary vs direct rivals, allowing aggressive local competitors to capture prime customer corridors.</p>
-          <div style="margin-top: 8px; font-size: 11px; color: var(--accent-emerald);"><strong>BizMind Solution:</strong> Live Google Places & OSM Overpass discovery.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 3: Startup Capital Allocation (Donut Chart) -->
+    <!-- Slide 3: Deterministic Financial Feasibility (Donut Chart) -->
     <div class="slide" id="slide-3">
-      <div class="slide-tag">Capital Allocation • Page 03 of 08</div>
-      <div class="slide-title">Startup Capital Allocation & Working Capital Reserves</div>
-      <div class="slide-subtitle">Native vector breakdown of initial CapEx launch expenditure and operating safety runway</div>
+      <div class="slide-tag">03 / Financial Feasibility • Page 03 of 08</div>
+      <div class="slide-title">Deterministic Financial Feasibility & Unit Economics Engine</div>
+      <div class="slide-subtitle">Mathematical modeling replacing spreadsheets with exact unit economics formulas, break-even calculus, and CapEx sizing</div>
 
       <div class="grid-2" style="align-items: center;">
         <div class="card">
-          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px; text-transform: uppercase;">CapEx Allocation Breakdown</div>
+          <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 8px; text-transform: uppercase;">Startup CapEx Allocation</div>
           <div class="donut-container">
-            <svg viewBox="0 0 100 100" width="180" height="180">
+            <svg viewBox="0 0 100 100" width="160" height="160">
               <circle cx="50" cy="50" r="35" fill="none" stroke="#FFBF24" stroke-width="16" stroke-dasharray="70 200" stroke-dashoffset="0" />
               <circle cx="50" cy="50" r="35" fill="none" stroke="#38BDF8" stroke-width="16" stroke-dasharray="60 200" stroke-dashoffset="-70" />
               <circle cx="50" cy="50" r="35" fill="none" stroke="#10B981" stroke-width="16" stroke-dasharray="45 200" stroke-dashoffset="-130" />
@@ -383,26 +424,38 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
           </div>
           <div class="donut-legend">
             <div class="legend-item"><span class="legend-dot" style="background:#FFBF24;"></span> Property Deposit (32%)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#38BDF8;"></span> Interior Setup (35%)</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#10B981;"></span> Equipment (23%)</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#38BDF8;"></span> Interior Fitout (35%)</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#10B981;"></span> Machinery & Equip (23%)</div>
             <div class="legend-item"><span class="legend-dot" style="background:#A855F7;"></span> Tech & Inventory (10%)</div>
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           <div class="card">
-            <div style="font-size: 11px; color: var(--text-muted);">Total Launch Outlay</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">${capex}</div>
-            <div style="font-size: 10px; color: var(--text-dim);">Fixed startup capital required</div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Contribution Margin per Unit</span>
+              <span style="font-size: 10px; font-family: monospace; color: var(--accent-gold);">CM = P - V</span>
+            </div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">$180.00 / Customer</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Net revenue per transaction contributing directly to fixed operational overhead.</div>
           </div>
+
           <div class="card">
-            <div style="font-size: 11px; color: var(--text-muted);">3-Month Working Capital Safety Reserve</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--accent-cyan); margin: 2px 0;">$495,000</div>
-            <div style="font-size: 10px; color: var(--text-dim);">Ensures survival during customer footfall ramp-up</div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Break-Even Sales Volume</span>
+              <span style="font-size: 10px; font-family: monospace; color: var(--accent-cyan);">Units = Fixed / CM</span>
+            </div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--accent-cyan); margin: 2px 0;">${beUnits} / Month</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Exact volume to clear ${opex} in fixed overhead.</div>
           </div>
-          <div class="card" style="border-color: rgba(245, 158, 11, 0.4);">
-            <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">CapEx Safety Verification</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">BizMind guarantees plans maintain at least 90 days of cash reserves prior to lease commitment.</div>
+
+          <div class="card">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Payback Period Horizon</span>
+              <span style="font-size: 10px; font-family: monospace; color: var(--accent-emerald);">CapEx / Annual Net Cash</span>
+            </div>
+            <div style="font-size: 20px; font-weight: 800; color: var(--accent-emerald); margin: 2px 0;">${payback}</div>
+            <div style="font-size: 10px; color: var(--text-muted);">Full capital recovery after covering operational overhead and working capital reserves.</div>
           </div>
         </div>
       </div>
@@ -410,271 +463,314 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
 
     <!-- Slide 4: 12-Month Cash Flow & Break-Even -->
     <div class="slide" id="slide-4">
-      <div class="slide-tag">Financial Trajectory • Page 04 of 08</div>
-      <div class="slide-title">12-Month Financial Trajectory: Revenue vs. Expenses</div>
-      <div class="slide-subtitle">Dynamic growth curve visualizing customer ramp-up crossing the operational expense floor</div>
+      <div class="slide-tag">04 / Cash Flow Trajectory • Page 04 of 08</div>
+      <div class="slide-title">12-Month Compounding Cash Flow & Break-Even Trajectory</div>
+      <div class="slide-subtitle">Dynamic growth curve visualizing footfall customer ramp-up crossing the operational expense floor</div>
 
       <div class="grid-2" style="align-items: center;">
         <div class="card">
-          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 8px;">Compounding Monthly Cash Curve</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 11px; font-weight: 700; color: #fff;">12-Month Cash Curve</span>
+            <span style="font-size: 10px; font-family: monospace; color: var(--accent-emerald);">Crossover @ Month 3</span>
+          </div>
           <div class="chart-box">
             <svg viewBox="0 0 300 150" width="100%" height="100%">
-              <!-- Grid lines -->
               <line x1="20" y1="130" x2="280" y2="130" stroke="#1E2433" stroke-width="1"/>
               <line x1="20" y1="80" x2="280" y2="80" stroke="#1E2433" stroke-width="1"/>
               <line x1="20" y1="30" x2="280" y2="30" stroke="#1E2433" stroke-width="1"/>
-              <!-- Expense line (Red dashed) -->
               <path d="M 20 85 Q 150 82 280 75" fill="none" stroke="#F43F5E" stroke-width="2" stroke-dasharray="4 4" />
-              <!-- Revenue line (Green solid) -->
               <path d="M 20 115 Q 120 85 280 25" fill="none" stroke="#10B981" stroke-width="3" />
-              <!-- Break-even intersection dot -->
               <circle cx="110" cy="84" r="5" fill="#FFBF24" stroke="#fff" stroke-width="2" />
               <text x="120" y="80" fill="#FFBF24" font-size="9" font-weight="bold">Month 3 Break-Even</text>
             </svg>
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           <div class="card">
-            <div style="font-size: 11px; color: var(--text-muted);">Break-Even Sales Volume</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--accent-gold);">${beUnits}</div>
-            <div style="font-size: 10px; color: var(--text-dim);">Monthly units to cover total expenses</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Break-Even Sales Floor</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--accent-gold);">${beRev} / mo</div>
+            <div style="font-size: 10px; color: var(--text-dim);">Minimum monthly revenue required to achieve cash-neutrality.</div>
           </div>
           <div class="card">
-            <div style="font-size: 11px; color: var(--text-muted);">Break-Even Revenue Floor</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--accent-cyan);">${beRev} / mo</div>
-            <div style="font-size: 10px; color: var(--text-dim);">Cash-neutral revenue threshold</div>
+            <div style="font-size: 11px; color: var(--text-muted);">3-Month Working Capital Runway</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--accent-cyan);">$495,000</div>
+            <div style="font-size: 10px; color: var(--text-dim);">Mandatory reserve absorbing footfall ramp-up volatility during M1-M2 launch.</div>
           </div>
           <div class="card">
-            <div style="font-size: 11px; color: var(--text-muted);">Demand Capacity Buffer</div>
-            <div style="font-size: 24px; font-weight: 800; color: var(--accent-emerald);">${beBuffer} Buffer</div>
-            <div style="font-size: 10px; color: var(--text-dim);">Downside protection against footfall dips</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Capacity Demand Safety Margin</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--accent-emerald);">${beBuffer} Buffer</div>
+            <div style="font-size: 10px; color: var(--text-dim);">Protection cushion against temporary pedestrian traffic dips.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 5: Scenario Stress-Testing -->
+    <!-- Slide 5: Scenario Sensitivity Analysis -->
     <div class="slide" id="slide-5">
-      <div class="slide-tag">Risk & Sensitivity • Page 05 of 08</div>
+      <div class="slide-tag">05 / Sensitivity Analysis • Page 05 of 08</div>
       <div class="slide-title">Solvency Stress-Testing: Multi-Scenario Sensitivity Analysis</div>
-      <div class="slide-subtitle">Rigorous empirical modeling proving solvency under severe market contraction and peak upside</div>
+      <div class="slide-subtitle">Simulating market downturn (-20% footfall, +5% cost) vs base target and growth expansion cases</div>
 
-      <div class="grid-3">
-        <div class="card" style="border-top: 4px solid var(--accent-rose);">
-          <div style="font-size: 11px; font-weight: 700; color: var(--accent-rose); text-transform: uppercase;">Conservative Case</div>
-          <div style="font-size: 18px; font-weight: 800; color: #fff; margin: 6px 0;">-20% Footfall Shock</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Footfall drops 20% while fixed expenses inflate 5%. Sized cash reserves absorb the slowdown with zero insolvency.</p>
-          <div style="margin-top: 12px; padding: 6px 10px; background: rgba(244, 63, 94, 0.1); border-radius: 6px; font-size: 11px; color: var(--accent-rose); font-weight: 700;">
-            Outcome: Solvent & Intact
+      <div class="grid-2" style="align-items: center;">
+        <div class="card">
+          <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 8px;">Revenue vs Expenses vs Profit</div>
+          <div class="chart-box">
+            <svg viewBox="0 0 300 150" width="100%" height="100%">
+              <!-- Conservative Case -->
+              <rect x="30" y="50" width="16" height="80" fill="#38BDF8" rx="2" />
+              <rect x="50" y="45" width="16" height="85" fill="#F43F5E" rx="2" />
+              <rect x="70" y="110" width="16" height="20" fill="#10B981" rx="2" />
+              <text x="35" y="145" fill="#94A3B8" font-size="8">Conservative</text>
+
+              <!-- Base Case -->
+              <rect x="120" y="30" width="16" height="100" fill="#38BDF8" rx="2" />
+              <rect x="140" y="48" width="16" height="82" fill="#F43F5E" rx="2" />
+              <rect x="160" y="85" width="16" height="45" fill="#10B981" rx="2" />
+              <text x="130" y="145" fill="#94A3B8" font-size="8">Base Target</text>
+
+              <!-- Optimistic Case -->
+              <rect x="210" y="15" width="16" height="115" fill="#38BDF8" rx="2" />
+              <rect x="230" y="42" width="16" height="88" fill="#F43F5E" rx="2" />
+              <rect x="250" y="65" width="16" height="65" fill="#10B981" rx="2" />
+              <text x="215" y="145" fill="#94A3B8" font-size="8">Optimistic</text>
+            </svg>
           </div>
         </div>
 
-        <div class="card" style="border-top: 4px solid var(--accent-gold);">
-          <div style="font-size: 11px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase;">Base Target Case</div>
-          <div style="font-size: 18px; font-weight: 800; color: #fff; margin: 6px 0;">Standard Operational Model</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Expected steady-state yielding healthy 22.9% net margin and full initial capital payback in 12.1 months.</p>
-          <div style="margin-top: 12px; padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; font-size: 11px; color: var(--accent-gold); font-weight: 700;">
-            Outcome: 12.1 Mo Payback
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="card" style="border-left: 3px solid var(--accent-gold);">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Conservative Case (-20% Demand)</span>
+              <span style="font-size: 9px; font-family: monospace; color: var(--accent-gold);">Solvent</span>
+            </div>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Absorbs 20% traffic drop and 5% cost surge. Generates $22.4k/mo profit with zero capital impairment.</p>
           </div>
-        </div>
 
-        <div class="card" style="border-top: 4px solid var(--accent-emerald);">
-          <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald); text-transform: uppercase;">Optimistic Case</div>
-          <div style="font-size: 18px; font-weight: 800; color: #fff; margin: 6px 0;">+20% High Repeat Volume</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Strong word-of-mouth customer frequency expands margins to 29.3%, accelerating payback to 8.5 months.</p>
-          <div style="margin-top: 12px; padding: 6px 10px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; font-size: 11px; color: var(--accent-emerald); font-weight: 700;">
-            Outcome: 8.5 Mo Accelerated
+          <div class="card" style="border-left: 3px solid var(--accent-emerald);">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Base Target Case</span>
+              <span style="font-size: 9px; font-family: monospace; color: var(--accent-emerald);">Target</span>
+            </div>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Steady-state operations yield 22.9% net margin ($72.6k/mo profit), recovering full CapEx outlay in 12.1 months.</p>
+          </div>
+
+          <div class="card" style="border-left: 3px solid var(--accent-cyan);">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="font-size: 11px; font-weight: 700; color: #fff;">Optimistic Case (+20% Expansion)</span>
+              <span style="font-size: 9px; font-family: monospace; color: var(--accent-cyan);">Growth</span>
+            </div>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">High repeat patronage scales net margin to 29.3% ($111.5k/mo), compressing capital payback to 8.5 months.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 6: Geospatial Location Intelligence -->
+    <!-- Slide 6: Geospatial GIS Engine -->
     <div class="slide" id="slide-6">
-      <div class="slide-tag">Spatial Intelligence • Page 06 of 08</div>
-      <div class="slide-title">Geospatial Intelligence: Micro-Radius Competitor Indexing</div>
-      <div class="slide-subtitle">Transforming physical geography into competitive dominance via isochrone dispersion and spatial algorithms</div>
+      <div class="slide-tag">06 / Spatial GIS Engine • Page 06 of 08</div>
+      <div class="slide-title">Geospatial GIS Engine & Micro-Radius Competitor Density</div>
+      <div class="slide-subtitle">Algorithmic spatial analysis transforming coordinate geography into quantifiable competitive advantages</div>
 
       <div class="grid-3">
         <div class="card">
           <div style="font-size: 26px; font-weight: 900; color: var(--accent-cyan);">01</div>
-          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0;">Isochrone Radii</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Calculates competitor density across 500m (walkshed), 1km (core), 2km (catchment), and 5km (vehicular draw) to evaluate real pedestrian pull.</p>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin: 4px 0;">Isochrone Radius Rings</div>
+          <div style="font-size: 9px; font-family: monospace; color: var(--accent-gold); background: #0A0D14; padding: 4px; border-radius: 4px; margin-bottom: 6px;">
+            Buffers: 500m, 1km, 2km, 5km Radii
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Calculates competitor density across pedestrian walkshed (500m) and vehicular trade area (5km) to model consumer travel friction.</p>
         </div>
+
         <div class="card">
           <div style="font-size: 26px; font-weight: 900; color: var(--accent-gold);">02</div>
-          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0;">Synergy vs Rivalry</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Separates zero-sum direct competitors from complementary demand hubs (metro stations, universities, office parks) that drive footfall.</p>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin: 4px 0;">Competitor Density Calculus</div>
+          <div style="font-size: 9px; font-family: monospace; color: var(--accent-gold); background: #0A0D14; padding: 4px; border-radius: 4px; margin-bottom: 6px;">
+            Density = Competitors / (π × r²)
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Computes competitor clustering per km². Detects high-density market saturation vs. underserved commercial white-space corridors.</p>
         </div>
+
         <div class="card">
           <div style="font-size: 26px; font-weight: 900; color: var(--accent-emerald);">03</div>
-          <div style="font-size: 15px; font-weight: 700; color: #fff; margin: 4px 0;">White-Space Discovery</div>
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Highlights dense consumer corridors where specific offerings (specialty coffee, artisan bakery, fitness) are completely unserved.</p>
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin: 4px 0;">Synergy vs Rivalry Scoring</div>
+          <div style="font-size: 9px; font-family: monospace; color: var(--accent-gold); background: #0A0D14; padding: 4px; border-radius: 4px; margin-bottom: 6px;">
+            Cannibalization vs Footfall Anchors
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">Distinguishes head-to-head rivals splitting market spend from synergistic demand hubs (transit stations, universities, corporate parks).</p>
         </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">Spatial Metrics Output:</div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+          Nearest Competitor Distance (m) &nbsp;•&nbsp; Average Competitor Proximity (km) &nbsp;•&nbsp; Farthest Catchment Boundary &nbsp;•&nbsp; Opportunity Viability Score (0-100)
+        </p>
       </div>
     </div>
 
-    <!-- Slide 7: LIVE DEMO: Location Intelligence Engine -->
+    <!-- Slide 7: Live Map Demo -->
     <div class="slide" id="slide-7">
-      <div class="slide-tag">Live Spatial Demo • Page 07 of 08</div>
+      <div class="slide-tag">07 / Live Spatial Demo • Page 07 of 08</div>
       <div class="slide-title">LIVE DEMO: Real-Time Location Intelligence & Spatial Radar</div>
-      <div class="slide-subtitle">Interactive spatial simulator — test corridor hotspots, adjust radius rings, and inspect real-time competitor clustering</div>
+      <div class="slide-subtitle">Interactive geospatial simulator — select hotspot corridors, toggle radius rings, and inspect real-time competitor clustering</div>
 
       <div class="grid-2" style="align-items: center;">
         <div class="radar-box">
           <div class="radar-sweep"></div>
-          <div class="radar-circle" style="width: 80px; height: 80px;"></div>
-          <div class="radar-circle" style="width: 160px; height: 160px;"></div>
-          <div class="radar-circle" style="width: 240px; height: 240px;"></div>
-
-          <!-- Target Pin -->
-          <div style="position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-gold); border: 2px solid #fff; box-shadow: 0 0 15px var(--accent-gold); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #000;">★</div>
-
-          <!-- Competitor Pins -->
-          <div class="radar-pin" style="top: 35%; left: 38%; background: var(--accent-rose);"></div>
-          <div class="radar-pin" style="top: 60%; left: 65%; background: var(--accent-gold);"></div>
-          <div class="radar-pin" style="top: 25%; left: 70%; background: var(--accent-cyan);"></div>
-          <div class="radar-pin" style="top: 75%; left: 30%; background: var(--accent-rose);"></div>
-          <div class="radar-pin" style="top: 45%; left: 22%; background: var(--accent-cyan);"></div>
-
-          <div style="position: absolute; bottom: 8px; left: 12px; font-size: 10px; color: var(--accent-emerald);">● Live Spatial Radar Active (500m - 3km)</div>
+          <div class="radar-circle" style="width: 70px; height: 70px;"></div>
+          <div class="radar-circle" style="width: 140px; height: 140px;"></div>
+          <div class="radar-circle" style="width: 210px; height: 210px;"></div>
+          <div class="radar-pin" style="top: 40%; left: 45%; background: var(--accent-rose); color: var(--accent-rose);"></div>
+          <div class="radar-pin" style="top: 60%; left: 55%; background: var(--accent-gold); color: var(--accent-gold);"></div>
+          <div class="radar-pin" style="top: 35%; left: 65%; background: var(--accent-cyan); color: var(--accent-cyan);"></div>
+          <div class="radar-pin" style="top: 65%; left: 35%; background: var(--accent-emerald); color: var(--accent-emerald);"></div>
+          <div style="position: absolute; bottom: 8px; left: 12px; font-size: 10px; font-family: monospace; color: var(--accent-gold);">
+            ● Center Pin: Indiranagar 100ft Road (12.9784° N, 77.6408° E)
+          </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div class="card" style="border-color: var(--accent-gold);">
-            <div style="font-size: 10px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase;">Live Opportunity Index</div>
-            <div style="font-size: 28px; font-weight: 800; color: #fff; margin: 4px 0;">78 / 100 Viability</div>
-            <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px; overflow: hidden; margin-top: 6px;">
-              <div style="width: 78%; height: 100%; background: linear-gradient(90deg, var(--accent-gold), var(--accent-emerald));"></div>
-            </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">High commercial feasibility: Favorable footfall density with unmet consumer demand in corridor.</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="card">
+            <div style="font-size: 11px; font-weight: 700; color: #fff;">Interactive Radar Controls</div>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">In the live web platform, the user can toggle between metro hotspots (Koramangala, Connaught Place, Bandra), adjust radius from 500m to 5km, and click POI pins for real-time rating and threat analysis.</p>
           </div>
-
-          <div class="grid-2">
-            <div class="card">
-              <div style="font-size: 10px; color: var(--text-muted);">Competitor Density</div>
-              <div style="font-size: 18px; font-weight: 800; color: var(--accent-cyan); margin-top: 2px;">4.8 / km²</div>
-            </div>
-            <div class="card">
-              <div style="font-size: 10px; color: var(--text-muted);">Nearest Rival Proximity</div>
-              <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin-top: 2px;">140 Meters</div>
-            </div>
+          <div class="card" style="border-left: 3px solid var(--accent-gold);">
+            <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">Live Recalculation Engine</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Dynamic competitor density per km², nearest rival distance, and algorithmic opportunity viability score update in sub-20ms.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 8: Machine Learning & Outcomes -->
+    <!-- Slide 8: Machine Learning Viability & Relational Schema -->
     <div class="slide" id="slide-8">
-      <div class="slide-tag">Predictive AI & Outcomes • Page 08 of 08</div>
-      <div class="slide-title">Machine Learning Regressor & Transformation Scorecard</div>
-      <div class="slide-subtitle">Dual-engine AI validation (Random Forest & XGBoost) with Responsible AI governance and proven business outcomes</div>
+      <div class="slide-tag">08 / ML Pipeline & Schema • Page 08 of 08</div>
+      <div class="slide-title">Scikit-Learn ML Viability Pipeline & Relational Data Architecture</div>
+      <div class="slide-subtitle">Calibrated predictive modeling, 14-table 3NF MySQL relational database, and end-to-end platform capabilities</div>
 
-      <div class="grid-2" style="align-items: center;">
+      <div class="grid-2">
         <div class="card">
-          <div style="font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 12px;">ML Feature Attribution Weights</div>
+          <div style="font-size: 11px; font-weight: 700; color: #fff; margin-bottom: 8px;">ML Feature Importance Weights (%)</div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;"><span>Footfall Density</span><span style="color:var(--accent-gold);">32%</span></div>
-              <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px;"><div style="width: 32%; height: 100%; background: var(--accent-gold); border-radius: 3px;"></div></div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+                <span>Commercial Footfall</span><span>32%</span>
+              </div>
+              <div style="background:#1E2433; height:6px; border-radius:3px; overflow:hidden; margin-top:2px;">
+                <div style="background:var(--accent-gold); width:32%; height:100%;"></div>
+              </div>
             </div>
             <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;"><span>Capital Adequacy</span><span style="color:var(--accent-gold);">26%</span></div>
-              <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px;"><div style="width: 26%; height: 100%; background: var(--accent-gold); border-radius: 3px;"></div></div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+                <span>Capital Adequacy</span><span>26%</span>
+              </div>
+              <div style="background:#1E2433; height:6px; border-radius:3px; overflow:hidden; margin-top:2px;">
+                <div style="background:var(--accent-cyan); width:26%; height:100%;"></div>
+              </div>
             </div>
             <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;"><span>Competitor Proximity</span><span style="color:var(--accent-gold);">21%</span></div>
-              <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px;"><div style="width: 21%; height: 100%; background: var(--accent-gold); border-radius: 3px;"></div></div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+                <span>Competitor Density</span><span>21%</span>
+              </div>
+              <div style="background:#1E2433; height:6px; border-radius:3px; overflow:hidden; margin-top:2px;">
+                <div style="background:var(--accent-emerald); width:21%; height:100%;"></div>
+              </div>
             </div>
             <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;"><span>Target Demographic Income</span><span style="color:var(--accent-gold);">14%</span></div>
-              <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px;"><div style="width: 14%; height: 100%; background: var(--accent-gold); border-radius: 3px;"></div></div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+                <span>Demographic Income Tier</span><span>14%</span>
+              </div>
+              <div style="background:#1E2433; height:6px; border-radius:3px; overflow:hidden; margin-top:2px;">
+                <div style="background:var(--accent-purple); width:14%; height:100%;"></div>
+              </div>
             </div>
             <div>
-              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;"><span>Seasonality Index</span><span style="color:var(--accent-gold);">7%</span></div>
-              <div style="width: 100%; height: 6px; background: #1E2433; border-radius: 3px;"><div style="width: 7%; height: 100%; background: var(--accent-gold); border-radius: 3px;"></div></div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted);">
+                <span>Seasonality Index</span><span>7%</span>
+              </div>
+              <div style="background:#1E2433; height:6px; border-radius:3px; overflow:hidden; margin-top:2px;">
+                <div style="background:var(--accent-rose); width:7%; height:100%;"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="grid-2">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           <div class="card">
-            <div style="font-size: 26px; font-weight: 900; color: var(--accent-gold);">85%</div>
-            <div style="font-size: 12px; font-weight: 700; color: #fff;">Planning Time Saved</div>
-            <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;">From 4 weeks to &lt;1 hour</div>
+            <div style="font-size: 11px; font-weight: 700; color: #fff;">14 Relational 3NF MySQL Tables</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+              <code>users</code>, <code>business_categories</code>, <code>locations</code>, <code>businesses</code>, <code>market_data</code>, <code>competitors</code>, <code>business_plans</code>, <code>financial_projections</code>, <code>predictions</code>, <code>recommendations</code>, <code>saved_businesses</code>, <code>reviews</code>, <code>notifications</code>, <code>admin_logs</code>.
+            </div>
           </div>
-          <div class="card">
-            <div style="font-size: 26px; font-weight: 900; color: var(--accent-cyan);">3.4x</div>
-            <div style="font-size: 12px; font-weight: 700; color: #fff;">Capital Efficiency</div>
-            <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;">Prevents premature burnout</div>
-          </div>
-          <div class="card">
-            <div style="font-size: 26px; font-weight: 900; color: var(--accent-emerald);">94%</div>
-            <div style="font-size: 12px; font-weight: 700; color: #fff;">Loan Approval Readiness</div>
-            <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;">Institutional-grade dossier</div>
-          </div>
-          <div class="card">
-            <div style="font-size: 26px; font-weight: 900; color: var(--accent-purple);">&lt; 20ms</div>
-            <div style="font-size: 12px; font-weight: 700; color: #fff;">Spatial Inference Latency</div>
-            <div style="font-size: 10px; color: var(--text-dim); margin-top: 2px;">Instantaneous radius queries</div>
+
+          <div class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+            <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700;">Capstone Platform Summary</div>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+              BizMind eliminates expensive proprietary Google Maps API billing with 100% open-source spatial GIS (Leaflet + OpenStreetMap), backed by deterministic financial feasibility calculus, multi-venture comparisons, and calibrated Scikit-learn viability ensembles.
+            </p>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Footer Keyboard Info -->
+  <!-- Footer Navigation Info -->
   <footer>
-    <div>BizMind • AI Business Planning Platform • 8 Interactive Pages</div>
-    <div>Use <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span> to Navigate</div>
+    <div>BIZMIND  •  AI-Powered Business Planning & Location Intelligence Platform</div>
+    <div>Use <span class="kbd">←</span> <span class="kbd">→</span> or <span class="kbd">Space</span> to navigate  •  Press <span class="kbd">F</span> for fullscreen</div>
   </footer>
 
+  <!-- Script for Navigation -->
   <script>
     let currentSlideIndex = 0;
     const totalSlides = 8;
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slide-counter');
+    const progressFill = document.getElementById('progress-fill');
 
-    function updateSlide() {
-      const slides = document.querySelectorAll('.slide');
-      slides.forEach((s, idx) => {
-        if (idx === currentSlideIndex) {
-          s.classList.add('active');
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+      currentSlideIndex = index;
+
+      slides.forEach((slide, i) => {
+        if (i === currentSlideIndex) {
+          slide.classList.add('active');
         } else {
-          s.classList.remove('active');
+          slide.classList.remove('active');
         }
       });
 
-      document.getElementById('slide-counter').textContent = 'Slide ' + (currentSlideIndex + 1) + ' / ' + totalSlides;
-      document.getElementById('progress-fill').style.width = (((currentSlideIndex + 1) / totalSlides) * 100) + '%';
+      counter.textContent = 'Slide ' + (currentSlideIndex + 1) + ' / ' + totalSlides;
+      progressFill.style.width = ((currentSlideIndex + 1) / totalSlides * 100) + '%';
     }
 
     function nextSlide() {
       if (currentSlideIndex < totalSlides - 1) {
-        currentSlideIndex++;
+        showSlide(currentSlideIndex + 1);
       } else {
-        currentSlideIndex = 0;
+        showSlide(0);
       }
-      updateSlide();
     }
 
     function prevSlide() {
       if (currentSlideIndex > 0) {
-        currentSlideIndex--;
+        showSlide(currentSlideIndex - 1);
       } else {
-        currentSlideIndex = totalSlides - 1;
+        showSlide(totalSlides - 1);
       }
-      updateSlide();
     }
 
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
+        document.documentElement.requestFullscreen().catch(err => console.error(err));
       } else {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(err => console.error(err));
       }
     }
 
-    window.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
         nextSlide();
@@ -690,16 +786,14 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
 </html>`;
 
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const filename = plan?.businessName
-    ? `BizMind-${plan.businessName.replace(/[^a-zA-Z0-9]/g, '_')}-8Page-AnimatedDeck.html`
-    : 'BizMind-Executive-8Page-AnimatedDeck.html';
-
-  const downloadUrl = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.download = filename;
+  a.href = url;
+  a.download = plan?.businessName
+    ? `${plan.businessName.toLowerCase().replace(/\s+/g, '_')}_presentation.html`
+    : 'bizmind_presentation.html';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(downloadUrl);
+  URL.revokeObjectURL(url);
 }

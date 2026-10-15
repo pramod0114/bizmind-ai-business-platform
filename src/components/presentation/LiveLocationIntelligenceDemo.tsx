@@ -3,20 +3,9 @@ import L from 'leaflet';
 import {
   MapPin,
   Compass,
-  Navigation,
   Radar,
-  Sparkles,
-  Layers,
-  ChevronRight,
-  TrendingUp,
-  ShieldCheck,
-  AlertCircle,
-  Eye,
-  CheckCircle,
-  Target,
   RefreshCw,
 } from 'lucide-react';
-import { Badge } from '../common/Badge';
 
 export interface HotspotPreset {
   id: string;
@@ -47,7 +36,7 @@ const PRESET_HOTSPOTS: HotspotPreset[] = [
     city: 'Bengaluru',
     category: 'Specialty Cafe & Eatery',
     coords: [12.9784, 77.6408],
-    description: 'Premier culinary and retail corridor with high tech-worker footfall and high disposable spend.',
+    description: 'Premier culinary and retail corridor with high footfall and disposable spend.',
   },
   {
     id: 'connaught',
@@ -55,7 +44,7 @@ const PRESET_HOTSPOTS: HotspotPreset[] = [
     city: 'New Delhi',
     category: 'Urban Bistro & Co-working',
     coords: [28.6315, 77.2167],
-    description: 'Iconic heritage commercial node with dense pedestrian footfall and transit connectivity.',
+    description: 'Heritage commercial node with dense pedestrian footfall and transit connectivity.',
   },
   {
     id: 'bandra',
@@ -63,7 +52,7 @@ const PRESET_HOTSPOTS: HotspotPreset[] = [
     city: 'Mumbai',
     category: 'Boutique Fitness & Lifestyle',
     coords: [19.0596, 72.8295],
-    description: 'High-income residential and cultural nexus with massive premium consumer demand.',
+    description: 'High-income residential and cultural nexus with premium consumer demand.',
   },
   {
     id: 'koramangala',
@@ -79,11 +68,10 @@ const PRESET_HOTSPOTS: HotspotPreset[] = [
     city: 'Islampur',
     category: 'Artisanal Cafe & Bakery',
     coords: [17.0505, 74.2635],
-    description: 'Rapidly expanding education and commercial corridor with prime first-mover advantage.',
+    description: 'Expanding education and commercial corridor with first-mover advantage.',
   },
 ];
 
-// Seeded competitors per preset
 const SEEDED_COMPETITORS: Record<string, DemoCompetitor[]> = {
   indiranagar: [
     { id: 'c1', name: 'Third Wave Coffee', category: 'Specialty Coffee', lat: 12.9792, lng: 77.6418, rating: 4.6, reviewsCount: 1420, distanceMeters: 140, threatLevel: 'High', cuisineOrType: 'Artisanal Pour-over' },
@@ -129,7 +117,6 @@ const SEEDED_COMPETITORS: Record<string, DemoCompetitor[]> = {
 export const LiveLocationIntelligenceDemo: React.FC = () => {
   const [selectedPresetId, setSelectedPresetId] = useState<string>('indiranagar');
   const [radiusMeters, setRadiusMeters] = useState<number>(1000);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [customCenter, setCustomCenter] = useState<[number, number] | null>(null);
   const [selectedCompetitor, setSelectedCompetitor] = useState<DemoCompetitor | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -144,20 +131,11 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
   const activePreset = PRESET_HOTSPOTS.find((p) => p.id === selectedPresetId) || PRESET_HOTSPOTS[0];
   const centerCoords = customCenter || activePreset.coords;
 
-  // Filter competitors within active radius and category
   const activeCompetitors = useMemo(() => {
     const list = SEEDED_COMPETITORS[selectedPresetId] || [];
-    return list.filter((comp) => {
-      const withinRadius = comp.distanceMeters <= radiusMeters;
-      const matchesCategory =
-        categoryFilter === 'all' ||
-        comp.category.toLowerCase().includes(categoryFilter.toLowerCase()) ||
-        comp.cuisineOrType.toLowerCase().includes(categoryFilter.toLowerCase());
-      return withinRadius && matchesCategory;
-    });
-  }, [selectedPresetId, radiusMeters, categoryFilter]);
+    return list.filter((comp) => comp.distanceMeters <= radiusMeters);
+  }, [selectedPresetId, radiusMeters]);
 
-  // Derived location metrics
   const metrics = useMemo(() => {
     const count = activeCompetitors.length;
     const areaSqKm = Math.PI * Math.pow(radiusMeters / 1000, 2);
@@ -174,10 +152,8 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
           )
         : null;
 
-    // Opportunity score algorithm (0 - 100)
-    // Higher when moderate competition (healthy demand) without extreme saturation
     let oppScore = 85;
-    if (count === 0) oppScore = 92; // Pure white space
+    if (count === 0) oppScore = 92;
     else if (count <= 3) oppScore = 88;
     else if (count <= 6) oppScore = 78;
     else if (count <= 10) oppScore = 68;
@@ -196,7 +172,6 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
     };
   }, [activeCompetitors, radiusMeters]);
 
-  // Trigger radar scan animation
   const handleTriggerScan = () => {
     setIsScanning(true);
     setScanPulse(true);
@@ -206,7 +181,6 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
     }, 800);
   };
 
-  // Initialize or update Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -225,7 +199,6 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
 
       L.control.zoom({ position: 'topright' }).addTo(map);
 
-      // On-map click to place target location
       map.on('click', (e: L.LeafletMouseEvent) => {
         setCustomCenter([e.latlng.lat, e.latlng.lng]);
       });
@@ -240,7 +213,6 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Draw central target pin
     if (centerMarkerRef.current) {
       centerMarkerRef.current.remove();
     }
@@ -261,11 +233,10 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
 
     centerMarkerRef.current = L.marker(centerCoords, { icon: targetIcon }).addTo(map);
     centerMarkerRef.current.bindTooltip(
-      `<strong>Proposed Business Site</strong><br/>${activePreset.name}`,
+      `<strong>Target Location</strong><br/>${activePreset.name}`,
       { direction: 'top', offset: [0, -18] }
     );
 
-    // Draw radius boundary circle
     if (circleLayerRef.current) {
       circleLayerRef.current.remove();
     }
@@ -280,7 +251,6 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
       dashArray: '6, 6',
     }).addTo(map);
 
-    // Draw competitor markers
     if (markersLayerRef.current) {
       markersLayerRef.current.clearLayers();
 
@@ -319,17 +289,11 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
       });
     }
 
-    // Adjust size after mount
     setTimeout(() => {
       map.invalidateSize();
     }, 150);
-
-    return () => {
-      // Keep map alive or clean up on unmount
-    };
   }, [centerCoords, radiusMeters, activeCompetitors, activePreset]);
 
-  // Clean destruction
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
@@ -341,10 +305,10 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
 
   return (
     <div className="w-full h-full flex flex-col justify-between space-y-3">
-      {/* Top Interactive Hotspot Selector & Quick Filters */}
+      {/* Top Filter Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-[#121722] p-2.5 rounded-xl border border-[#1E2433] items-center">
         {/* Preset Selector */}
-        <div className="sm:col-span-4 flex items-center gap-2">
+        <div className="sm:col-span-5 flex items-center gap-2">
           <MapPin className="w-4 h-4 text-[#FFBF24] shrink-0" />
           <select
             value={selectedPresetId}
@@ -364,15 +328,15 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
         </div>
 
         {/* Radius Selector */}
-        <div className="sm:col-span-4 flex items-center justify-center gap-1">
-          <span className="text-[10px] text-[#94A3B8] font-bold uppercase mr-1">Radius:</span>
+        <div className="sm:col-span-4 flex items-center justify-center gap-1.5">
+          <span className="text-[10px] text-[#94A3B8] font-semibold uppercase mr-1">Radius:</span>
           {[500, 1000, 2000, 3000].map((r) => (
             <button
               key={r}
               onClick={() => setRadiusMeters(r)}
-              className={`px-2 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                 radiusMeters === r
-                  ? 'bg-[#FFBF24] text-[#0B0B0C] shadow-sm font-bold'
+                  ? 'bg-[#FFBF24] text-[#0B0B0C] font-bold shadow-sm'
                   : 'bg-[#1E2433] text-[#94A3B8] hover:text-white'
               }`}
             >
@@ -382,21 +346,21 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
         </div>
 
         {/* Scan & Trigger Button */}
-        <div className="sm:col-span-4 flex items-center justify-end gap-2">
+        <div className="sm:col-span-3 flex items-center justify-end">
           <button
             onClick={handleTriggerScan}
             disabled={isScanning}
-            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-[#FFBF24]/15 text-[#FFBF24] border border-[#FFBF24]/40 hover:bg-[#FFBF24]/25 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#1E2433] text-white hover:border-[#FFBF24] border border-[#27272A] transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <Radar className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
-            <span>{isScanning ? 'Scanning Radius...' : 'Run Spatial Scan'}</span>
+            <Radar className={`w-3.5 h-3.5 text-[#FFBF24] ${isScanning ? 'animate-spin' : ''}`} />
+            <span>{isScanning ? 'Scanning...' : 'Scan Location'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main Interactive Stage: Map (Left) + Real-Time Scorecard (Right) */}
+      {/* Main Interactive Stage */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-[360px]">
-        {/* Interactive Map View */}
+        {/* Map */}
         <div className="lg:col-span-8 rounded-xl overflow-hidden border border-[#1E2433] relative bg-[#0B0B0C] flex flex-col">
           <div
             ref={mapContainerRef}
@@ -404,102 +368,91 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
             style={{ minHeight: '320px' }}
           />
 
-          {/* Radar Sweep Effect Overlay */}
           {scanPulse && (
             <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center bg-[#FFBF24]/5">
               <div className="w-64 h-64 rounded-full border-2 border-[#FFBF24] animate-ping opacity-60"></div>
             </div>
           )}
 
-          {/* Map Overlay Badge */}
-          <div className="absolute bottom-2 left-2 z-10 bg-[#0A0D14]/90 backdrop-blur-md px-2.5 py-1 rounded-md border border-[#1E2433] text-[10px] text-[#94A3B8] flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-            <span>Live Leaflet / OSM Engine • Click map to set custom site</span>
+          <div className="absolute bottom-2 left-2 z-10 bg-[#0A0D14]/90 backdrop-blur-md px-2.5 py-1 rounded border border-[#1E2433] text-[10px] text-[#94A3B8]">
+            Click map to set custom business coordinates
           </div>
 
-          {/* Legend */}
-          <div className="absolute top-2 left-2 z-10 bg-[#0A0D14]/90 backdrop-blur-md px-2 py-1 rounded-md border border-[#1E2433] text-[10px] text-white flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#FFBF24]"></span> Proposed Site
+          <div className="absolute top-2 left-2 z-10 bg-[#0A0D14]/90 backdrop-blur-md px-2.5 py-1 rounded border border-[#1E2433] text-[10px] text-white flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#FFBF24]"></span> Target Site
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Threat
             </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500"></span> Med Threat
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span> Medium Threat
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-sky-400"></span> Low Threat
             </span>
           </div>
         </div>
 
-        {/* Real-Time Live Spatial Scorecard & Competitor List */}
+        {/* Right Dashboard */}
         <div className="lg:col-span-4 flex flex-col justify-between space-y-2.5">
-          {/* Opportunity Score Gauge */}
-          <div className="p-3.5 rounded-xl bg-[#121722] border border-[#1E2433] space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-[#FFBF24] uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Live Opportunity Index
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                {metrics.saturationLevel} Saturation
-              </span>
+          {/* Opportunity Score */}
+          <div className="p-4 rounded-xl bg-[#121722] border border-[#1E2433] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-[#94A3B8] uppercase tracking-wider">Opportunity Rating</span>
+              <span className="font-semibold text-emerald-400">{metrics.saturationLevel} Saturation</span>
             </div>
 
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-extrabold text-white">{metrics.oppScore}</span>
-              <span className="text-xs text-[#94A3B8]">/ 100 Viability Rating</span>
+              <span className="text-xs text-[#94A3B8]">/ 100 Index</span>
             </div>
 
             <div className="w-full bg-[#1E2433] h-2 rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-amber-500 via-[#FFBF24] to-emerald-400"
+                className="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-amber-500 to-emerald-400"
                 style={{ width: `${metrics.oppScore}%` }}
               />
             </div>
             <p className="text-[11px] text-[#94A3B8] leading-tight">
               {metrics.oppScore >= 80
-                ? 'High market opportunity: Favorable density with unmet consumer demand in corridor.'
-                : metrics.oppScore >= 65
-                ? 'Moderate competition: Viable site requiring distinct brand and product differentiation.'
-                : 'Dense market cluster: Significant rival concentration; focus on specialized niche offerings.'}
+                ? 'High market opportunity with strong demand and healthy competitor spacing.'
+                : 'Dense market cluster with established competitors requiring distinct product offerings.'}
             </p>
           </div>
 
-          {/* Quick Metrics Grid */}
+          {/* Metrics */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="p-2.5 rounded-lg bg-[#121722] border border-[#1E2433]">
-              <div className="text-[10px] text-[#94A3B8]">Rivals in Radius</div>
-              <div className="text-lg font-bold text-white mt-0.5">{metrics.count} Businesses</div>
+            <div className="p-3 rounded-lg bg-[#121722] border border-[#1E2433]">
+              <div className="text-[10px] text-[#94A3B8]">Competitor Count</div>
+              <div className="text-lg font-bold text-white mt-0.5">{metrics.count} Verified</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[#121722] border border-[#1E2433]">
-              <div className="text-[10px] text-[#94A3B8]">Cluster Density</div>
+            <div className="p-3 rounded-lg bg-[#121722] border border-[#1E2433]">
+              <div className="text-[10px] text-[#94A3B8]">Spatial Density</div>
               <div className="text-lg font-bold text-sky-400 mt-0.5">{metrics.density} / km²</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[#121722] border border-[#1E2433]">
+            <div className="p-3 rounded-lg bg-[#121722] border border-[#1E2433]">
               <div className="text-[10px] text-[#94A3B8]">Nearest Rival</div>
               <div className="text-lg font-bold text-amber-400 mt-0.5">{metrics.nearest}</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-[#121722] border border-[#1E2433]">
-              <div className="text-[10px] text-[#94A3B8]">Avg Proximity</div>
+            <div className="p-3 rounded-lg bg-[#121722] border border-[#1E2433]">
+              <div className="text-[10px] text-[#94A3B8]">Average Distance</div>
               <div className="text-lg font-bold text-emerald-400 mt-0.5">{metrics.average}</div>
             </div>
           </div>
 
-          {/* Selected Competitor or Top Cluster List */}
+          {/* Competitor Detail */}
           <div className="p-3 rounded-xl bg-[#121722] border border-[#1E2433] flex-1 flex flex-col justify-between">
-            <div className="text-[10px] font-bold text-white uppercase tracking-wider mb-1.5 flex items-center justify-between">
-              <span>{selectedCompetitor ? 'Inspected Competitor' : 'Nearby Competitors'}</span>
-              <span className="text-[#64748B] text-[9px]">Click pins to inspect</span>
+            <div className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span>{selectedCompetitor ? 'Selected Competitor' : 'Nearby Businesses'}</span>
+              <span className="text-[#64748B] text-[9px]">Click markers to inspect</span>
             </div>
 
             {selectedCompetitor ? (
               <div className="p-2.5 rounded-lg bg-[#0A0D14] border border-[#27272A] space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white">{selectedCompetitor.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+                  <span className="text-[10px] text-amber-400 font-semibold">
                     {selectedCompetitor.threatLevel} Threat
                   </span>
                 </div>
@@ -508,7 +461,7 @@ export const LiveLocationIntelligenceDemo: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-[#64748B] pt-1 border-t border-[#1E2433]">
                   <span>★ {selectedCompetitor.rating} ({selectedCompetitor.reviewsCount} reviews)</span>
-                  <span className="text-[#FFBF24] font-semibold">{selectedCompetitor.distanceMeters}m from site</span>
+                  <span className="text-[#FFBF24] font-semibold">{selectedCompetitor.distanceMeters}m away</span>
                 </div>
                 <button
                   onClick={() => setSelectedCompetitor(null)}
