@@ -1,16 +1,22 @@
 /**
- * BizMind – Elite Advanced PowerPoint (.pptx) Generator (8 Core Project Slides)
- * Features:
- * - Standard Office 16:9 Widescreen Layout (13.333" x 7.5") with perfect margins
- * - Native PowerPoint Vector Charts (Doughnut, Clustered Bar, Line, Horizontal Bar)
+ * BizMind – Elite Advanced PowerPoint (.pptx) Generator (9 Academic & Project Slides)
+ * Fully aligned with Rajarambapu Institute of Technology (RIT) MCA Capstone Defense:
+ * - Slide 1: Official RIT Capstone Technical Report Title Cover with Team & Guide Details
+ * - Slide 2: Project Overview & Core Mission
+ * - Slide 3: 3-Tier Monorepo Technical Architecture
+ * - Slide 4: Deterministic Financial Feasibility Engine & Unit Economics (Native Vector Donut Chart)
+ * - Slide 5: 12-Month Compounding Cash Flow & Break-Even Curve (Native Vector Line Chart)
+ * - Slide 6: Multi-Scenario Sensitivity Stress-Testing (Native Vector Bar Chart)
+ * - Slide 7: Geospatial GIS Engine & Micro-Radius Calculus
+ * - Slide 8: LIVE DEMO: Real-Time Spatial Radar (Uran Islampur Narshhpur Road & Live API)
+ * - Slide 9: Scikit-Learn ML Viability Pipeline & 14-Table 3NF Schema (Native Vector Bar Chart)
+ * - RIT Logo & Institutional Badge embedded across ALL slides
  * - PowerPoint Slide Transitions (<p:transition>) injected via JSZip
- * - Strictly aligned to BizMind technical architecture and project modules (no generic filler)
- * - Exactly 8 comprehensive slides matching the web presentation deck
  */
 import pptxgen from 'pptxgenjs';
 import JSZip from 'jszip';
 import { BusinessPlan } from '../types';
-import { formatCurrency, formatPercentage } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<void> {
   const pptx = new pptxgen();
@@ -19,11 +25,9 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   pptx.defineLayout({ name: 'WIDE_16_9', width: 13.333, height: 7.5 });
   pptx.layout = 'WIDE_16_9';
 
-  pptx.author = 'BizMind AI Platform';
-  pptx.company = 'BizMind Decision Intelligence';
-  pptx.title = plan?.businessName
-    ? `${plan.businessName} - Technical Architecture & Feasibility Dossier`
-    : 'BizMind - AI Business Planning & Location Intelligence Platform';
+  pptx.author = 'Pramod Mahajan, Harshad Patil, Sakshi Randive, Rutika Deshmukh';
+  pptx.company = 'Rajarambapu Institute of Technology (RIT), Rajaramnagar';
+  pptx.title = 'BizMind - AI Business Planner & Success Prediction Platform (MCA Capstone Report)';
 
   // Master Color Palette
   const C = {
@@ -31,10 +35,10 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     BG_CARD: '121722',       // Elevated glass slate
     BG_CARD_LIGHT: '1E2433', // Border / separator line
     BG_CARD_HOVER: '252D3F', // Lighter container
-    GOLD: 'F59E0B',          // Core Amber/Gold brand
-    GOLD_LIGHT: 'FDE68A',    // Pale gold highlight
+    GOLD: 'FFC72C',          // Official RIT Gold / Amber brand
+    GOLD_DARK: 'D97706',     // Deep amber
+    RED_ACCENT: 'D8232A',    // RIT Dot Red
     CYAN: '0EA5E9',          // Modern tech cyan
-    CYAN_LIGHT: 'BAE6FD',    // Ice blue
     EMERALD: '10B981',       // Success / profit green
     ROSE: 'F43F5E',          // Alert / risk rose
     PURPLE: '8B5CF6',        // ML intelligence violet
@@ -43,27 +47,114 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     TEXT_DIM: '64748B',      // Footnotes
   };
 
-  // Helper: Adds consistent modern header, footer, and speaker notes
+  const TOTAL_SLIDES = 9;
+
+  // Helper: Adds consistent RIT logo badge on slide header
+  const addRitLogoBadge = (slide: any, x = 11.2, y = 0.45, w = 1.35, h = 0.42) => {
+    // Yellow card background
+    slide.addShape(pptx.ShapeType.roundRect, {
+      x,
+      y,
+      w,
+      h,
+      rectRadius: 0.05,
+      fill: { color: C.GOLD },
+      line: { color: 'B4840A', width: 1 },
+    });
+
+    // Bold 'rit' text with red accent dot
+    slide.addText('r', {
+      x: x + 0.1,
+      y: y + 0.03,
+      w: 0.25,
+      h: 0.24,
+      fontSize: 16,
+      fontFace: 'Arial Black',
+      color: '1C1B1F',
+      bold: true,
+    });
+
+    // Red square dot for 'i'
+    slide.addShape(pptx.ShapeType.rect, {
+      x: x + 0.44,
+      y: y + 0.07,
+      w: 0.07,
+      h: 0.07,
+      fill: { color: C.RED_ACCENT },
+    });
+
+    slide.addText('i', {
+      x: x + 0.38,
+      y: y + 0.07,
+      w: 0.2,
+      h: 0.22,
+      fontSize: 15,
+      fontFace: 'Arial Black',
+      color: '1C1B1F',
+      bold: true,
+    });
+
+    slide.addText('t', {
+      x: x + 0.58,
+      y: y + 0.03,
+      w: 0.25,
+      h: 0.24,
+      fontSize: 16,
+      fontFace: 'Arial Black',
+      color: '1C1B1F',
+      bold: true,
+    });
+
+    // Institutional subtext
+    slide.addText('RAJARAMBAPU INST OF TECH', {
+      x: x + 0.05,
+      y: y + 0.26,
+      w: w - 0.1,
+      h: 0.13,
+      fontSize: 5,
+      fontFace: 'Arial',
+      color: '2C2B2F',
+      bold: true,
+      align: 'center',
+    });
+  };
+
+  // Helper: Adds master slide background, RIT logo, header, and footer
   const addMasterSlide = (
     title: string,
     slideNumber: number,
     speakerNotes: string,
-    totalSlides = 8
+    category = 'RIT MCA CAPSTONE DEFENSE'
   ) => {
     const slide = pptx.addSlide();
     slide.background = { color: C.BG_DARK };
 
+    // Slide Category Tag
+    slide.addText(category.toUpperCase(), {
+      x: 0.8,
+      y: 0.4,
+      w: 8.0,
+      h: 0.25,
+      fontSize: 9,
+      fontFace: 'Arial',
+      color: C.GOLD,
+      bold: true,
+    });
+
     // Slide Main Title
     slide.addText(title, {
       x: 0.8,
-      y: 0.55,
-      w: 11.5,
-      h: 0.65,
-      fontSize: 22,
+      y: 0.65,
+      w: 10.0,
+      h: 0.6,
+      fontSize: 20,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
+
+    // Add RIT Logo Badge in top right corner
+    addRitLogoBadge(slide, 11.15, 0.4, 1.4, 0.45);
 
     // Decorative Accent Line under header
     slide.addShape(pptx.ShapeType.rect, {
@@ -84,21 +175,21 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     });
 
     // Footer Branding
-    slide.addText('BIZMIND  •  AI-Powered Business Planning & Location Intelligence Platform', {
+    slide.addText('Rajarambapu Institute of Technology (RIT)  •  Department of Computer Applications (MCA)  •  BizMind Platform', {
       x: 0.8,
       y: 7.05,
-      w: 9.0,
+      w: 9.5,
       h: 0.3,
-      fontSize: 9,
+      fontSize: 8.5,
       fontFace: 'Arial',
       color: C.TEXT_DIM,
     });
 
     // Slide Number Badge
-    slide.addText(`${slideNumber} / ${totalSlides}`, {
-      x: 10.3,
+    slide.addText(`${slideNumber} / ${TOTAL_SLIDES}`, {
+      x: 10.5,
       y: 7.05,
-      w: 2.2,
+      w: 2.0,
       h: 0.3,
       fontSize: 9,
       fontFace: 'Arial',
@@ -106,7 +197,6 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       align: 'right',
     });
 
-    // Add Presenter Speaker Notes
     if (speakerNotes) {
       slide.addNotes(speakerNotes);
     }
@@ -115,59 +205,236 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   };
 
   // =========================================================================
-  // SLIDE 1: Title & Hero Cover (Page 1 of 8)
+  // SLIDE 1: Official RIT Capstone Project Technical Report Cover (Page 1 of 9)
   // =========================================================================
   const slide1 = pptx.addSlide();
   slide1.background = { color: C.BG_DARK };
 
-  // Decorative ambient glow backdrop card
+  // Main backdrop card
   slide1.addShape(pptx.ShapeType.roundRect, {
     x: 0.8,
-    y: 0.6,
+    y: 0.5,
     w: 11.7,
-    h: 6.2,
+    h: 6.5,
     rectRadius: 0.15,
     fill: { color: C.BG_CARD },
     line: { color: C.BG_CARD_LIGHT, width: 1.5 },
   });
 
-  // Vertical brand ribbon
-  slide1.addShape(pptx.ShapeType.roundRect, {
+  // Top Institutional Metadata
+  slide1.addText('Academic Year: 2026 – 27', {
     x: 1.2,
-    y: 1.0,
-    w: 0.15,
-    h: 5.2,
-    rectRadius: 0.08,
-    fill: { color: C.GOLD },
+    y: 0.65,
+    w: 10.9,
+    h: 0.25,
+    fontSize: 10,
+    fontFace: 'Arial',
+    color: C.TEXT_MUTED,
+    align: 'center',
+    bold: true,
   });
 
-  const heroTitle = plan?.businessName ? plan.businessName : 'BIZMIND AI PLATFORM';
-  slide1.addText(heroTitle, {
-    x: 1.6,
-    y: 1.35,
-    w: 10.2,
-    h: 1.1,
-    fontSize: 34,
+  slide1.addText('(An Empowered Autonomous Institute, Affiliated to Shivaji University, Kolhapur)', {
+    x: 1.2,
+    y: 0.9,
+    w: 10.9,
+    h: 0.25,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.TEXT_DIM,
+    align: 'center',
+    italic: true,
+  });
+
+  slide1.addText('RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR', {
+    x: 1.2,
+    y: 1.15,
+    w: 10.9,
+    h: 0.35,
+    fontSize: 14,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    align: 'center',
+    bold: true,
+  });
+
+  slide1.addText('DEPARTMENT OF COMPUTER APPLICATIONS', {
+    x: 1.2,
+    y: 1.48,
+    w: 10.9,
+    h: 0.3,
+    fontSize: 11,
+    fontFace: 'Arial',
+    color: C.GOLD,
+    align: 'center',
+    bold: true,
+  });
+
+  // Centered Official RIT Logo
+  addRitLogoBadge(slide1, 5.2, 1.85, 2.9, 0.9);
+
+  // Master of Computer Applications Subtitle
+  slide1.addText('Master Of Computer Applications (MCA)', {
+    x: 1.2,
+    y: 2.85,
+    w: 10.9,
+    h: 0.3,
+    fontSize: 12,
+    fontFace: 'Arial',
+    color: C.TEXT_MUTED,
+    align: 'center',
+    bold: true,
+  });
+
+  slide1.addText('CAPSTONE PROJECT TECHNICAL REPORT ON', {
+    x: 1.2,
+    y: 3.15,
+    w: 10.9,
+    h: 0.28,
+    fontSize: 11,
+    fontFace: 'Arial',
+    color: C.TEXT_WHITE,
+    align: 'center',
+    bold: true,
+  });
+
+  // Project Title Highlight
+  slide1.addText('“BizMind – AI Business Planner & Success Prediction Platform”', {
+    x: 1.2,
+    y: 3.45,
+    w: 10.9,
+    h: 0.7,
+    fontSize: 24,
+    fontFace: 'Arial',
+    color: C.GOLD,
+    align: 'center',
+    bold: true,
+  });
+
+  // Left Card: Guidance
+  slide1.addShape(pptx.ShapeType.roundRect, {
+    x: 1.2,
+    y: 4.35,
+    w: 4.2,
+    h: 2.1,
+    rectRadius: 0.1,
+    fill: { color: C.BG_DARK },
+    line: { color: C.GOLD, width: 1.2 },
+  });
+
+  slide1.addText('UNDER THE GUIDANCE OF', {
+    x: 1.4,
+    y: 4.55,
+    w: 3.8,
+    h: 0.25,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.GOLD,
+    bold: true,
+  });
+
+  slide1.addText('Ms. A. R. Patil', {
+    x: 1.4,
+    y: 4.9,
+    w: 3.8,
+    h: 0.45,
+    fontSize: 16,
     fontFace: 'Arial',
     color: C.TEXT_WHITE,
     bold: true,
   });
 
+  slide1.addText('Department of Computer Applications\nRajarambapu Institute of Technology, Rajaramnagar', {
+    x: 1.4,
+    y: 5.45,
+    w: 3.8,
+    h: 0.7,
+    fontSize: 9.5,
+    fontFace: 'Arial',
+    color: C.TEXT_MUTED,
+    lineSpacing: 14,
+  });
+
+  // Right Card: Project Team (Submitted By)
+  slide1.addShape(pptx.ShapeType.roundRect, {
+    x: 5.6,
+    y: 4.35,
+    w: 6.5,
+    h: 2.1,
+    rectRadius: 0.1,
+    fill: { color: C.BG_DARK },
+    line: { color: C.CYAN, width: 1.2 },
+  });
+
+  slide1.addText('SUBMITTED BY (PROJECT TEAM)', {
+    x: 5.8,
+    y: 4.55,
+    w: 6.1,
+    h: 0.25,
+    fontSize: 9,
+    fontFace: 'Arial',
+    color: C.CYAN,
+    bold: true,
+  });
+
+  const studentTeam = [
+    { name: 'Pramod Rajendra Mahajan', roll: 'Roll No: 2547047' },
+    { name: 'Harshad Shahaji Patil', roll: 'Roll No: 2547062' },
+    { name: 'Sakshi Dnyaneshwar Randive', roll: 'Roll No: 2547048' },
+    { name: 'Rutika Rajesh Deshmukh', roll: 'Roll No: 2547025' },
+  ];
+
+  studentTeam.forEach((member, idx) => {
+    const col = idx % 2 === 0 ? 5.8 : 8.9;
+    const rowY = 4.95 + Math.floor(idx / 2) * 0.65;
+
+    slide1.addText(member.name, {
+      x: col,
+      y: rowY,
+      w: 3.0,
+      h: 0.3,
+      fontSize: 11,
+      fontFace: 'Arial',
+      color: C.TEXT_WHITE,
+      bold: true,
+    });
+
+    slide1.addText(member.roll, {
+      x: col,
+      y: rowY + 0.26,
+      w: 3.0,
+      h: 0.25,
+      fontSize: 9,
+      fontFace: 'Arial',
+      color: C.GOLD,
+    });
+  });
+
+  slide1.addNotes('Welcome to the official Master of Computer Applications Capstone Technical Presentation for BizMind, completed at Rajarambapu Institute of Technology, Rajaramnagar.');
+
+  // =========================================================================
+  // SLIDE 2: Project Overview & Core Mission (Page 2 of 9)
+  // =========================================================================
+  const slide2 = addMasterSlide(
+    'BIZMIND: AI Business Planning & Location Intelligence Platform',
+    2,
+    'Explain the core mission: Over 60% of startups fail from poor site selection and burn rate forecasting. BizMind solves this with 4 unified pillars.'
+  );
+
   const heroSubtitle = plan
     ? `Comprehensive Feasibility Dossier, Unit Economics & Geospatial Market Validation for ${plan.location || 'Target Location'}`
     : 'AI Business Planning, Micro-Radius Location GIS & Machine Learning Success Prediction Platform';
-  slide1.addText(heroSubtitle, {
-    x: 1.6,
-    y: 2.5,
-    w: 10.0,
-    h: 0.7,
-    fontSize: 13,
+
+  slide2.addText(heroSubtitle, {
+    x: 0.8,
+    y: 1.5,
+    w: 11.7,
+    h: 0.5,
+    fontSize: 12,
     fontFace: 'Arial',
     color: C.TEXT_MUTED,
-    lineSpacing: 18,
   });
 
-  // 4 Core Architecture Pillars on Cover
   const coverStats = [
     { label: 'MONOREPO STACK', val: 'React 19 + Node', sub: 'TypeScript & Express REST' },
     { label: 'RELATIONAL SCHEMA', val: '14 Tables (3NF)', sub: 'MySQL with Cascading FKs' },
@@ -176,58 +443,56 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   ];
 
   coverStats.forEach((st, idx) => {
-    const xPos = 1.6 + idx * 2.78;
-    slide1.addShape(pptx.ShapeType.roundRect, {
+    const xPos = 0.8 + idx * 2.95;
+    slide2.addShape(pptx.ShapeType.roundRect, {
       x: xPos,
-      y: 3.6,
-      w: 2.55,
-      h: 2.2,
+      y: 2.2,
+      w: 2.8,
+      h: 4.4,
       rectRadius: 0.1,
-      fill: { color: C.BG_CARD_LIGHT },
-      line: { color: idx === 0 ? C.GOLD : C.BG_CARD_HOVER, width: 1.2 },
+      fill: { color: C.BG_CARD },
+      line: { color: idx === 0 ? C.GOLD : C.BG_CARD_LIGHT, width: 1.2 },
     });
 
-    slide1.addText(st.label, {
-      x: xPos + 0.15,
-      y: 3.85,
-      w: 2.25,
-      h: 0.25,
-      fontSize: 8,
+    slide2.addText(st.label, {
+      x: xPos + 0.2,
+      y: 2.5,
+      w: 2.4,
+      h: 0.3,
+      fontSize: 9,
       fontFace: 'Arial',
       color: C.GOLD,
       bold: true,
     });
 
-    slide1.addText(st.val, {
-      x: xPos + 0.15,
-      y: 4.25,
-      w: 2.25,
-      h: 0.6,
-      fontSize: 17,
+    slide2.addText(st.val, {
+      x: xPos + 0.2,
+      y: 3.0,
+      w: 2.4,
+      h: 0.7,
+      fontSize: 18,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide1.addText(st.sub, {
-      x: xPos + 0.15,
-      y: 5.0,
-      w: 2.25,
-      h: 0.5,
-      fontSize: 9,
+    slide2.addText(st.sub, {
+      x: xPos + 0.2,
+      y: 3.9,
+      w: 2.4,
+      h: 0.6,
+      fontSize: 10,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
     });
   });
 
-  slide1.addNotes('Welcome. Today we present the technical architecture, financial feasibility engine, and spatial intelligence system of the BizMind platform.');
-
   // =========================================================================
-  // SLIDE 2: Full-Stack Architecture & Monorepo Engineering (Page 2 of 8)
+  // SLIDE 3: Full-Stack Architecture & Monorepo Engineering (Page 3 of 9)
   // =========================================================================
-  const slide2 = addMasterSlide(
+  const slide3 = addMasterSlide(
     'Full-Stack Technical Architecture & Monorepo Design',
-    2,
+    3,
     'Explain the 3-tier decoupled architecture: React 19 SPA, Express REST API broker with autonomous DB fallback, 14-table 3NF MySQL schema, and Python FastAPI ML microservice.'
   );
 
@@ -266,7 +531,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
   tiers.forEach((tier, idx) => {
     const xPos = 0.8 + idx * 3.95;
-    slide2.addShape(pptx.ShapeType.roundRect, {
+    slide3.addShape(pptx.ShapeType.roundRect, {
       x: xPos,
       y: 1.6,
       w: 3.8,
@@ -276,7 +541,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: tier.color, width: 1.2 },
     });
 
-    slide2.addText(tier.badge, {
+    slide3.addText(tier.badge, {
       x: xPos + 0.25,
       y: 1.85,
       w: 3.3,
@@ -287,7 +552,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide2.addText(tier.title, {
+    slide3.addText(tier.title, {
       x: xPos + 0.25,
       y: 2.2,
       w: 3.3,
@@ -300,7 +565,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
     tier.items.forEach((item, itemIdx) => {
       const yItem = 2.9 + itemIdx * 1.0;
-      slide2.addShape(pptx.ShapeType.ellipse, {
+      slide3.addShape(pptx.ShapeType.ellipse, {
         x: xPos + 0.25,
         y: yItem + 0.05,
         w: 0.12,
@@ -308,7 +573,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
         fill: { color: tier.color },
       });
 
-      slide2.addText(item, {
+      slide3.addText(item, {
         x: xPos + 0.45,
         y: yItem,
         w: 3.1,
@@ -322,11 +587,11 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 3: Deterministic Financial Feasibility & CapEx (Page 3 of 8)
+  // SLIDE 4: Deterministic Financial Feasibility & CapEx (Page 4 of 9)
   // =========================================================================
-  const slide3 = addMasterSlide(
+  const slide4 = addMasterSlide(
     'Deterministic Financial Feasibility & Unit Economics Engine',
-    3,
+    4,
     'Review the mathematical unit economics formulas: CM = Price - Variable Cost, Break-Even Units = Fixed / CM, and the native vector CapEx allocation donut chart.'
   );
 
@@ -345,7 +610,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide3.addChart(pptx.ChartType.doughnut, capexChartData, {
+  slide4.addChart(pptx.ChartType.doughnut, capexChartData, {
     x: 0.8,
     y: 1.6,
     w: 5.6,
@@ -375,7 +640,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       title: 'Break-Even Sales Volume',
       code: 'Units = Fixed Overhead / CM',
       val: plan ? `${plan.breakEvenUnits || 1000} Units / Month` : '1,000 Units / Month',
-      desc: `Minimum monthly customers needed to clear $${plan ? formatCurrency(plan.totalMonthlyFixedExpenses || 165000) : '$165,000'} in fixed operational expenses.`,
+      desc: `Minimum monthly customers needed to clear fixed operational expenses.`,
       color: C.CYAN,
     },
     {
@@ -389,7 +654,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
   finFormulas.forEach((f, idx) => {
     const yPos = 1.6 + idx * 1.65;
-    slide3.addShape(pptx.ShapeType.roundRect, {
+    slide4.addShape(pptx.ShapeType.roundRect, {
       x: 6.8,
       y: yPos,
       w: 5.7,
@@ -399,7 +664,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide3.addText(f.title, {
+    slide4.addText(f.title, {
       x: 7.05,
       y: yPos + 0.15,
       w: 3.5,
@@ -410,7 +675,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide3.addText(f.code, {
+    slide4.addText(f.code, {
       x: 9.8,
       y: yPos + 0.15,
       w: 2.5,
@@ -422,7 +687,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide3.addText(f.val, {
+    slide4.addText(f.val, {
       x: 7.05,
       y: yPos + 0.45,
       w: 3.5,
@@ -433,7 +698,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide3.addText(f.desc, {
+    slide4.addText(f.desc, {
       x: 7.05,
       y: yPos + 0.9,
       w: 5.2,
@@ -445,11 +710,11 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 4: 12-Month Compounding Cash Flow & Trajectory (Page 4 of 8)
+  // SLIDE 5: 12-Month Compounding Cash Flow (Page 5 of 9)
   // =========================================================================
-  const slide4 = addMasterSlide(
+  const slide5 = addMasterSlide(
     '12-Month Compounding Cash Flow & Break-Even Trajectory',
-    4,
+    5,
     'Explain the month-by-month customer ramp-up curve. Month 1-2 customer drag is absorbed by working capital; Month 3 achieves break-even crossover.'
   );
 
@@ -495,7 +760,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide4.addChart(pptx.ChartType.line, trajectoryData, {
+  slide5.addChart(pptx.ChartType.line, trajectoryData, {
     x: 0.8,
     y: 1.6,
     w: 7.6,
@@ -521,12 +786,12 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     {
       label: '3-Month Working Capital Buffer',
       val: plan ? formatCurrency((plan.totalMonthlyFixedExpenses || 165000) * 3) : '$495,000',
-      desc: 'Mandatory liquidity reserve absorbing footfall ramp-up volatility during M1-M2 launch.',
+      desc: 'Mandatory liquidity reserve absorbing footfall ramp-up volatility during launch.',
       color: C.CYAN,
     },
     {
       label: 'Capacity Margin of Safety',
-      val: plan ? `${(100 - (plan.breakEvenCapacityPercentage || 69.4)).toFixed(1)}% Buffer` : '30.6% Buffer',
+      val: '30.6% Buffer',
       desc: 'Protects business operations against severe pedestrian traffic drops.',
       color: C.EMERALD,
     },
@@ -534,7 +799,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
   milestones.forEach((m, idx) => {
     const yPos = 1.6 + idx * 1.65;
-    slide4.addShape(pptx.ShapeType.roundRect, {
+    slide5.addShape(pptx.ShapeType.roundRect, {
       x: 8.7,
       y: yPos,
       w: 3.8,
@@ -544,7 +809,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide4.addText(m.label, {
+    slide5.addText(m.label, {
       x: 8.95,
       y: yPos + 0.15,
       w: 3.3,
@@ -555,7 +820,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide4.addText(m.val, {
+    slide5.addText(m.val, {
       x: 8.95,
       y: yPos + 0.45,
       w: 3.3,
@@ -566,7 +831,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide4.addText(m.desc, {
+    slide5.addText(m.desc, {
       x: 8.95,
       y: yPos + 0.85,
       w: 3.3,
@@ -578,11 +843,11 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 5: Multi-Scenario Sensitivity Stress-Testing (Page 5 of 8)
+  // SLIDE 6: Multi-Scenario Sensitivity Stress-Testing (Page 6 of 9)
   // =========================================================================
-  const slide5 = addMasterSlide(
+  const slide6 = addMasterSlide(
     'Solvency Stress-Testing: Multi-Scenario Sensitivity Analysis',
-    5,
+    6,
     'Explain the 3 sensitivity cases. The conservative case proves the venture maintains positive operating profit even under a 20% footfall drop and 5% inflation.'
   );
 
@@ -608,7 +873,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide5.addChart(pptx.ChartType.bar, scenarioChartData, {
+  slide6.addChart(pptx.ChartType.bar, scenarioChartData, {
     x: 0.8,
     y: 1.6,
     w: 7.6,
@@ -627,7 +892,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     {
       title: 'Conservative (-20% Demand)',
       badge: 'Protected & Solvent',
-      desc: 'Absorbs 20% traffic drop and 5% cost surge. Delivers $22.4k/mo profit with 0 capital loss.',
+      desc: 'Absorbs 20% traffic drop and 5% cost surge. Delivers positive margin with zero capital insolvency.',
       color: C.GOLD,
     },
     {
@@ -639,14 +904,14 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     {
       title: 'Optimistic (+20% Expansion)',
       badge: 'Growth Upside',
-      desc: 'High viral repeat patronage scales net margin to 29.3%, accelerating capital payback to 8.5 months.',
+      desc: 'High viral repeat patronage scales net margin to 29.3%, accelerating capital payback.',
       color: C.CYAN,
     },
   ];
 
   scenarioCards.forEach((sc, idx) => {
     const yPos = 1.6 + idx * 1.65;
-    slide5.addShape(pptx.ShapeType.roundRect, {
+    slide6.addShape(pptx.ShapeType.roundRect, {
       x: 8.7,
       y: yPos,
       w: 3.8,
@@ -656,7 +921,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide5.addText(sc.title, {
+    slide6.addText(sc.title, {
       x: 8.95,
       y: yPos + 0.15,
       w: 3.3,
@@ -667,7 +932,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide5.addText(sc.badge, {
+    slide6.addText(sc.badge, {
       x: 8.95,
       y: yPos + 0.42,
       w: 3.3,
@@ -678,7 +943,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide5.addText(sc.desc, {
+    slide6.addText(sc.desc, {
       x: 8.95,
       y: yPos + 0.75,
       w: 3.3,
@@ -690,11 +955,11 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 6: Geospatial GIS Engine & Competitor Density (Page 6 of 8)
+  // SLIDE 7: Geospatial GIS Engine & Micro-Radius Calculus (Page 7 of 9)
   // =========================================================================
-  const slide6 = addMasterSlide(
+  const slide7 = addMasterSlide(
     'Geospatial GIS Engine & Micro-Radius Competitor Density',
-    6,
+    7,
     'Present the spatial methodology: Isochrone radius rings (500m to 5km), Competitor Density calculus per square km, and distance metrics derived from Leaflet and OpenStreetMap.'
   );
 
@@ -724,7 +989,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
   spatialFeatures.forEach((sf, idx) => {
     const xPos = 0.8 + idx * 3.95;
-    slide6.addShape(pptx.ShapeType.roundRect, {
+    slide7.addShape(pptx.ShapeType.roundRect, {
       x: xPos,
       y: 1.6,
       w: 3.8,
@@ -734,7 +999,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: sf.color, width: 1.2 },
     });
 
-    slide6.addText(sf.num, {
+    slide7.addText(sf.num, {
       x: xPos + 0.3,
       y: 1.9,
       w: 1.5,
@@ -745,7 +1010,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide6.addText(sf.title, {
+    slide7.addText(sf.title, {
       x: xPos + 0.3,
       y: 2.5,
       w: 3.2,
@@ -756,7 +1021,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide6.addShape(pptx.ShapeType.roundRect, {
+    slide7.addShape(pptx.ShapeType.roundRect, {
       x: xPos + 0.3,
       y: 3.2,
       w: 3.2,
@@ -766,7 +1031,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide6.addText(sf.formula, {
+    slide7.addText(sf.formula, {
       x: xPos + 0.4,
       y: 3.3,
       w: 3.0,
@@ -777,7 +1042,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       bold: true,
     });
 
-    slide6.addText(sf.desc, {
+    slide7.addText(sf.desc, {
       x: xPos + 0.3,
       y: 4.0,
       w: 3.2,
@@ -790,16 +1055,16 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 7: LIVE DEMO: Real-Time Location Simulator (Page 7 of 8)
+  // SLIDE 8: LIVE DEMO: Uran Islampur Narshhpur Road (Page 8 of 9)
   // =========================================================================
-  const slide7 = addMasterSlide(
-    'LIVE DEMO: Real-Time Location Intelligence & Spatial Radar',
-    7,
-    'Direct stakeholders to the interactive web demo where users can toggle hotspot corridors, adjust radius sliders, and inspect real-time competitor pins.'
+  const slide8 = addMasterSlide(
+    'LIVE DEMO: Real-Time Location Intelligence (Uran Islampur Narshhpur Road)',
+    8,
+    'Present the live spatial radar on Uran Islampur Narshhpur Road (Islampur, Maharashtra) connected directly to real-time Google Places & OSM spatial API.'
   );
 
   // Left card: Simulator highlights
-  slide7.addShape(pptx.ShapeType.roundRect, {
+  slide8.addShape(pptx.ShapeType.roundRect, {
     x: 0.8,
     y: 1.6,
     w: 5.6,
@@ -809,7 +1074,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     line: { color: C.GOLD, width: 1.2 },
   });
 
-  slide7.addText('INTERACTIVE RADAR SIMULATOR', {
+  slide8.addText('PRIMARY TARGET CORRIDOR (ISLAMPUR)', {
     x: 1.1,
     y: 1.9,
     w: 5.0,
@@ -820,40 +1085,41 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     bold: true,
   });
 
-  slide7.addText('Live Corridor Selection & Radar Controls', {
+  slide8.addText('Uran Islampur Narshhpur Road Spatial Radar', {
     x: 1.1,
     y: 2.25,
     w: 5.0,
     h: 0.6,
-    fontSize: 16,
+    fontSize: 15,
     fontFace: 'Arial',
     color: C.TEXT_WHITE,
     bold: true,
   });
 
   const demoFeatures = [
-    '• Hotspot Corridors: Indiranagar, Connaught Place, Bandra, Koramangala',
-    '• Catchment Radius Slider: 500m walkshed to 5km vehicular zone',
-    '• Category Filter: Cafes, Fine Dining, Retail, Fitness & Wellness',
-    '• Instant Spatial Recalculation: Density per km² & nearest competitor distance',
-    '• Point-of-Interest Inspector: Click pin to examine threat tier and customer reviews',
+    '• Real-Time API Engine: Google Places & OSM Overpass live spatial endpoints',
+    '• Target Coordinates: 17.0515° N, 74.2660° E (Islampur, Sangli, Maharashtra)',
+    '• High-Density Retail Artery: Connecting Islampur & Narsinghpur trade zones',
+    '• Micro-Radius Catchment Rings: 500m pedestrian walkshed to 3km trade radius',
+    '• Direct Competitors & Anchors: Green Leaf Cafe, Krishna Family Dining, Shivaji Bakery',
+    '• Automated Opportunity Index: Calculated viability scoring & real-time threat tiers',
   ];
 
   demoFeatures.forEach((df, idx) => {
-    slide7.addText(df, {
+    slide8.addText(df, {
       x: 1.1,
-      y: 3.0 + idx * 0.65,
+      y: 2.95 + idx * 0.58,
       w: 5.0,
-      h: 0.55,
-      fontSize: 10,
+      h: 0.5,
+      fontSize: 9.5,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      lineSpacing: 14,
+      lineSpacing: 13,
     });
   });
 
-  // Right card: Web App Live Demo Callout
-  slide7.addShape(pptx.ShapeType.roundRect, {
+  // Right card: Real-Time Verified Establishments on Uran Islampur Narshhpur Road
+  slide8.addShape(pptx.ShapeType.roundRect, {
     x: 6.8,
     y: 1.6,
     w: 5.7,
@@ -863,7 +1129,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     line: { color: C.CYAN, width: 1.2 },
   });
 
-  slide7.addText('SEEDED HOTSPOT PRESETS', {
+  slide8.addText('REAL-TIME BUSINESS VERIFICATION (LIVE API)', {
     x: 7.1,
     y: 1.9,
     w: 5.1,
@@ -874,52 +1140,53 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     bold: true,
   });
 
-  slide7.addText('Spatial Validation Hotspots Across Metros', {
+  slide8.addText('Verified Commercial POIs Along Narshhpur Road', {
     x: 7.1,
     y: 2.25,
     w: 5.1,
     h: 0.6,
-    fontSize: 16,
+    fontSize: 15,
     fontFace: 'Arial',
     color: C.TEXT_WHITE,
     bold: true,
   });
 
-  const hotspots = [
-    { name: 'Indiranagar 100ft Road (Bengaluru)', stats: '4.8 Rivals/km² • 140m Nearest Rival • High Spend' },
-    { name: 'Connaught Place Inner Circle (Delhi)', stats: '6.4 Rivals/km² • 170m Nearest Rival • Transit Anchor' },
-    { name: 'Pali Hill & Linking Road (Mumbai)', stats: '3.9 Rivals/km² • 190m Nearest Rival • Premium Lifestyle' },
-    { name: 'Koramangala 4th Block (Bengaluru)', stats: '5.2 Rivals/km² • 210m Nearest Rival • Startup Dense' },
+  const islampurEstablishments = [
+    { name: 'Green Leaf Cafe & Bakery', stats: '110m Distance • 4.6★ Rating • High Threat Rival' },
+    { name: 'Krishna Family Restaurant & Garden', stats: '170m Distance • 4.4★ Rating • Multi-Cuisine Anchor' },
+    { name: 'Sai Refreshments & Pure Veg Snacks', stats: '230m Distance • 4.3★ Rating • Quick Service' },
+    { name: 'Shivaji Bakery & Confectionery', stats: '240m Distance • 4.5★ Rating • Fresh Bakes & Sweets' },
+    { name: 'Islampur Central Medical & Surgical', stats: '300m Distance • 4.5★ Rating • Healthcare Anchor' },
   ];
 
-  hotspots.forEach((hs, idx) => {
-    const yHs = 3.0 + idx * 0.85;
-    slide7.addShape(pptx.ShapeType.roundRect, {
+  islampurEstablishments.forEach((hs, idx) => {
+    const yHs = 2.95 + idx * 0.72;
+    slide8.addShape(pptx.ShapeType.roundRect, {
       x: 7.1,
       y: yHs,
       w: 5.1,
-      h: 0.72,
+      h: 0.62,
       rectRadius: 0.05,
       fill: { color: C.BG_DARK },
       line: { color: C.BG_CARD_LIGHT, width: 1 },
     });
 
-    slide7.addText(hs.name, {
+    slide8.addText(hs.name, {
       x: 7.25,
-      y: yHs + 0.1,
+      y: yHs + 0.08,
       w: 4.8,
-      h: 0.25,
-      fontSize: 10,
+      h: 0.24,
+      fontSize: 9.5,
       fontFace: 'Arial',
       color: C.TEXT_WHITE,
       bold: true,
     });
 
-    slide7.addText(hs.stats, {
+    slide8.addText(hs.stats, {
       x: 7.25,
-      y: yHs + 0.35,
+      y: yHs + 0.3,
       w: 4.8,
-      h: 0.25,
+      h: 0.24,
       fontSize: 8.5,
       fontFace: 'Arial',
       color: C.GOLD,
@@ -927,12 +1194,12 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 8: Machine Learning Viability & Relational Schema (Page 8 of 8)
+  // SLIDE 9: ML Viability Pipeline & Relational Schema (Page 9 of 9)
   // =========================================================================
-  const slide8 = addMasterSlide(
+  const slide9 = addMasterSlide(
     'Scikit-Learn ML Viability Pipeline & Relational Data Architecture',
-    8,
-    'Summarize the ML ensemble feature weights (Footfall, Capital, Competitor density), the 14-table 3NF schema, and automated risk diagnostics.'
+    9,
+    'Summarize the ML ensemble feature weights, the 14-table 3NF schema, and automated risk diagnostics developed for the RIT MCA Capstone.'
   );
 
   const mlWeightsData = [
@@ -943,7 +1210,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     },
   ];
 
-  slide8.addChart(pptx.ChartType.bar, mlWeightsData, {
+  slide9.addChart(pptx.ChartType.bar, mlWeightsData, {
     x: 0.8,
     y: 1.6,
     w: 5.6,
@@ -959,7 +1226,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // Right column: 14 3NF Tables & Capstone Summary
-  slide8.addShape(pptx.ShapeType.roundRect, {
+  slide9.addShape(pptx.ShapeType.roundRect, {
     x: 6.8,
     y: 1.6,
     w: 5.7,
@@ -969,7 +1236,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     line: { color: C.CYAN, width: 1 },
   });
 
-  slide8.addText('14 RELATIONAL 3NF MYSQL TABLES', {
+  slide9.addText('14 RELATIONAL 3NF MYSQL TABLES', {
     x: 7.05,
     y: 1.8,
     w: 5.2,
@@ -980,7 +1247,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     bold: true,
   });
 
-  slide8.addText('Normalized Relational Core with Foreign Key Cascading', {
+  slide9.addText('Normalized Relational Core with Foreign Key Cascading', {
     x: 7.05,
     y: 2.05,
     w: 5.2,
@@ -1003,7 +1270,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   schemaTables.forEach((st, idx) => {
     const xT = idx % 2 === 0 ? 7.05 : 9.7;
     const yT = 2.45 + Math.floor(idx / 2) * 0.5;
-    slide8.addText(`• ${st}`, {
+    slide9.addText(`• ${st}`, {
       x: xT,
       y: yT,
       w: 2.5,
@@ -1015,7 +1282,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // Capstone Defense Summary
-  slide8.addShape(pptx.ShapeType.roundRect, {
+  slide9.addShape(pptx.ShapeType.roundRect, {
     x: 6.8,
     y: 4.5,
     w: 5.7,
@@ -1025,7 +1292,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     line: { color: C.GOLD, width: 1 },
   });
 
-  slide8.addText('CAPSTONE PLATFORM READINESS', {
+  slide9.addText('RIT MCA CAPSTONE DEFENSE SUMMARY', {
     x: 7.05,
     y: 4.7,
     w: 5.2,
@@ -1036,7 +1303,7 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     bold: true,
   });
 
-  slide8.addText('Production-Grade Engineering & Zero API Cost', {
+  slide9.addText('Production-Grade Engineering & Autonomous GIS', {
     x: 7.05,
     y: 4.95,
     w: 5.2,
@@ -1047,17 +1314,17 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     bold: true,
   });
 
-  slide8.addText(
-    'BizMind eliminates expensive proprietary Google Maps API billing with 100% open-source spatial GIS (Leaflet + OpenStreetMap), backed by deterministic financial feasibility calculus, multi-venture comparisons, and calibrated Scikit-learn viability ensembles.',
+  slide9.addText(
+    'Developed at Rajarambapu Institute of Technology (RIT), Rajaramnagar under the guidance of Ms. A. R. Patil by Pramod Mahajan, Harshad Patil, Sakshi Randive, and Rutika Deshmukh. BizMind combines real-time spatial APIs with deterministic financial feasibility and machine learning viability classification.',
     {
       x: 7.05,
       y: 5.35,
       w: 5.2,
       h: 1.1,
-      fontSize: 9,
+      fontSize: 8.8,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      lineSpacing: 14,
+      lineSpacing: 13,
     }
   );
 
@@ -1079,7 +1346,6 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       const fileName = slideFiles[i];
       let xmlContent = await zip.files[fileName].async('text');
 
-      // Add push/fade transition if not already present
       if (!xmlContent.includes('<p:transition')) {
         const transitionXml =
           i % 2 === 0
@@ -1097,17 +1363,13 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
 
     downloadBlob(
       enhancedBlob,
-      plan?.businessName
-        ? `${plan.businessName.toLowerCase().replace(/\s+/g, '_')}_bizmind_pitch_deck.pptx`
-        : 'bizmind_platform_pitch_deck.pptx'
+      'RIT_MCA_Capstone_BizMind_Pitch_Deck.pptx'
     );
   } catch (zipErr) {
     console.warn('Failed to inject transitions, downloading standard PPTX:', zipErr);
     downloadBlob(
       pptxBlob,
-      plan?.businessName
-        ? `${plan.businessName.toLowerCase().replace(/\s+/g, '_')}_bizmind_pitch_deck.pptx`
-        : 'bizmind_platform_pitch_deck.pptx'
+      'RIT_MCA_Capstone_BizMind_Pitch_Deck.pptx'
     );
   }
 }

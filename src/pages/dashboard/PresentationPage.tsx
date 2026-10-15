@@ -1,16 +1,13 @@
 /**
- * BizMind – Project Presentation & Technical Architecture Deck (8 Core Slides)
- * Tailored specifically to the BizMind platform:
- * - 3-Tier Monorepo Architecture (React 19, Express, MySQL 3NF, Python FastAPI ML)
- * - Deterministic Financial Feasibility Engine & Unit Economics (Formulas & CapEx)
- * - 12-Month Compounding Cash Flow & Break-Even Curve
- * - Triple-Scenario Sensitivity Stress-Testing
- * - Leaflet OpenStreetMap Spatial GIS & Micro-Radius Competitor Density Calculus
- * - LIVE INTERACTIVE Location Intelligence & Spatial Radar Map Demo
- * - Scikit-Learn Viability Classification Pipeline, Feature Weights & 14-Table 3NF Schema
+ * BizMind – Project Presentation & Technical Architecture Deck
+ * Features:
+ * - Slide 1: Rajarambapu Institute of Technology (RIT) MCA Capstone Project Technical Report
+ * - RIT Logo displayed across all slides
+ * - Clean Fullscreen Mode: Displays ONLY the slide, Floating Close (X), and Previous/Next (< >) controls
+ * - Slide 8: Real-Time Spatial Radar centered on Uran Islampur Narshhpur Road with live API integration
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ResponsiveContainer,
   PieChart as RechartsPieChart,
@@ -33,7 +30,6 @@ import {
   Play,
   Pause,
   Download,
-  Printer,
   DollarSign,
   MapPin,
   TrendingUp,
@@ -48,8 +44,10 @@ import {
   Radar,
   ShieldCheck,
   Server,
-  Activity,
   Code2,
+  GraduationCap,
+  Users,
+  Award,
 } from 'lucide-react';
 import { planService } from '../../services/planService';
 import { generateBizMindPptx } from '../../services/pptxService';
@@ -62,8 +60,9 @@ import {
   chartRevealVariant,
 } from '../../components/presentation/SlideAnimationEngine';
 import { LiveLocationIntelligenceDemo } from '../../components/presentation/LiveLocationIntelligenceDemo';
+import { RitLogo } from '../../components/common/RitLogo';
 import { BusinessPlan } from '../../types';
-import { formatCurrency, formatPercentage } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/formatters';
 
 interface SlideData {
   id: number;
@@ -112,7 +111,7 @@ export const PresentationPage: React.FC = () => {
     setIsExportingPptx(true);
     try {
       await generateBizMindPptx(selectedPlan);
-      showToast('Downloaded Native PowerPoint (.pptx) with Vector Charts');
+      showToast('Downloaded Native PowerPoint (.pptx) with Vector Charts & RIT Branding');
     } catch (err: any) {
       console.error('Failed to export PPTX:', err);
       showToast('Export failed: ' + (err?.message || 'Error'));
@@ -131,12 +130,111 @@ export const PresentationPage: React.FC = () => {
     }
   };
 
-  // 8 Specific Project Slides (No Generic Fluff or Common Textbook Slides)
+  // Full comprehensive 9-slide deck starting with official RIT Capstone Report Slide
   const slides: SlideData[] = [
-    // SLIDE 1: Project Overview & Core Mission
+    // SLIDE 1: Official RIT Capstone Technical Report Cover
     {
       id: 1,
-      category: '01 / Project Overview',
+      category: '01 / Academic Capstone Technical Report',
+      title: 'CAPSTONE PROJECT TECHNICAL REPORT',
+      subtitle: 'Rajarambapu Institute of Technology, Rajaramnagar — Department of Computer Applications',
+      notes:
+        'Official introduction. Presenting the Master of Computer Applications (MCA) Capstone Technical Project: BizMind - AI Business Planner & Success Prediction Platform, under the guidance of Ms. A. R. Patil.',
+      content: () => (
+        <motion.div
+          variants={containerStaggerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col justify-center items-center h-full max-w-4xl mx-auto text-center space-y-4 py-2"
+        >
+          {/* Header Metadata */}
+          <motion.div variants={fadeUpVariant} className="space-y-1">
+            <div className="text-xs sm:text-sm font-semibold tracking-wide text-[#94A3B8]">
+              Academic Year: <span className="text-white font-bold">2026 – 27</span>
+            </div>
+            <div className="text-[11px] sm:text-xs text-[#64748B] italic">
+              (An Empowered Autonomous Institute, Affiliated to Shivaji University, Kolhapur)
+            </div>
+            <div className="text-sm sm:text-base font-extrabold text-[#F8FAFC] tracking-wide uppercase pt-1">
+              RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR
+            </div>
+            <div className="text-xs sm:text-sm text-[#FFBF24] font-semibold tracking-wider uppercase">
+              Department of Computer Applications
+            </div>
+          </motion.div>
+
+          {/* Official RIT Logo Banner */}
+          <motion.div variants={popScaleVariant} className="py-1">
+            <RitLogo className="w-56 h-16 sm:w-64 sm:h-20 shadow-xl border border-black/20" />
+          </motion.div>
+
+          {/* Degree & Project Title */}
+          <motion.div variants={fadeUpVariant} className="space-y-1.5">
+            <div className="text-xs font-mono tracking-widest text-[#94A3B8] uppercase">
+              Master Of Computer Applications (MCA)
+            </div>
+            <div className="text-xs font-bold text-[#E2E8F0] tracking-wider uppercase">
+              CAPSTONE PROJECT TECHNICAL REPORT ON
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              &ldquo;<span className="text-[#EF4444]">Biz</span><span className="text-white">Mind</span> &ndash; AI Business Planner &amp; Success Prediction Platform&rdquo;
+            </h1>
+          </motion.div>
+
+          {/* Guidance & Team Grid */}
+          <motion.div variants={containerStaggerVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full pt-2">
+            {/* Guide Card */}
+            <motion.div variants={popScaleVariant} className="p-3.5 rounded-xl bg-[#121722] border border-[#1E2433] text-left space-y-1">
+              <div className="text-[10px] font-semibold text-[#FFBF24] uppercase tracking-wider flex items-center gap-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-[#FFBF24]" />
+                <span>Under the Guidance of</span>
+              </div>
+              <div className="text-base font-bold text-white mt-0.5">
+                Ms. A. R. Patil
+              </div>
+              <div className="text-[11px] text-[#94A3B8]">
+                Department of Computer Applications, RIT
+              </div>
+            </motion.div>
+
+            {/* Submitted By Team Card */}
+            <motion.div variants={popScaleVariant} className="p-3.5 rounded-xl bg-[#121722] border border-[#1E2433] text-left space-y-1.5">
+              <div className="text-[10px] font-semibold text-[#38BDF8] uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <span>Submitted By (Project Team)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <div>
+                  <div className="font-bold text-white">Pramod Rajendra Mahajan</div>
+                  <div className="text-[10px] font-mono text-[#FFBF24]">Roll No: 2547047</div>
+                </div>
+                <div>
+                  <div className="font-bold text-white">Harshad Shahaji Patil</div>
+                  <div className="text-[10px] font-mono text-[#FFBF24]">Roll No: 2547062</div>
+                </div>
+                <div>
+                  <div className="font-bold text-white">Sakshi Dnyaneshwar Randive</div>
+                  <div className="text-[10px] font-mono text-[#FFBF24]">Roll No: 2547048</div>
+                </div>
+                <div>
+                  <div className="font-bold text-white">Rutika Rajesh Deshmukh</div>
+                  <div className="text-[10px] font-mono text-[#FFBF24]">Roll No: 2547025</div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div variants={fadeUpVariant} className="text-[10px] font-mono text-[#64748B] pt-1">
+            RAJARAMBAPU INSTITUTE OF TECHNOLOGY, RAJARAMNAGAR • SANGALI, MAHARASHTRA
+          </motion.div>
+        </motion.div>
+      ),
+    },
+
+    // SLIDE 2: Project Overview & Core Mission
+    {
+      id: 2,
+      category: '02 / Project Overview',
       title: 'BIZMIND: AI Business Planning & Location Intelligence',
       subtitle: 'Plan Smarter. Analyze Better. Build with Confidence. — An empirical decision-support platform for modern business ventures.',
       notes:
@@ -234,10 +332,10 @@ export const PresentationPage: React.FC = () => {
       ),
     },
 
-    // SLIDE 2: System Architecture & Technical Specifications
+    // SLIDE 3: System Architecture & Technical Specifications
     {
-      id: 2,
-      category: '02 / System Architecture',
+      id: 3,
+      category: '03 / System Architecture',
       title: 'Full-Stack Technical Architecture & Monorepo Design',
       subtitle: 'Decoupled multi-tier architecture delivering high-performance spatial queries, deterministic business math, and ML inference.',
       notes:
@@ -351,10 +449,10 @@ export const PresentationPage: React.FC = () => {
       ),
     },
 
-    // SLIDE 3: Deterministic Financial Feasibility & Unit Economics Engine
+    // SLIDE 4: Deterministic Financial Feasibility & Unit Economics Engine
     {
-      id: 3,
-      category: '03 / Financial Feasibility Engine',
+      id: 4,
+      category: '04 / Financial Feasibility Engine',
       title: 'Deterministic Financial Feasibility & Unit Economics Engine',
       subtitle: 'Mathematical modeling replacing subjective spreadsheets with exact unit economics, break-even calculus, and CapEx sizing.',
       notes:
@@ -449,10 +547,10 @@ export const PresentationPage: React.FC = () => {
       },
     },
 
-    // SLIDE 4: 12-Month Compounding Cash Flow & Break-Even Trajectory
+    // SLIDE 5: 12-Month Compounding Cash Flow & Break-Even Trajectory
     {
-      id: 4,
-      category: '04 / Cash Flow Modeling',
+      id: 5,
+      category: '05 / Cash Flow Modeling',
       title: '12-Month Compounding Cash Flow & Break-Even Trajectory',
       subtitle: 'Dynamic growth curve visualizing footfall customer ramp-up crossing the operational expense floor.',
       notes:
@@ -537,10 +635,10 @@ export const PresentationPage: React.FC = () => {
       },
     },
 
-    // SLIDE 5: Multi-Scenario Sensitivity Stress-Testing
+    // SLIDE 6: Multi-Scenario Sensitivity Stress-Testing
     {
-      id: 5,
-      category: '05 / Sensitivity Analysis',
+      id: 6,
+      category: '06 / Sensitivity Analysis',
       title: 'Solvency Stress-Testing: Multi-Scenario Sensitivity Analysis',
       subtitle: 'Simulating severe market footfall contraction (-20%) and cost inflation (+5%) vs. target base and expansion cases.',
       notes:
@@ -634,10 +732,10 @@ export const PresentationPage: React.FC = () => {
       },
     },
 
-    // SLIDE 6: Geospatial GIS Engine & Micro-Radius Competitor Saturation
+    // SLIDE 7: Geospatial GIS Engine & Micro-Radius Competitor Saturation
     {
-      id: 6,
-      category: '06 / Spatial GIS Engine',
+      id: 7,
+      category: '07 / Spatial GIS Engine',
       title: 'Geospatial GIS Engine & Micro-Radius Competitor Density',
       subtitle: 'Algorithmic spatial analysis transforming coordinate geography into quantifiable competitive advantages.',
       notes:
@@ -700,14 +798,14 @@ export const PresentationPage: React.FC = () => {
       ),
     },
 
-    // SLIDE 7: LIVE DEMO: Location Intelligence Engine
+    // SLIDE 8: LIVE DEMO: Location Intelligence Engine (Uran Islampur Narshhpur Road)
     {
-      id: 7,
-      category: '07 / Live Spatial Demo',
+      id: 8,
+      category: '08 / Live Spatial Demo (Real-Time API)',
       title: 'LIVE DEMO: Real-Time Location Intelligence & Spatial Radar',
-      subtitle: 'Interactive geospatial simulator — select hotspot corridors, toggle radius rings, and inspect real-time competitor clustering.',
+      subtitle: 'Target Corridor: Uran Islampur Narshhpur Road — Live API execution querying real-time businesses, spatial saturation, and competitor clusters.',
       notes:
-        'Live interactive demonstration. Show stakeholders how the presenter can switch corridors, adjust radii, trigger radar sweeps, and inspect nearby rivals live.',
+        'Live interactive demonstration centered on Uran Islampur Narshhpur Road (Islampur, Maharashtra). Shows real-time business discovery via the backend spatial API, live radius expansion, GPS location lookup, and instant saturation scoring.',
       content: () => (
         <motion.div
           variants={containerStaggerVariants}
@@ -720,10 +818,10 @@ export const PresentationPage: React.FC = () => {
       ),
     },
 
-    // SLIDE 8: Machine Learning Viability Pipeline, 14 3NF Schema & Project Summary
+    // SLIDE 9: Machine Learning Viability Pipeline, 14 3NF Schema & Project Summary
     {
-      id: 8,
-      category: '08 / ML Pipeline & Schema',
+      id: 9,
+      category: '09 / ML Pipeline & Schema',
       title: 'Scikit-Learn ML Viability Pipeline & Relational Data Architecture',
       subtitle: 'Calibrated predictive modeling, 14-table 3NF MySQL relational database, and end-to-end platform capabilities.',
       notes:
@@ -809,7 +907,7 @@ export const PresentationPage: React.FC = () => {
               <motion.div variants={fadeUpVariant} className="p-3.5 rounded-xl bg-[#121722] border border-[#FFBF24]/20 space-y-1">
                 <div className="text-xs font-bold text-[#FFBF24]">Project Defense & Capstone Summary</div>
                 <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                  BizMind is fully operational with 0 external paid Google Maps dependencies, end-to-end unit economics modeling, multi-venture comparisons, and calibrated machine learning viability scoring.
+                  BizMind is fully operational with 0 external paid Google Maps dependencies, end-to-end unit economics modeling, multi-venture comparisons, and calibrated machine learning viability scoring developed for RIT Capstone Project.
                 </p>
               </motion.div>
             </motion.div>
@@ -842,6 +940,22 @@ export const PresentationPage: React.FC = () => {
     }
   };
 
+  const exitFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => console.error(err));
+    }
+    setIsFullscreen(false);
+  };
+
+  // Sync fullscreen change with document fullscreen event
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -854,6 +968,7 @@ export const PresentationPage: React.FC = () => {
         toggleFullscreen();
       } else if (e.key === 'Escape') {
         setShowDrawer(false);
+        setIsFullscreen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -879,115 +994,179 @@ export const PresentationPage: React.FC = () => {
     <div
       ref={containerRef}
       className={`min-h-[calc(100vh-80px)] flex flex-col bg-[#0A0D14] text-white selection:bg-[#FFBF24] selection:text-black ${
-        isFullscreen ? 'fixed inset-0 z-50 p-6 bg-[#0A0D14]' : 'rounded-2xl border border-[#1E2433] overflow-hidden'
+        isFullscreen
+          ? 'fixed inset-0 z-50 p-4 sm:p-8 bg-[#0A0D14] h-screen w-screen overflow-hidden'
+          : 'rounded-2xl border border-[#1E2433] overflow-hidden'
       }`}
     >
-      {/* Top Controller Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-[#1E2433] bg-[#0E121B]/90 backdrop-blur-md">
-        {/* Left: Presentation Branding & Slide Count */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowDrawer(!showDrawer)}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-xs font-medium text-[#94A3B8] hover:text-white transition-colors"
-          >
-            <Layers className="w-3.5 h-3.5 text-[#FFBF24]" />
-            <span>
-              Slide {currentSlide + 1} of {totalSlides}
-            </span>
-          </button>
+      {/* 
+        CLEAN FULLSCREEN MODE:
+        When isFullscreen is true, completely hide all normal top controllers, buttons, tabs, and export tools.
+        Show ONLY the slide, with:
+        - Floating close button (X) in top right
+        - Floating previous button (<) on left edge
+        - Floating next button (>) on right edge
+      */}
+      {isFullscreen ? (
+        <>
+          {/* Top Floating Bar in Fullscreen: Just the RIT Logo & Minimal Close X */}
+          <div className="absolute top-4 left-6 right-6 z-40 flex items-center justify-between pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-3">
+              <RitLogo className="w-28 h-8 shadow-md" />
+              <div className="px-2.5 py-1 rounded-full bg-[#121722]/80 backdrop-blur-md border border-[#1E2433] text-[11px] font-mono text-[#FFBF24]">
+                Slide {currentSlide + 1} / {totalSlides}
+              </div>
+            </div>
 
-          <span className="hidden sm:inline text-xs font-mono text-[#64748B] truncate max-w-xs">
-            {currentSlideData.category}
-          </span>
-        </div>
-
-        {/* Center: Venture Feasibility Plan Selector */}
-        {plans.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#94A3B8] hidden md:inline">Feasibility Plan:</span>
-            <select
-              value={selectedPlanId}
-              onChange={(e) => setSelectedPlanId(e.target.value)}
-              className="bg-[#141824] text-xs text-white border border-[#1E2433] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#FFBF24]"
+            <button
+              onClick={exitFullscreen}
+              className="pointer-events-auto p-2.5 rounded-full bg-[#121722]/90 hover:bg-[#1E2433] border border-[#27272A] hover:border-[#FFBF24] text-[#A1A1AA] hover:text-white transition-all shadow-xl cursor-pointer group"
+              title="Close Fullscreen (Esc)"
             >
-              <option value="platform">BizMind Project Architecture (Default)</option>
-              {plans.map((p) => (
-                <option key={p.id} value={String(p.id)}>
-                  {p.businessName} ({p.location || 'Local'})
-                </option>
-              ))}
-            </select>
+              <X className="w-5 h-5 group-hover:scale-110 transition-transform text-[#FFBF24]" />
+            </button>
           </div>
-        )}
 
-        {/* Right: Controls & Export */}
-        <div className="flex items-center gap-1.5">
+          {/* Floating Left Navigation Button (<) */}
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className={`p-2 rounded-lg border text-xs transition-colors ${
-              isPlaying
-                ? 'bg-[#FFBF24]/20 border-[#FFBF24] text-[#FFBF24]'
-                : 'bg-[#141824] border-[#1E2433] text-[#94A3B8] hover:text-white'
-            }`}
-            title={isPlaying ? 'Pause Auto-Play (7s)' : 'Auto-Play Slideshow'}
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-[#121722]/85 hover:bg-[#1E2433] border border-[#27272A] hover:border-[#FFBF24] text-white transition-all shadow-2xl cursor-pointer group"
+            title="Previous Slide (Left Arrow)"
           >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            <ChevronLeft className="w-6 h-6 text-[#FFBF24] group-hover:-translate-x-0.5 transition-transform" />
           </button>
 
+          {/* Floating Right Navigation Button (>) */}
           <button
-            onClick={() => setShowNotes(!showNotes)}
-            className={`p-2 rounded-lg border text-xs transition-colors ${
-              showNotes
-                ? 'bg-sky-500/20 border-sky-500 text-sky-400'
-                : 'bg-[#141824] border-[#1E2433] text-[#94A3B8] hover:text-white'
-            }`}
-            title="Toggle Presenter Speaking Notes"
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-[#121722]/85 hover:bg-[#1E2433] border border-[#27272A] hover:border-[#FFBF24] text-white transition-all shadow-2xl cursor-pointer group"
+            title="Next Slide (Right Arrow / Space)"
           >
-            <Lightbulb className="w-4 h-4" />
+            <ChevronRight className="w-6 h-6 text-[#FFBF24] group-hover:translate-x-0.5 transition-transform" />
           </button>
+        </>
+      ) : (
+        /* Normal Standard Controller Bar */
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-[#1E2433] bg-[#0E121B]/90 backdrop-blur-md">
+          {/* Left: Presentation Branding & RIT Logo */}
+          <div className="flex items-center gap-3">
+            <RitLogo className="w-24 h-7" />
+            <button
+              onClick={() => setShowDrawer(!showDrawer)}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-xs font-medium text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
+            >
+              <Layers className="w-3.5 h-3.5 text-[#FFBF24]" />
+              <span>
+                Slide {currentSlide + 1} of {totalSlides}
+              </span>
+            </button>
 
-          <button
-            onClick={handleExportHtml}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-xs font-medium text-white transition-colors"
-            title="Download Standalone Animated HTML Deck"
-          >
-            <Download className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">HTML</span>
-          </button>
+            <span className="hidden sm:inline text-xs font-mono text-[#64748B] truncate max-w-xs">
+              {currentSlideData.category}
+            </span>
+          </div>
 
-          <button
-            onClick={handleExportPptx}
-            disabled={isExportingPptx}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFBF24] hover:bg-[#E5AC20] text-black font-bold text-xs transition-colors shadow-sm disabled:opacity-50"
-            title="Download Native PowerPoint (.pptx) with Vector Charts"
-          >
-            <Presentation className="w-3.5 h-3.5" />
-            <span>{isExportingPptx ? 'Exporting...' : 'Export PPTX'}</span>
-          </button>
+          {/* Center: Venture Feasibility Plan Selector */}
+          {plans.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#94A3B8] hidden md:inline">Feasibility Plan:</span>
+              <select
+                value={selectedPlanId}
+                onChange={(e) => setSelectedPlanId(e.target.value)}
+                className="bg-[#141824] text-xs text-white border border-[#1E2433] rounded-lg px-2.5 py-1 focus:outline-none focus:border-[#FFBF24]"
+              >
+                <option value="platform">BizMind Project Architecture (Default)</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={String(p.id)}>
+                    {p.businessName} ({p.location || 'Local'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <button
-            onClick={toggleFullscreen}
-            className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors"
-            title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
+          {/* Right: Controls & Export */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className={`p-2 rounded-lg border text-xs transition-colors cursor-pointer ${
+                isPlaying
+                  ? 'bg-[#FFBF24]/20 border-[#FFBF24] text-[#FFBF24]'
+                  : 'bg-[#141824] border-[#1E2433] text-[#94A3B8] hover:text-white'
+              }`}
+              title={isPlaying ? 'Pause Auto-Play (7s)' : 'Auto-Play Slideshow'}
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className={`p-2 rounded-lg border text-xs transition-colors cursor-pointer ${
+                showNotes
+                  ? 'bg-sky-500/20 border-sky-500 text-sky-400'
+                  : 'bg-[#141824] border-[#1E2433] text-[#94A3B8] hover:text-white'
+              }`}
+              title="Toggle Presenter Speaking Notes"
+            >
+              <Lightbulb className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={handleExportHtml}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-xs font-medium text-white transition-colors cursor-pointer"
+              title="Download Standalone Animated HTML Deck"
+            >
+              <Download className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">HTML</span>
+            </button>
+
+            <button
+              onClick={handleExportPptx}
+              disabled={isExportingPptx}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFBF24] hover:bg-[#E5AC20] text-black font-bold text-xs transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+              title="Download Native PowerPoint (.pptx) with Vector Charts & RIT Branding"
+            >
+              <Presentation className="w-3.5 h-3.5" />
+              <span>{isExportingPptx ? 'Exporting...' : 'Export PPTX (9p)'}</span>
+            </button>
+
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
+              title="Fullscreen Mode"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Slide Viewport */}
-      <div className="relative flex-1 p-6 sm:p-10 flex flex-col justify-between overflow-hidden">
-        {/* Slide Header */}
-        <div className="mb-4">
-          <div className="text-[11px] font-mono text-[#FFBF24] tracking-wider uppercase font-semibold">
-            {currentSlideData.category}
+      <div
+        className={`relative flex-1 flex flex-col justify-between overflow-hidden ${
+          isFullscreen ? 'p-6 sm:p-12 h-full' : 'p-6 sm:p-10'
+        }`}
+      >
+        {/* Slide Header with RIT Branding on EVERY Slide */}
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="text-[11px] font-mono text-[#FFBF24] tracking-wider uppercase font-semibold flex items-center gap-2">
+              <span>{currentSlideData.category}</span>
+              <span className="text-[#64748B]">•</span>
+              <span className="text-[#94A3B8]">RIT Rajaramnagar</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+              {currentSlideData.title}
+            </h2>
+            <p className="text-xs sm:text-sm text-[#94A3B8] mt-1 max-w-4xl">
+              {currentSlideData.subtitle}
+            </p>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
-            {currentSlideData.title}
-          </h2>
-          <p className="text-xs sm:text-sm text-[#94A3B8] mt-1 max-w-4xl">
-            {currentSlideData.subtitle}
-          </p>
+
+          {/* RIT Logo Badge on All Slides */}
+          <div className="hidden sm:block shrink-0">
+            <RitLogo className="w-24 h-7 shadow-sm" />
+          </div>
         </div>
 
         {/* Slide Body Animated Transition */}
@@ -997,8 +1176,8 @@ export const PresentationPage: React.FC = () => {
           </SlideAnimationEngine>
         </div>
 
-        {/* Presenter Notes Overlay */}
-        {showNotes && (
+        {/* Presenter Notes Overlay (only in standard view) */}
+        {!isFullscreen && showNotes && (
           <div className="mt-4 p-3.5 rounded-xl bg-[#0E121B] border border-sky-500/30 text-xs text-sky-200 flex items-start gap-2.5 animate-fadeIn">
             <Lightbulb className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
             <div>
@@ -1008,48 +1187,50 @@ export const PresentationPage: React.FC = () => {
           </div>
         )}
 
-        {/* Bottom Navigation & Progress Bar */}
-        <div className="mt-4 pt-4 border-t border-[#1E2433] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={prevSlide}
-              className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors"
-              title="Previous Slide (Left Arrow)"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors"
-              title="Next Slide (Right Arrow / Space)"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Segmented Slide Indicators */}
-          <div className="flex items-center gap-1.5">
-            {slides.map((_, idx) => (
+        {/* Bottom Navigation & Progress Bar (Hidden in Fullscreen) */}
+        {!isFullscreen && (
+          <div className="mt-4 pt-4 border-t border-[#1E2433] flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <button
-                key={idx}
-                onClick={() => {
-                  setDirection(idx > currentSlide ? 1 : -1);
-                  setCurrentSlide(idx);
-                }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  idx === currentSlide
-                    ? 'w-8 bg-[#FFBF24]'
-                    : 'w-2 bg-[#1E2433] hover:bg-[#94A3B8]'
-                }`}
-                title={`Jump to Slide ${idx + 1}`}
-              />
-            ))}
-          </div>
+                onClick={prevSlide}
+                className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
+                title="Previous Slide (Left Arrow)"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={nextSlide}
+                className="p-2 rounded-lg bg-[#141824] hover:bg-[#1A2030] border border-[#1E2433] text-[#94A3B8] hover:text-white transition-colors cursor-pointer"
+                title="Next Slide (Right Arrow / Space)"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
 
-          <div className="text-[11px] font-mono text-[#64748B]">
-            Page {currentSlide + 1} of {totalSlides}
+            {/* Segmented Slide Indicators */}
+            <div className="flex items-center gap-1.5">
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setDirection(idx > currentSlide ? 1 : -1);
+                    setCurrentSlide(idx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    idx === currentSlide
+                      ? 'w-8 bg-[#FFBF24]'
+                      : 'w-2 bg-[#1E2433] hover:bg-[#94A3B8]'
+                  }`}
+                  title={`Jump to Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <div className="text-[11px] font-mono text-[#64748B]">
+              Slide {currentSlide + 1} of {totalSlides}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Slide Drawer Modal */}
@@ -1058,13 +1239,15 @@ export const PresentationPage: React.FC = () => {
           <div className="w-full max-w-sm bg-[#0E121B] border-l border-[#1E2433] h-full p-5 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-[#1E2433]">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#FFBF24]" />
-                  <span>8-Slide Presentation Index</span>
-                </h3>
+                <div className="flex items-center gap-2">
+                  <RitLogo className="w-16 h-5" />
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <span>9-Slide Deck Index</span>
+                  </h3>
+                </div>
                 <button
                   onClick={() => setShowDrawer(false)}
-                  className="p-1 rounded text-[#94A3B8] hover:text-white"
+                  className="p-1 rounded text-[#94A3B8] hover:text-white cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1079,7 +1262,7 @@ export const PresentationPage: React.FC = () => {
                       setCurrentSlide(idx);
                       setShowDrawer(false);
                     }}
-                    className={`w-full text-left p-3 rounded-xl border transition-colors ${
+                    className={`w-full text-left p-3 rounded-xl border transition-colors cursor-pointer ${
                       idx === currentSlide
                         ? 'bg-[#FFBF24]/10 border-[#FFBF24] text-white'
                         : 'bg-[#141824] border-[#1E2433] text-[#94A3B8] hover:bg-[#1A2030] hover:text-white'

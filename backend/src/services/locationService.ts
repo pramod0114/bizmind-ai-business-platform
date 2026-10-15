@@ -447,6 +447,15 @@ const FALLBACK_LOCATIONS_DATABASE: {
     address: { city: 'Noida', suburb: 'Sector 18', state: 'Uttar Pradesh', country: 'India', postcode: '201301' },
   },
   {
+    keywords: ['uran islampur', 'narshhpur', 'narsinghpur', 'uran islampur narshhpur road', 'islampur narshhpur road', 'narshhpur road'],
+    name: 'Uran Islampur Narshhpur Road',
+    display_name: 'Uran Islampur Narshhpur Road, Islampur, Sangli District, Maharashtra, 415409, India',
+    latitude: 17.0515,
+    longitude: 74.2660,
+    type: 'road',
+    address: { suburb: 'Narshhpur Road', city: 'Islampur', state: 'Maharashtra', country: 'India', postcode: '415409' },
+  },
+  {
     keywords: ['rajaramnagar', 'islampur', '415409'],
     name: 'Rajaramnagar, Islampur',
     display_name: 'Rajaramnagar, Islampur, Sangli, Maharashtra, 415409, India',
