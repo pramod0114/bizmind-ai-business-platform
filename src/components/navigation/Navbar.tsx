@@ -21,32 +21,24 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#111113]/90 backdrop-blur-md border-b border-[#27272A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-[#FFBF24] flex items-center justify-center text-[#0B0B0C] font-black text-base shadow-sm group-hover:bg-[#F59E0B] transition-colors">
-            B
-          </div>
-          <div>
-            <span className="text-lg font-bold text-[#F8FAFC] tracking-tight flex items-center gap-1.5">
-              BizMind <span className="text-[#FFBF24] font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded bg-[#FFBF24]/10 border border-[#FFBF24]/30">AI</span>
-            </span>
-          </div>
-        </Link>
+    <header className="sticky top-0 z-40 w-full px-3 sm:px-6 py-2">
+      <div className="max-w-6xl mx-auto h-14 px-4 sm:px-6 flex items-center justify-between">
+        
+        {/* Left balance placeholder */}
+        <div className="hidden md:block w-48" />
 
-        {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Centered Navigation Links */}
+        <nav className="hidden md:flex items-center justify-center gap-2 flex-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path;
             return (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
                   isActive
-                    ? 'text-[#FFBF24] bg-[#FFBF24]/10 border border-[#FFBF24]/30'
-                    : 'text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D]'
+                    ? 'text-[#FFBF24] font-semibold'
+                    : 'text-[#A1A1AA] hover:text-[#F8FAFC]'
                 }`}
               >
                 {link.name}
@@ -55,18 +47,18 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* Public / Authenticated Action CTAs */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Public / Authenticated Action CTAs (Right-aligned) */}
+        <div className="hidden md:flex items-center justify-end gap-3 w-48">
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link
                 to="/settings"
                 className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#1A1A1D] border border-[#27272A] text-xs text-[#F8FAFC] hover:border-[#FFBF24]/40 transition-colors"
               >
-                <div className="w-6 h-6 rounded-md bg-[#FFBF24] text-[#0B0B0C] font-bold flex items-center justify-center text-[10px]">
+                <div className="w-5 h-5 rounded bg-[#FFBF24] text-[#0B0B0C] font-bold flex items-center justify-center text-[10px]">
                   {user?.full_name?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <span className="font-medium max-w-[120px] truncate">{user?.full_name}</span>
+                <span className="font-medium max-w-[100px] truncate">{user?.full_name}</span>
               </Link>
               <Link to="/dashboard">
                 <Button size="sm" variant="primary" rightIcon={<LayoutDashboard className="w-3.5 h-3.5" />}>
@@ -75,7 +67,7 @@ export const Navbar: React.FC = () => {
               </Link>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <Link to="/login">
                 <Button variant="ghost" size="sm">
                   Sign In
@@ -86,31 +78,35 @@ export const Navbar: React.FC = () => {
                   Get Started
                 </Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle */}
-        <div className="flex md:hidden items-center gap-2">
-          {isAuthenticated ? (
-            <Link to="/dashboard">
-              <Button size="sm" variant="primary">
-                Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <Link to="/login">
-              <Button size="sm" variant="outline">
-                Sign In
-              </Button>
-            </Link>
-          )}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] transition-colors cursor-pointer"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+        {/* Mobile View Controls */}
+        <div className="flex md:hidden items-center justify-between w-full">
+          <span className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wider">Navigation</span>
+
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <Link to="/dashboard">
+                <Button size="sm" variant="primary">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" variant="outline">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-lg text-[#A1A1AA] hover:text-[#F8FAFC] hover:bg-[#1A1A1D] transition-colors cursor-pointer"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 

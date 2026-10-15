@@ -149,6 +149,18 @@ export const HomePage: React.FC = () => {
     <div className="space-y-24 py-8 md:py-16">
       {/* 1. HERO SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        {/* Brand Logo Anchor above Headline */}
+        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-[#111113] border border-[#27272A] shadow-xl hover:border-[#FFBF24]/40 transition-all mb-8 group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFBF24] to-[#F59E0B] flex items-center justify-center text-[#0B0B0C] font-black text-xl shadow-md group-hover:scale-105 transition-transform">
+            B
+          </div>
+          <div className="flex items-center">
+            <span className="text-2xl font-extrabold text-[#F8FAFC] tracking-tight">
+              BizMind
+            </span>
+          </div>
+        </div>
+
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#F8FAFC] tracking-tight max-w-4xl mx-auto leading-tight sm:leading-none">
           Make Smarter Business Decisions with{' '}
           <span className="text-[#FFBF24]">
