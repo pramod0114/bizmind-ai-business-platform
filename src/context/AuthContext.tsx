@@ -63,6 +63,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       setIsLoading(false);
     }
+
+    const handleAuthInvalidated = () => {
+      setToken(null);
+      setUser(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener('bizmind_auth_invalidated', handleAuthInvalidated);
+    return () => {
+      window.removeEventListener('bizmind_auth_invalidated', handleAuthInvalidated);
+    };
   }, [loadUser]);
 
   /**

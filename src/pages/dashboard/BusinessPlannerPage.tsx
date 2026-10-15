@@ -122,7 +122,9 @@ export const BusinessPlannerPage: React.FC = () => {
         loadPlanIntoState(plans[0]);
       }
     } catch (err: any) {
-      console.error('Error fetching plans:', err);
+      if (err?.statusCode !== 401) {
+        console.warn('Could not fetch saved plans:', err?.message || err);
+      }
     } finally {
       setIsLoading(false);
     }

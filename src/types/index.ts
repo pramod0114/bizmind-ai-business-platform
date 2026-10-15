@@ -602,9 +602,13 @@ export interface LocationComparisonItem {
   address: string;
   totalBusinesses: number;
   relevantBusinesses: number;
+  relevantCompetitors?: number;
   competitorDensity: number;
+  density?: number;
   averageDistance: string;
+  averageDistanceFormatted?: string;
   nearestCompetitor: string;
+  nearestDistanceFormatted?: string;
   concentrationLevel: string;
   competitionRisk: string;
   marketOpportunity: string;

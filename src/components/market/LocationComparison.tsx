@@ -224,7 +224,7 @@ export const LocationComparison: React.FC<LocationComparisonProps> = ({
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Total Nearby Establishments</td>
                       {comparisons.map((c, idx) => (
                         <td key={idx} className="py-2.5 px-4 font-mono">
-                          {c.totalBusinesses}
+                          {c.totalBusinesses ?? 0}
                         </td>
                       ))}
                     </tr>
@@ -232,23 +232,27 @@ export const LocationComparison: React.FC<LocationComparisonProps> = ({
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Direct Competitors Identified</td>
                       {comparisons.map((c, idx) => (
                         <td key={idx} className="py-2.5 px-4 font-mono font-bold text-[#FFBF24]">
-                          {c.relevantCompetitors}
+                          {c.relevantBusinesses ?? c.relevantCompetitors ?? 0}
                         </td>
                       ))}
                     </tr>
                     <tr>
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Spatial Density (per km²)</td>
-                      {comparisons.map((c, idx) => (
-                        <td key={idx} className="py-2.5 px-4 font-mono">
-                          {c.density.toFixed(2)}/km²
-                        </td>
-                      ))}
+                      {comparisons.map((c, idx) => {
+                        const rawDensity = c.competitorDensity ?? c.density ?? 0;
+                        const densityVal = Number(rawDensity);
+                        return (
+                          <td key={idx} className="py-2.5 px-4 font-mono">
+                            {isNaN(densityVal) ? '0.00' : densityVal.toFixed(2)}/km²
+                          </td>
+                        );
+                      })}
                     </tr>
                     <tr>
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Average Distance to Competitor</td>
                       {comparisons.map((c, idx) => (
                         <td key={idx} className="py-2.5 px-4 font-mono">
-                          {c.averageDistanceFormatted}
+                          {c.averageDistanceFormatted || c.averageDistance || 'N/A'}
                         </td>
                       ))}
                     </tr>
@@ -256,7 +260,7 @@ export const LocationComparison: React.FC<LocationComparisonProps> = ({
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Nearest Direct Competitor</td>
                       {comparisons.map((c, idx) => (
                         <td key={idx} className="py-2.5 px-4 font-mono text-[#38BDF8]">
-                          {c.nearestDistanceFormatted}
+                          {c.nearestDistanceFormatted || c.nearestCompetitor || 'N/A'}
                         </td>
                       ))}
                     </tr>
@@ -274,7 +278,7 @@ export const LocationComparison: React.FC<LocationComparisonProps> = ({
                             }
                             size="sm"
                           >
-                            {c.competitionRisk}
+                            {c.competitionRisk || 'Moderate'}
                           </Badge>
                         </td>
                       ))}
@@ -283,7 +287,7 @@ export const LocationComparison: React.FC<LocationComparisonProps> = ({
                       <td className="py-2.5 px-4 font-semibold text-[#A1A1AA]">Observed Market Opportunity</td>
                       {comparisons.map((c, idx) => (
                         <td key={idx} className="py-2.5 px-4 font-medium text-[#FFBF24]">
-                          {c.marketOpportunity}
+                          {c.marketOpportunity || 'Moderate Opportunity'}
                         </td>
                       ))}
                     </tr>

@@ -57,7 +57,10 @@ export async function authenticateUser(
     }
 
     // Verify user still exists and is active in database
-    const user = await db.findUserById(decoded.id);
+    let user = await db.findUserById(decoded.id);
+    if (!user && decoded.email) {
+      user = await db.findUserByEmail(decoded.email);
+    }
     if (!user) {
       sendError(res, 'User account not found or was removed.', 401);
       return;

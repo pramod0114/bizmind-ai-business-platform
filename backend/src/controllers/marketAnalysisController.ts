@@ -352,9 +352,13 @@ export async function compareLocations(req: AuthRequest, res: Response): Promise
       address: string;
       totalBusinesses: number;
       relevantBusinesses: number;
+      relevantCompetitors?: number;
       competitorDensity: number;
+      density?: number;
       averageDistance: string;
+      averageDistanceFormatted?: string;
       nearestCompetitor: string;
+      nearestDistanceFormatted?: string;
       concentrationLevel: string;
       competitionRisk: string;
       marketOpportunity: string;
@@ -382,9 +386,13 @@ export async function compareLocations(req: AuthRequest, res: Response): Promise
         address: metrics.location.address,
         totalBusinesses: metrics.totalBusinesses,
         relevantBusinesses: metrics.relevantCompetitorsCount,
+        relevantCompetitors: metrics.relevantCompetitorsCount,
         competitorDensity: metrics.competitorDensity,
+        density: metrics.competitorDensity,
         averageDistance: metrics.distanceMetrics.averageDistanceFormatted,
+        averageDistanceFormatted: metrics.distanceMetrics.averageDistanceFormatted,
         nearestCompetitor: metrics.distanceMetrics.nearestDistanceFormatted,
+        nearestDistanceFormatted: metrics.distanceMetrics.nearestDistanceFormatted,
         concentrationLevel: metrics.concentration.level,
         competitionRisk: metrics.competitionRisk.level,
         marketOpportunity: metrics.marketOpportunity.indicator,

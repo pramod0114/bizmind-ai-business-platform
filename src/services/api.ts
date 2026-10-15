@@ -35,6 +35,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => response,
   (error) => {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      const existingToken = localStorage.getItem('bizmind_token');
+      if (existingToken) {
+        localStorage.removeItem('bizmind_token');
+        window.dispatchEvent(new Event('bizmind_auth_invalidated'));
+      }
+    }
     const customError = {
       message: error.response?.data?.message || error.message || 'An unexpected error occurred',
       statusCode: error.response?.status || 500,
