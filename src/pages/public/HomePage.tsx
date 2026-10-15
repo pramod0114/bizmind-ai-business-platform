@@ -149,11 +149,6 @@ export const HomePage: React.FC = () => {
     <div className="space-y-24 py-8 md:py-16">
       {/* 1. HERO SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FFBF24]/10 border border-[#FFBF24]/30 text-[#FFBF24] text-xs font-semibold mb-6">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Enterprise AI Business Planning & Decision Intelligence</span>
-        </div>
-
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-[#F8FAFC] tracking-tight max-w-4xl mx-auto leading-tight sm:leading-none">
           Make Smarter Business Decisions with{' '}
           <span className="text-[#FFBF24]">
@@ -195,9 +190,6 @@ export const HomePage: React.FC = () => {
                 <div className="w-3 h-3 rounded-full bg-[#EF4444]/80" />
                 <div className="w-3 h-3 rounded-full bg-[#FACC15]/80" />
                 <div className="w-3 h-3 rounded-full bg-[#22C55E]/80" />
-                <span className="text-xs font-mono text-[#71717A] ml-2">
-                  bizmind.platform/decision-suite/demo-preview
-                </span>
               </div>
               <Badge variant="primary" size="sm">Live Preview Shell</Badge>
             </div>
