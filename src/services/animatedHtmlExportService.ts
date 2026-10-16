@@ -770,40 +770,64 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       </div>
     </div>
 
-    <!-- Slide 9: Feature 8 / Reports & Architecture – Comprehensive Analytical & Export Suite -->
+    <!-- Slide 9: Project Conclusion & Key Takeaways -->
     <div class="slide" id="slide-9">
-      <div class="slide-tag">09 / FEATURE 8: REPORTS & ARCHITECTURE • Page 09 of 10</div>
-      <div class="slide-title">Reports & Analytical Intelligence Suite</div>
-      <div class="slide-subtitle">Automated executive deliverables, multi-format export pipeline (.pptx, .html, .pdf), and 14-table 3NF relational data architecture.</div>
+      <div class="slide-tag">09 / PROJECT CONCLUSION • Page 09 of 10</div>
+      <div class="slide-title">Conclusion & Final Takeaways</div>
+      <div class="slide-subtitle">How BizMind helps everyday entrepreneurs make smart, confident, and risk-free business decisions.</div>
 
       <div class="grid-3">
         <div class="card" style="border-top: 3px solid var(--accent-gold);">
-          <div style="font-size: 11px; font-family: monospace; color: var(--accent-gold); font-weight: 700;">EXPORT ENGINE</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">Multi-Format Output</div>
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-gold); font-weight: 700;">EASY PLANNING</div>
+          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">Clear Numbers & Costs</div>
           <ul style="font-size: 10px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
-            <li><strong>Microsoft PPTX:</strong> Native Office OpenXML slides with JSZip transitions</li>
-            <li><strong>Animated HTML:</strong> Self-contained browser presentation with radar sweep</li>
-            <li><strong>Executive PDF:</strong> Formatted printable balance sheets and maps</li>
+            <li>Calculate startup investment and monthly bills in minutes</li>
+            <li>Know exactly how many daily sales you need to break even</li>
+            <li>No complicated accounting jargon or confusing formulas</li>
           </ul>
         </div>
 
         <div class="card" style="border-top: 3px solid var(--accent-cyan);">
-          <div style="font-size: 11px; font-family: monospace; color: var(--accent-cyan); font-weight: 700;">DATABASE SCHEMA</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">14 Normalized 3NF Tables</div>
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-cyan); font-weight: 700;">SMART LOCATION</div>
+          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">Pick The Right Spot</div>
           <ul style="font-size: 10px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
-            <li><code>business_plans</code>, <code>capex_items</code>, <code>opex_items</code></li>
-            <li><code>market_analyses</code>, <code>competitor_places</code></li>
-            <li><code>ml_predictions</code>, <code>recommendations</code></li>
-            <li>ACID compliance with in-memory transaction fallback</li>
+            <li>See nearby competitors on the map before signing a lease</li>
+            <li>Check customer footfall along main roads and market areas</li>
+            <li>Compare multiple spots side-by-side to find the winner</li>
           </ul>
         </div>
 
         <div class="card" style="border-top: 3px solid var(--accent-emerald);">
-          <div style="font-size: 11px; font-family: monospace; color: var(--accent-emerald); font-weight: 700;">RIT CAPSTONE DEFENSE</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">Academic Synthesis</div>
-          <div style="font-size: 10px; color: var(--text-muted); line-height: 1.5;">
-            Developed at Rajarambapu Institute of Technology (RIT), Rajaramnagar by Pramod Mahajan, Harshad Patil, Sakshi Randive, and Rutika Deshmukh under the guidance of Ms. A. R. Patil. BizMind bridges geospatial intelligence, financial science, and machine learning into an accessible enterprise platform.
-          </div>
+          <div style="font-size: 11px; font-family: monospace; color: var(--accent-emerald); font-weight: 700;">ACTIONABLE ADVICE</div>
+          <div style="font-size: 14px; font-weight: 700; color: #fff; margin: 4px 0 6px;">Lower Risk, Higher Success</div>
+          <ul style="font-size: 10px; color: var(--text-muted); line-height: 1.6; list-style: square; padding-left: 14px;">
+            <li>Get practical tips on pricing, rent discounts, and savings</li>
+            <li>Keep a safe cash cushion to handle unexpected quiet months</li>
+            <li>Turn business ideas into realistic, profitable ventures</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-top: 12px;">
+        <div class="card" style="padding: 10px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Test First</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--accent-emerald);">Zero Risk</div>
+          <div style="font-size: 9px; color: var(--text-dim); margin-top: 2px;">Test ideas before spending money</div>
+        </div>
+        <div class="card" style="padding: 10px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Clear Answers</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--accent-cyan);">Simple Data</div>
+          <div style="font-size: 9px; color: var(--text-dim); margin-top: 2px;">Easy charts anyone can understand</div>
+        </div>
+        <div class="card" style="padding: 10px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">Better Decisions</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--accent-gold);">Smart Guidance</div>
+          <div style="font-size: 9px; color: var(--text-dim); margin-top: 2px;">Practical tips for real shops</div>
+        </div>
+        <div class="card" style="padding: 10px; text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase;">For Everyone</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--accent-purple);">Free & Open</div>
+          <div style="font-size: 9px; color: var(--text-dim); margin-top: 2px;">Built for students & new founders</div>
         </div>
       </div>
     </div>

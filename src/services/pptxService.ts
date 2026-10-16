@@ -9,7 +9,7 @@
  * - Slide 6: Multi-Scenario Sensitivity Stress-Testing (Native Vector Bar Chart)
  * - Slide 7: Geospatial GIS Engine & Micro-Radius Calculus
  * - Slide 8: LIVE DEMO: Real-Time Spatial Radar (Uran Islampur Narshhpur Road & Live API)
- * - Slide 9: Scikit-Learn ML Viability Pipeline & 14-Table 3NF Schema (Native Vector Bar Chart)
+ * - Slide 9: Project Conclusion & Final Takeaways in Simple Language
  * - RIT Logo & Institutional Badge embedded across ALL slides
  * - PowerPoint Slide Transitions (<p:transition>) injected via JSZip
  */
@@ -1695,17 +1695,17 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 9: Feature 8 / Reports & Architecture – Comprehensive Analytical & Export Suite (Page 9 of 10)
+  // SLIDE 9: Project Conclusion & Key Takeaways (Page 9 of 10)
   // =========================================================================
   const slide9 = addMasterSlide(
-    'Reports & Analytical Intelligence Suite',
+    'Conclusion & Final Takeaways',
     9,
-    'BizMind provides multi-format export capabilities, including Native PowerPoint (.pptx) with vector charts, Standalone Animated HTML (.html), and PDF summaries, backed by 14 normalized 3NF MySQL relational tables.',
-    '09 / FEATURE 8: REPORTS & ARCHITECTURE'
+    'In conclusion, BizMind makes business planning simple, clear, and practical. Entrepreneurs can check their costs, find the right location, study nearby competitors, and get simple advice before spending real money.',
+    '09 / PROJECT CONCLUSION'
   );
 
   slide9.addText(
-    'Automated executive deliverables, multi-format export pipeline (.pptx, .html, .pdf), and 14-table 3NF relational data architecture.',
+    'How BizMind helps everyday entrepreneurs make smart, confident, and risk-free business decisions.',
     {
       x: 0.8,
       y: 1.45,
@@ -1717,28 +1717,28 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     }
   );
 
-  const exportFormats = [
+  const conclusionCards = [
     {
-      title: 'Native PowerPoint (.pptx)',
-      desc: 'True Office 365 16:9 widescreen slides with editable vector shapes, real native PowerPoint charts, slide transitions, and official RIT Capstone formatting.',
-      badge: 'ZERO SCREENSHOT HACK • PURE VECTOR',
+      title: 'Easy Business Planning',
+      desc: 'Calculate startup costs, monthly bills, and daily sales goals in minutes without messy spreadsheets or complicated accounting terms.',
+      badge: 'KNOW YOUR PROFIT & BREAK-EVEN POINT',
       color: C.GOLD,
     },
     {
-      title: 'Standalone Animated HTML',
-      desc: 'Self-contained, interactive offline deck with fluid CSS animations, keyboard hotkeys (Arrow keys, F for fullscreen), radar sweeps, and responsive layout.',
-      badge: 'ZERO EXTERNAL DEPS • WORKS OFFLINE',
+      title: 'Smart Location Check',
+      desc: 'See nearby competitors on the map and check customer footfall before renting a shop, helping you avoid overcrowded spots.',
+      badge: 'PICK THE BEST SPOT FOR YOUR SHOP',
       color: C.CYAN,
     },
     {
-      title: '14 Relational 3NF Tables',
-      desc: 'Robust data architecture with users, business_plans, location_analyses, market_analyses, competitors, predictions, and audit_logs with cascading foreign keys.',
-      badge: 'MYSQL 8.0 + IN-MEMORY FALLBACK',
+      title: 'Practical Success Advice',
+      desc: 'Receive clear, easy suggestions on setting product prices, cutting extra expenses, and keeping a cash buffer so your business survives and grows.',
+      badge: 'SAVE MONEY & AVOID BEGINNER MISTAKES',
       color: C.EMERALD,
     },
   ];
 
-  exportFormats.forEach((ef, idx) => {
+  conclusionCards.forEach((ef, idx) => {
     const ex = 0.8 + idx * 3.95;
     slide9.addShape(pptx.ShapeType.roundRect, {
       x: ex,
@@ -1766,10 +1766,10 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
       y: 2.75,
       w: 3.4,
       h: 1.4,
-      fontSize: 8.5,
+      fontSize: 9,
       fontFace: 'Arial',
       color: C.TEXT_MUTED,
-      lineSpacing: 12,
+      lineSpacing: 13,
     });
 
     slide9.addText(ef.badge, {
@@ -1784,15 +1784,15 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
     });
   });
 
-  // System Architecture Strip
-  const archStats = [
-    { l: 'RESPONSE TIME', v: '< 180ms', s: 'High-throughput API' },
-    { l: 'SPATIAL ENGINE', v: 'Leaflet + OSM', s: 'Zero API cost barrier' },
-    { l: 'STORAGE RESILIENCE', v: 'ACID Compliant', s: 'Automated fallback' },
-    { l: 'PLATFORM STACK', v: 'React 19 + Node', s: 'TypeScript end-to-end' },
+  // Conclusion Summary Strip
+  const conclusionStats = [
+    { l: 'TEST FIRST', v: 'Zero Risk', s: 'Test ideas before spending money' },
+    { l: 'CLEAR ANSWERS', v: 'Simple Data', s: 'Easy charts anyone can understand' },
+    { l: 'BETTER DECISIONS', v: 'Smart Guidance', s: 'Practical tips for real-world shops' },
+    { l: 'FOR EVERYONE', v: 'Free & Open', s: 'Built for students & new founders' },
   ];
 
-  archStats.forEach((st, idx) => {
+  conclusionStats.forEach((st, idx) => {
     const sx = 0.8 + idx * 2.95;
     slide9.addShape(pptx.ShapeType.roundRect, {
       x: sx,

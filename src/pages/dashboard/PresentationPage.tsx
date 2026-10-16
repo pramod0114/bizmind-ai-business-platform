@@ -953,14 +953,14 @@ export const PresentationPage: React.FC = () => {
       ),
     },
 
-    // SLIDE 9: Feature 8 / Reports & Architecture – Comprehensive Analytical & Export Suite
+    // SLIDE 9: Project Conclusion – Simple, Real-World Business Decision Platform
     {
       id: 9,
-      category: '09 / Feature 8: Reports & Architecture',
-      title: 'Reports & Analytical Intelligence Suite',
-      subtitle: 'Automated executive deliverables, multi-format export pipeline (.pptx, .html, .pdf), and 14-table 3NF relational data architecture.',
+      category: '09 / Project Conclusion',
+      title: 'Conclusion & Key Takeaways',
+      subtitle: 'How BizMind helps everyday entrepreneurs make smart, confident, and risk-free business decisions.',
       notes:
-        'BizMind provides multi-format export capabilities, including Native PowerPoint (.pptx) with vector charts, Standalone Animated HTML (.html), and PDF summaries, backed by 14 normalized 3NF MySQL relational tables.',
+        'In conclusion, BizMind makes business planning simple, clear, and practical. Entrepreneurs can calculate their costs, find the right location, study nearby competitors, and get simple advice before spending their money.',
       content: () => (
         <motion.div
           variants={containerStaggerVariants}
@@ -968,75 +968,75 @@ export const PresentationPage: React.FC = () => {
           animate="visible"
           className="flex flex-col justify-center h-full max-w-5xl mx-auto space-y-4"
         >
-          {/* 3 Export Formats Grid */}
+          {/* 3 Core Conclusion Pillars */}
           <motion.div variants={containerStaggerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            {/* Format 1: PPTX */}
+            {/* Pillar 1: Easy Planning */}
             <motion.div variants={popScaleVariant} className="p-4 rounded-xl bg-[#121722] border border-[#1E2433] space-y-2 hover:border-[#FFBF24]/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-[#FFBF24]/15 border border-[#FFBF24]/30 flex items-center justify-center text-[#FFBF24]">
-                <Presentation className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-white">Native PowerPoint (.pptx)</h3>
+              <h3 className="text-sm font-bold text-white">Easy Business Planning</h3>
               <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                True Office 365 16:9 widescreen slides with editable vector shapes, real native PowerPoint charts, slide transitions, and official RIT Capstone formatting.
+                Calculate startup costs, monthly bills, and daily sales goals in minutes without messy spreadsheets or complicated accounting terms.
               </p>
               <div className="text-[10px] font-mono text-[#FFBF24] pt-1">
-                Zero screenshot hack • Pure vector
+                Know your profit & break-even point
               </div>
             </motion.div>
 
-            {/* Format 2: HTML */}
+            {/* Pillar 2: Smart Location Check */}
             <motion.div variants={popScaleVariant} className="p-4 rounded-xl bg-[#121722] border border-[#1E2433] space-y-2 hover:border-[#38BDF8]/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/15 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
-                <Code2 className="w-4 h-4" />
+                <MapPin className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-white">Standalone Animated HTML</h3>
+              <h3 className="text-sm font-bold text-white">Smart Location Check</h3>
               <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                Self-contained, interactive offline deck with fluid animations, keyboard hotkeys (Arrow keys, F for fullscreen), and responsive design.
+                See nearby competitors on the map and check customer footfall before renting a shop, helping you avoid overcrowded spots.
               </p>
               <div className="text-[10px] font-mono text-[#38BDF8] pt-1">
-                Zero external deps • Works offline
+                Pick the best spot for your shop
               </div>
             </motion.div>
 
-            {/* Format 3: Architecture & Schema */}
+            {/* Pillar 3: Lower Risk & Practical Advice */}
             <motion.div variants={popScaleVariant} className="p-4 rounded-xl bg-[#121722] border border-[#1E2433] space-y-2 hover:border-[#10B981]/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-[#10B981]/15 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
-                <Database className="w-4 h-4" />
+                <TrendingUp className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-white">14 Relational 3NF Tables</h3>
+              <h3 className="text-sm font-bold text-white">Practical Success Advice</h3>
               <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                Robust data architecture with users, business_plans, location_analyses, market_analyses, competitors, predictions, and audit_logs with cascading foreign keys.
+                Receive clear, easy suggestions on setting product prices, cutting extra expenses, and keeping a cash buffer so your business survives and grows.
               </p>
               <div className="text-[10px] font-mono text-[#10B981] pt-1">
-                MySQL 8.0 + Relational fallback
+                Save money & avoid beginner mistakes
               </div>
             </motion.div>
           </motion.div>
 
-          {/* System Performance & Architecture Strip */}
+          {/* Simple Takeaways Summary Strip */}
           <motion.div variants={containerStaggerVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
             <motion.div variants={popScaleVariant} className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433]">
-              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Response Time</div>
-              <div className="text-base font-bold text-[#10B981] font-mono mt-0.5">&lt; 180ms</div>
-              <div className="text-[10px] text-[#64748B]">High-throughput API</div>
+              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Test First</div>
+              <div className="text-base font-bold text-[#10B981] font-mono mt-0.5">Zero Risk</div>
+              <div className="text-[10px] text-[#64748B]">Test ideas before spending money</div>
             </motion.div>
 
             <motion.div variants={popScaleVariant} className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433]">
-              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Spatial Engine</div>
-              <div className="text-base font-bold text-[#38BDF8] font-mono mt-0.5">Leaflet + OSM</div>
-              <div className="text-[10px] text-[#64748B]">Zero paid API cost barrier</div>
+              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Clear Answers</div>
+              <div className="text-base font-bold text-[#38BDF8] font-mono mt-0.5">Simple Data</div>
+              <div className="text-[10px] text-[#64748B]">Easy charts anyone can understand</div>
             </motion.div>
 
             <motion.div variants={popScaleVariant} className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433]">
-              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Storage Resilience</div>
-              <div className="text-base font-bold text-[#FFBF24] font-mono mt-0.5">ACID Compliant</div>
-              <div className="text-[10px] text-[#64748B]">Automated storage fallback</div>
+              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Better Decisions</div>
+              <div className="text-base font-bold text-[#FFBF24] font-mono mt-0.5">Smart Guidance</div>
+              <div className="text-[10px] text-[#64748B]">Practical tips for real-world shops</div>
             </motion.div>
 
             <motion.div variants={popScaleVariant} className="p-3 rounded-xl bg-[#0E121B] border border-[#1E2433]">
-              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">Platform Stack</div>
-              <div className="text-base font-bold text-purple-400 font-mono mt-0.5">React 19 + Node</div>
-              <div className="text-[10px] text-[#64748B]">TypeScript end-to-end</div>
+              <div className="text-[10px] font-semibold text-[#94A3B8] uppercase">For Everyone</div>
+              <div className="text-base font-bold text-purple-400 font-mono mt-0.5">Free & Open</div>
+              <div className="text-[10px] text-[#64748B]">Built for students & new founders</div>
             </motion.div>
           </motion.div>
         </motion.div>
