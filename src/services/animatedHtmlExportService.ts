@@ -770,10 +770,10 @@ export function generateAnimatedHtmlPresentation(plan?: BusinessPlan | null): vo
       </div>
     </div>
 
-    <!-- Slide 9: Project Conclusion & Key Takeaways -->
+    <!-- Slide 9: Project Conclusion -->
     <div class="slide" id="slide-9">
-      <div class="slide-tag">09 / PROJECT CONCLUSION • Page 09 of 10</div>
-      <div class="slide-title">Conclusion & Final Takeaways</div>
+      <div class="slide-tag">09 / CONCLUSION • Page 09 of 10</div>
+      <div class="slide-title">Conclusion</div>
       <div class="slide-subtitle">How BizMind helps everyday entrepreneurs make smart, confident, and risk-free business decisions.</div>
 
       <div class="grid-3">

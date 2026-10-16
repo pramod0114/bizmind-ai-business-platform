@@ -956,8 +956,8 @@ export const PresentationPage: React.FC = () => {
     // SLIDE 9: Project Conclusion – Simple, Real-World Business Decision Platform
     {
       id: 9,
-      category: '09 / Project Conclusion',
-      title: 'Conclusion & Key Takeaways',
+      category: '09 / Conclusion',
+      title: 'Conclusion',
       subtitle: 'How BizMind helps everyday entrepreneurs make smart, confident, and risk-free business decisions.',
       notes:
         'In conclusion, BizMind makes business planning simple, clear, and practical. Entrepreneurs can calculate their costs, find the right location, study nearby competitors, and get simple advice before spending their money.',

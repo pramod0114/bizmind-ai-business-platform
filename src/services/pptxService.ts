@@ -1695,13 +1695,13 @@ export async function generateBizMindPptx(plan?: BusinessPlan | null): Promise<v
   });
 
   // =========================================================================
-  // SLIDE 9: Project Conclusion & Key Takeaways (Page 9 of 10)
+  // SLIDE 9: Project Conclusion (Page 9 of 10)
   // =========================================================================
   const slide9 = addMasterSlide(
-    'Conclusion & Final Takeaways',
+    'Conclusion',
     9,
     'In conclusion, BizMind makes business planning simple, clear, and practical. Entrepreneurs can check their costs, find the right location, study nearby competitors, and get simple advice before spending real money.',
-    '09 / PROJECT CONCLUSION'
+    '09 / CONCLUSION'
   );
 
   slide9.addText(
